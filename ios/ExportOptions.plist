@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Distribution method -->
+    <key>method</key>
+    <string>app-store</string>
+
+    <!-- Your Apple Developer Team ID -->
+    <key>teamID</key>
+    <string>AHVM2Z8TDL</string>
+
+    <!-- Explicitly specify the signing certificate (match exactly what is in Keychain) -->
+    <key>signingCertificate</key>
+    <string>iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)</string>
+
+    <!-- Map your app's bundle ID to the exact provisioning profile name -->
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.tech4dev.constructionprofitcalculator</key>
+        <string>ConstructionProfitCalculator_Distribution_Profile</string>
+    </dict>
+
+    <!-- Optional: strip Swift symbols to reduce app size -->
+    <key>stripSwiftSymbols</key>
+    <true/>
+
+    <!-- Optional: no app thinning -->
+    <key>thinning</key>
+    <string><none></string>
+</dict>
+</plist>
