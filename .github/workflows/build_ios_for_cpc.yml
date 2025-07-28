@@ -1,0 +1,121 @@
+name: Build and Upload iOS IPA to App Store Connect
+on:
+  workflow_dispatch:
+jobs:
+  build-and-upload:
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: 'stable'
+          architecture: arm64
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Set up Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      - name: Install Fastlane
+        run: gem install fastlane
+      - name: Create temporary keychain
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+      - name: Import Apple certificate
+        env:
+          IOS_DISTRIBUTION_P12: ${{ secrets.IOS_DISTRIBUTION_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$IOS_DISTRIBUTION_P12" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
+      - name: Install provisioning profile
+        env:
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        run: |
+          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
+      - name: Build IPA
+        run: |
+          flutter build ipa \
+            --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --verbose > build_log.txt 2>&1
+          ls -l build/ios/ipa/ || echo "IPA directory not found"
+          cat ios/Runner.xcodeproj/project.pbxproj | grep -E "PROVISIONING_PROFILE|CODE_SIGN_IDENTITY"
+          mkdir -p app-ipa
+          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
+      - name: Set up Fastlane configuration
+        run: |
+          mkdir -p ./fastlane
+          cat > ./fastlane/Fastfile << 'EOL'
+          default_platform(:ios)
+          platform :ios do
+            lane :upload_to_app_store_connect do
+              ENV["SPACESHIP_LOGGER"] = "nil"
+              app_store_connect_api_key(
+                key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+                issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+                key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
+                is_key_content_base64: true
+              )
+              deliver(
+                ipa: "./app-ipa/construction_profit_calculator_english.ipa",
+                skip_screenshots: true,
+                skip_metadata: true,
+                skip_app_version_update: true,
+                force: true,
+                precheck_include_in_app_purchases: false
+              )
+            end
+          end
+          EOL
+      - name: Run Fastlane to upload IPA
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+        run: fastlane ios upload_to_app_store_connect
+        working-directory: ${{ github.workspace }}
+      - name: Debug App Store Connect env vars
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+        run: |
+          echo "APP_STORE_CONNECT_KEY_ID is set: ${APP_STORE_CONNECT_KEY_ID:+yes}"
+          echo "APP_STORE_CONNECT_ISSUER_ID is set: ${APP_STORE_CONNECT_ISSUER_ID:+yes}"
+          echo "APP_STORE_CONNECT_KEY_CONTENT is set: ${APP_STORE_CONNECT_KEY_CONTENT:+yes}"
+        shell: bash
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: |
+            build_log.txt
+            fastlane/report.xml
+      - name: Upload IPA
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-ipa
+          path: app-ipa/*.ipa
