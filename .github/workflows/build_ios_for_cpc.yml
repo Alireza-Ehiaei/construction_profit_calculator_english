@@ -117,5 +117,4 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: app-ipa
-          path: app-ipa/*.ipa
+          name: build_ios_for_cpc
