@@ -17,10 +17,12 @@ jobs:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
           echo "Length of IOS_DISTRIBUTION_P12_V2: ${#IOS_DISTRIBUTION_P12_V2}"
           echo "Length of CERTIFICATE_PASSWORD_V2: ${#CERTIFICATE_PASSWORD_V2}"
           echo "Length of KEYCHAIN_PASSWORD: ${#KEYCHAIN_PASSWORD}"
+          echo "Length of IOS_PROVISIONING_PROFILE_V2: ${#IOS_PROVISIONING_PROFILE_V2}"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -66,9 +68,9 @@ jobs:
 
       - name: Install provisioning profile
         env:
-          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           PROFILE_UUID=$(security cms -D -i profile.mobileprovision | /usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin)
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
