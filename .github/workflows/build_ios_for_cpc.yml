@@ -99,13 +99,13 @@ jobs:
 
 
       - name: Upload build log artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: flutter-build-log
           path: build_log.txt
 
 
-      - name: Set up Fastlane configuration
+      - name: Set up Fastlane configuration 
         run: |
           mkdir -p ./fastlane
           cat > ./fastlane/Fastfile << 'EOL'
