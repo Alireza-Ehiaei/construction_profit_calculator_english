@@ -64,7 +64,20 @@ jobs:
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security find-identity -v -p codesigning build.keychain
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
+
+      - name: Build IPA
+        run: |
+          flutter build ipa \
+            --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --no-codesign \
+            --verbose > build_log.txt 2>&1
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -config Release archive -archivePath build/Runner.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" PROVISIONING_PROFILE="$PROFILE_UUID"
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/ExportOptions.plist -exportPath build -allowProvisioningUpdates
+          ls -l build/ios/ipa/ || echo "IPA directory not found"
+          mkdir -p app-ipa
+          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
 
       - name: Install provisioning profile
         env:
