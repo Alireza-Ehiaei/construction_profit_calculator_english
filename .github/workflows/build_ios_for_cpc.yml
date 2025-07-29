@@ -11,6 +11,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
       - name: Debug secrets presence
         env:
           IOS_DISTRIBUTION_P12: ${{ secrets.IOS_DISTRIBUTION_P12 }}
@@ -30,6 +31,9 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Build iOS IPA with version and build number
+        run: flutter build ios --release --no-codesign --build-name=1.0.1 --build-number=2
 
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
@@ -83,8 +87,7 @@ jobs:
       - name: Install CocoaPods dependencies
         run: |
           cd ios
-          pod install --repo-update
-          cd ..
+          pod install 
 
       - name: Build IPA
         run: |
