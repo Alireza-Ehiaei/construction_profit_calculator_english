@@ -70,10 +70,12 @@ jobs:
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
-          PROFILE_UUID=$(security cms -D -i profile.mobileprovision | /usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin)
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision || { echo "Base64 decode failed"; exit 1; }
+          file profile.mobileprovision
+          security cms -D -i profile.mobileprovision > decoded_plist.plist || { echo "Failed to decode provisioning profile"; exit 1; }
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist) || { echo "Failed to extract UUID"; exit 1; }
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Install CocoaPods dependencies
