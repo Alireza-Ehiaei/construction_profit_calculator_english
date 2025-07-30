@@ -7,10 +7,12 @@ jobs:
   build-and-upload:
     runs-on: macos-15
 
+    env:
+      DEVELOPMENT_TEAM: AHVM2Z8TDL  # Your Apple Developer Team ID
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
 
       - name: Debug secrets presence
         env:
@@ -34,18 +36,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS IPA with version and build number
-        run: flutter build ios --release --build-name=1.0.1 --build-number=2
-
-      - name: Set up Ruby for Fastlane
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-
-      - name: Install Fastlane
-        run: gem install fastlane
-
       - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -66,19 +56,6 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
 
-      - name: Build IPA
-        run: |
-          flutter build ipa \
-            --release \
-            --export-options-plist=ios/ExportOptions.plist \
-            --no-codesign \
-            --verbose > build_log.txt 2>&1
-          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -config Release archive -archivePath build/Runner.xcarchive CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" PROVISIONING_PROFILE="$PROFILE_UUID"
-          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/ExportOptions.plist -exportPath build -allowProvisioningUpdates
-          ls -l build/ios/ipa/ || echo "IPA directory not found"
-          mkdir -p app-ipa
-          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-
       - name: Install provisioning profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
@@ -96,11 +73,15 @@ jobs:
           cd ios
           pod install --repo-update
 
-      - name: Build IPA
-        env:
-          DEVELOPMENT_TEAM: AHVM2Z8TDL  # your actual team ID
+      - name: Build IPA with signing
         run: |
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1
+          flutter build ipa \
+            --release \
+            --build-name=1.0.1 \
+            --build-number=2 \
+            --export-options-plist=ios/ExportOptions.plist \
+            --verbose > build_log.txt 2>&1
+
           if [ -d "build/ios/ipa" ] && ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
             echo "IPA directory and IPA file found:"
             ls -l build/ios/ipa
@@ -113,21 +94,28 @@ jobs:
             exit 1
           fi
 
-
-
       - name: Upload build log artifact
+        if: failure() || success()
         uses: actions/upload-artifact@v4
         with:
           name: flutter-build-log
           path: build_log.txt
 
+      - name: Set up Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
 
-      - name: Set up Fastlane configuration 
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Set up Fastlane configuration
         run: |
           mkdir -p ./fastlane
           cat > ./fastlane/Fastfile << 'EOL'
           default_platform(:ios)
-          
+
           platform :ios do
             lane :upload_to_app_store_connect do
               ENV["SPACESHIP_LOGGER"] = "nil"
@@ -168,18 +156,12 @@ jobs:
           echo "APP_STORE_CONNECT_KEY_CONTENT is set: ${APP_STORE_CONNECT_KEY_CONTENT:+yes}"
         shell: bash
 
-      - name: Upload build log
+      - name: Upload Fastlane report and IPA artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
+          name: build-log-and-ipa
           path: |
             build_log.txt
             fastlane/report.xml
-
-      - name: Upload IPA
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build_ios_for_cpc
-          path: app-ipa/*.ipa
+            app-ipa/*.ipa
