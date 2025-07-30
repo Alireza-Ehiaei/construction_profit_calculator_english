@@ -45,17 +45,17 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
 
+  
       - name: Import Apple certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
+          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12 || { echo "Failed to decode certificate"; exit 1; }
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-
       - name: Install provisioning profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
@@ -68,38 +68,27 @@ jobs:
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios
-          pod install --repo-update
-
-      - name: Build IPA with signing
+      - name: Build IPA
         env:
-          DEVELOPMENT_TEAM: AHVM2Z8TDL    # Your Apple Developer Team ID
-          # If you want explicit provisioning profile, add:
-          # PROVISIONING_PROFILE_SPECIFIER: Your_Profile_Name_Or_UUID
+          DEVELOPMENT_TEAM: AHVM2Z8TDL
         run: |
-          # Run flutter build ipa with full verbosity and proper signing
           flutter build ipa \
             --release \
             --build-name=1.0.1 \
             --build-number=2 \
             --export-options-plist=ios/ExportOptions.plist \
+            --no-codesign \
             --verbose > build_log.txt 2>&1
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -config Release archive -archivePath build/Runner.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM"
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/ExportOptions.plist -exportPath build
+          ls -l build/ios/ipa/ || echo "IPA directory not found"
+          mkdir -p app-ipa
+          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
       
-          # Check if IPA was generated successfully
-          if [ -d "build/ios/ipa" ] && ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
-            echo "IPA directory and IPA file found:"
-            ls -l build/ios/ipa
-            mkdir -p app-ipa
-            cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-          else
-            echo "IPA directory or IPA file not found. Build probably failed."
-            echo "==== Flutter build log ====="
-            cat build_log.txt
-            exit 1
-          fi
-
 
       - name: Upload build log artifact
         if: failure() || success()
