@@ -1,14 +1,14 @@
+# Sensitive files
 **/*.mobileprovision
 **/*.p12
 **/*.cer
 **/*.key
 **/*.pem
+# Build artifacts
 build/
 .dart_tool/
 .pub-cache/
 .pub/
-.DS_Store
-
 # Xcode
 **/dgph
 *.mode1v3
@@ -17,20 +17,14 @@ build/
 *.pbxuser
 *.perspectivev3
 **/*sync/
-xcuserdata
+xcuserdata/
 **/DerivedData/
 Icon?
 **/Pods/
 **/.symlinks/
 profile
 **/.generated/
-
 # Flutter/Dart
-.dart_tool/
-.packages
-.pub-cache/
-.pub/
-build/
 Flutter/App.framework
 Flutter/Flutter.framework
 Flutter/Flutter.podspec
@@ -42,21 +36,15 @@ Flutter/flutter_assets/
 Flutter/flutter_export_environment.sh
 ServiceDefinitions.json
 Runner/GeneratedPluginRegistrant.*
-
 # Android Studio/Flutter metadata
 .metadata
-
-# Test directory (optional: remove if tests are needed)
+# Test directory
 test/
-
-# Common macOS files
+# macOS
 .DS_Store
-
-# Exceptions to Xcode rules
+# Exceptions
 !default.mode1v3
 !default.mode2v3
 !default.pbxuser
 !default.perspectivev3
-
-# Ensure critical files are tracked
 !ios/ExportOptions.plist
