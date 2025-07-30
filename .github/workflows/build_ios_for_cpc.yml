@@ -7,20 +7,24 @@ jobs:
   build-and-upload:
     runs-on: macos-15
 
+    env:
+      DEVELOPMENT_TEAM: AHVM2Z8TDL
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-
       - name: Debug secrets presence
         env:
-          IOS_DISTRIBUTION_P12: ${{ secrets.IOS_DISTRIBUTION_P12 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "Length of IOS_DISTRIBUTION_P12: ${#IOS_DISTRIBUTION_P12}"
-          echo "Length of CERTIFICATE_PASSWORD: ${#CERTIFICATE_PASSWORD}"
+          echo "Length of IOS_DISTRIBUTION_P12_V2: ${#IOS_DISTRIBUTION_P12_V2}"
+          echo "Length of CERTIFICATE_PASSWORD_V2: ${#CERTIFICATE_PASSWORD_V2}"
           echo "Length of KEYCHAIN_PASSWORD: ${#KEYCHAIN_PASSWORD}"
+          echo "Length of IOS_PROVISIONING_PROFILE_V2: ${#IOS_PROVISIONING_PROFILE_V2}"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -32,8 +36,65 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS IPA with version and build number
-        run: flutter build ios --release --no-codesign --build-name=1.0.1 --build-number=2
+      - name: Create temporary keychain
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+
+      - name: Import Apple certificate
+        env:
+          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12 || { echo "Failed to decode certificate"; exit 1; }
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
+
+      - name: Install provisioning profile
+        env:
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+        run: |
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision || { echo "Base64 decode failed"; exit 1; }
+          file profile.mobileprovision
+          security cms -D -i profile.mobileprovision > decoded_plist.plist || { echo "Failed to decode provisioning profile"; exit 1; }
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist) || { echo "Failed to extract UUID"; exit 1; }
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Build IPA
+        env:
+          DEVELOPMENT_TEAM: AHVM2Z8TDL
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -config Release archive -archivePath build/Runner.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+            -allowProvisioningUpdates > build_log.txt 2>&1
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/ExportOptions.plist -exportPath build
+          ls -l build/ios/ipa/ || echo "IPA directory not found"
+          mkdir -p app-ipa
+          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload build log artifact
+        if: failure() || success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-build-log
+          path: build_log.txt
 
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
@@ -44,68 +105,12 @@ jobs:
       - name: Install Fastlane
         run: gem install fastlane
 
-      - name: Create temporary keychain
-        env:
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security set-keychain-settings -lut 21600 build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-
-      - name: Debug .p12 certificate file
-        env:
-          IOS_DISTRIBUTION_P12: ${{ secrets.IOS_DISTRIBUTION_P12 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        run: |
-          echo "$IOS_DISTRIBUTION_P12" | base64 --decode > certificate.p12
-          ls -l certificate.p12
-          file certificate.p12
-          openssl pkcs12 -info -in certificate.p12 -nomacver -nokeys -passin pass:$CERTIFICATE_PASSWORD || echo "OpenSSL could not read the certificate"
-
-      - name: Import Apple certificate
-        env:
-          IOS_DISTRIBUTION_P12: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-
-        run: |
-          echo "$IOS_DISTRIBUTION_P12" | base64 --decode > certificate.p12
-          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-
-      - name: Install provisioning profile
-        env:
-          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
-        run: |
-          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios
-          pod install 
-
-      - name: Build IPA
-        run: |
-          flutter build ipa \
-            --release \
-            --export-options-plist=ios/ExportOptions.plist \
-            --verbose > build_log.txt 2>&1
-          ls -l build/ios/ipa/ || echo "IPA directory not found"
-          cat ios/Runner.xcodeproj/project.pbxproj | grep -E "PROVISIONING_PROFILE|CODE_SIGN_IDENTITY"
-          mkdir -p app-ipa
-          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-
       - name: Set up Fastlane configuration
         run: |
           mkdir -p ./fastlane
           cat > ./fastlane/Fastfile << 'EOL'
           default_platform(:ios)
-          
+
           platform :ios do
             lane :upload_to_app_store_connect do
               ENV["SPACESHIP_LOGGER"] = "nil"
@@ -135,29 +140,12 @@ jobs:
         run: fastlane ios upload_to_app_store_connect
         working-directory: ${{ github.workspace }}
 
-      - name: Debug App Store Connect env vars
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
-        run: |
-          echo "APP_STORE_CONNECT_KEY_ID is set: ${APP_STORE_CONNECT_KEY_ID:+yes}"
-          echo "APP_STORE_CONNECT_ISSUER_ID is set: ${APP_STORE_CONNECT_ISSUER_ID:+yes}"
-          echo "APP_STORE_CONNECT_KEY_CONTENT is set: ${APP_STORE_CONNECT_KEY_CONTENT:+yes}"
-        shell: bash
-
-      - name: Upload build log
+      - name: Upload Fastlane report and IPA artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
+          name: build-log-and-ipa
           path: |
             build_log.txt
             fastlane/report.xml
-
-      - name: Upload IPA
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build_ios_for_cpc
-          path: app-ipa/*.ipa
+            app-ipa/*.ipa
