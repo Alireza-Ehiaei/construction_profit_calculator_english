@@ -58,17 +58,18 @@ jobs:
           security find-identity -v -p codesigning build.keychain || { echo "Certificate import failed"; exit 1; }
 
       - name: Install provisioning profile
+        id: install_profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision || { echo "Base64 decode failed"; exit 1; }
-          file profile.mobileprovision
-          security cms -D -i profile.mobileprovision > decoded_plist.plist || { echo "Failed to decode provisioning profile"; exit 1; }
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist) || { echo "Failed to extract UUID"; exit 1; }
-          echo "Provisioning profile UUID is $PROFILE_UUID"
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
+          security cms -D -i profile.mobileprovision > decoded_plist.plist
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist)
+          echo "Provisioning profile UUID: $PROFILE_UUID"
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+          echo "::set-output name=profile_uuid::$PROFILE_UUID"
+      
 
       - name: Install CocoaPods dependencies
         run: |
@@ -78,20 +79,17 @@ jobs:
       - name: Build IPA with signing
         env:
           DEVELOPMENT_TEAM: ${{ env.DEVELOPMENT_TEAM }}
-          PROFILE_UUID: ${{ steps.install_provisioning_profile.outputs.PROFILE_UUID }}
-        shell: bash
+          PROFILE_UUID: ${{ steps.install_profile.outputs.profile_uuid }}
         run: |
-          # The provisioning profile UUID was output in the previous step; export it for use
-          export PROFILE_UUID
           echo "Using provisioning profile UUID: $PROFILE_UUID"
-
+      
           flutter build ipa \
             --release \
             --build-name=1.0.1 \
             --build-number=2 \
             --export-options-plist=ios/ExportOptions.plist \
             --verbose > build_log.txt 2>&1
-
+      
           if [ -d "build/ios/ipa" ] && ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
             echo "IPA directory and IPA file found:"
             ls -l build/ios/ipa
@@ -103,6 +101,7 @@ jobs:
             cat build_log.txt
             exit 1
           fi
+
 
       - name: Upload build log artifact
         if: always()
