@@ -8,7 +8,7 @@ jobs:
     runs-on: macos-15
 
     env:
-      DEVELOPMENT_TEAM: AHVM2Z8TDL  # Your Apple Developer Team ID
+      DEVELOPMENT_TEAM: AHVM2Z8TDL
 
     steps:
       - name: Checkout repository
@@ -45,7 +45,7 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
 
-      - name: Import Apple distribution certificate
+      - name: Import Apple certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
@@ -54,57 +54,43 @@ jobs:
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12 || { echo "Failed to decode certificate"; exit 1; }
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          echo "Current code signing identities in keychain:"
-          security find-identity -v -p codesigning build.keychain || { echo "Certificate import failed"; exit 1; }
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
 
       - name: Install provisioning profile
-        id: install_profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
-          security cms -D -i profile.mobileprovision > decoded_plist.plist
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist)
-          echo "Provisioning profile UUID: $PROFILE_UUID"
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision || { echo "Base64 decode failed"; exit 1; }
+          file profile.mobileprovision
+          security cms -D -i profile.mobileprovision > decoded_plist.plist || { echo "Failed to decode provisioning profile"; exit 1; }
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist) || { echo "Failed to extract UUID"; exit 1; }
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
-          echo "::set-output name=profile_uuid::$PROFILE_UUID"
-      
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Install CocoaPods dependencies
         run: |
           cd ios
           pod install --repo-update
 
-      - name: Build IPA with signing
+      - name: Build IPA
         env:
-          DEVELOPMENT_TEAM: ${{ env.DEVELOPMENT_TEAM }}
-          PROFILE_UUID: ${{ steps.install_profile.outputs.profile_uuid }}
+          DEVELOPMENT_TEAM: AHVM2Z8TDL
         run: |
-          echo "Using provisioning profile UUID: $PROFILE_UUID"
-      
-          flutter build ipa \
-            --release \
-            --build-name=1.0.1 \
-            --build-number=2 \
-            --export-options-plist=ios/ExportOptions.plist \
-            --verbose > build_log.txt 2>&1
-      
-          if [ -d "build/ios/ipa" ] && ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
-            echo "IPA directory and IPA file found:"
-            ls -l build/ios/ipa
-            mkdir -p app-ipa
-            cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-          else
-            echo "IPA directory or IPA file not found. Build probably failed."
-            echo "==== Flutter build log ====="
-            cat build_log.txt
-            exit 1
-          fi
-
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -config Release archive -archivePath build/Runner.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+            -allowProvisioningUpdates > build_log.txt 2>&1
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/ExportOptions.plist -exportPath build
+          ls -l build/ios/ipa/ || echo "IPA directory not found"
+          mkdir -p app-ipa
+          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
+        working-directory: ${{ github.workspace }}
 
       - name: Upload build log artifact
-        if: always()
+        if: failure() || success()
         uses: actions/upload-artifact@v4
         with:
           name: flutter-build-log
@@ -153,17 +139,6 @@ jobs:
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
         run: fastlane ios upload_to_app_store_connect
         working-directory: ${{ github.workspace }}
-
-      - name: Debug App Store Connect env vars
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
-        run: |
-          echo "APP_STORE_CONNECT_KEY_ID is set: ${APP_STORE_CONNECT_KEY_ID:+yes}"
-          echo "APP_STORE_CONNECT_ISSUER_ID is set: ${APP_STORE_CONNECT_ISSUER_ID:+yes}"
-          echo "APP_STORE_CONNECT_KEY_CONTENT is set: ${APP_STORE_CONNECT_KEY_CONTENT:+yes}"
-        shell: bash
 
       - name: Upload Fastlane report and IPA artifacts
         if: always()
