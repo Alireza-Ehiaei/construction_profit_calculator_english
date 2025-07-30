@@ -48,11 +48,14 @@ jobs:
           cd ..
       - name: Build IPA
         run: |
+<<<<<<< HEAD
           # Debug certificate and profile
           security find-identity -v -p codesigning build.keychain
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
           security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f18cbe50-fcdb-44b8-bdc8-4259a646b5ae.mobileprovision | grep -E 'TeamIdentifier|AppIDName|UUID'
           # Build IPA
+=======
+>>>>>>> bb4e644789090ffa36ec894495506d71fc7e6e27
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
