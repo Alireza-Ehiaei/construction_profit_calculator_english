@@ -66,14 +66,17 @@ jobs:
           pod install --repo-update
       - name: Configure Xcode project for Runner
         run: |
-          # Update Runner target to use manual signing
-          /usr/libexec/PlistBuddy -c "Set :buildConfigurationList:buildConfigurations:0:buildSettings:CODE_SIGN_STYLE Manual" ios/Runner.xcodeproj/project.pbxproj
-          /usr/libexec/PlistBuddy -c "Set :buildConfigurationList:buildConfigurations:0:buildSettings:CODE_SIGN_IDENTITY 'iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)'" ios/Runner.xcodeproj/project.pbxproj
-          /usr/libexec/PlistBuddy -c "Set :buildConfigurationList:buildConfigurations:0:buildSettings:PROVISIONING_PROFILE_SPECIFIER '$PROFILE_NAME'" ios/Runner.xcodeproj/project.pbxproj
-          /usr/libexec/PlistBuddy -c "Set :buildConfigurationList:buildConfigurations:0:buildSettings:DEVELOPMENT_TEAM '$DEVELOPMENT_TEAM'" ios/Runner.xcodeproj/project.pbxproj
+          # Update Runner target's Release configuration for manual signing
+          /usr/libexec/PlistBuddy -c "Set :objects:97C147071CF9000F007C117D:buildSettings:CODE_SIGN_STYLE Manual" ios/Runner.xcodeproj/project.pbxproj
+          /usr/libexec/PlistBuddy -c "Set :objects:97C147071CF9000F007C117D:buildSettings:CODE_SIGN_IDENTITY 'iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)'" ios/Runner.xcodeproj/project.pbxproj
+          /usr/libexec/PlistBuddy -c "Set :objects:97C147071CF9000F007C117D:buildSettings:PROVISIONING_PROFILE_SPECIFIER '$PROFILE_NAME'" ios/Runner.xcodeproj/project.pbxproj
+          /usr/libexec/PlistBuddy -c "Set :objects:97C147071CF9000F007C117D:buildSettings:DEVELOPMENT_TEAM '$DEVELOPMENT_TEAM'" ios/Runner.xcodeproj/project.pbxproj
           # Disable signing for Pods targets
           sed -i '' '/CODE_SIGN_IDENTITY/d' ios/Pods/Pods.xcodeproj/project.pbxproj
           sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' ios/Pods/Pods.xcodeproj/project.pbxproj
+        env:
+          DEVELOPMENT_TEAM: AHVM2Z8TDL
+          PROFILE_NAME: ConstructionProfitCalculator_Distribution_Profile
       - name: Build IPA
         env:
           DEVELOPMENT_TEAM: AHVM2Z8TDL
