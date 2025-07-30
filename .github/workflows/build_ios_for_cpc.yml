@@ -4,22 +4,9 @@ on:
 jobs:
   build-and-upload:
     runs-on: macos-15
-    env:
-      DEVELOPMENT_TEAM: AHVM2Z8TDL
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Debug secrets presence
-        env:
-          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
-        run: |
-          echo "Length of IOS_DISTRIBUTION_P12_V2: ${#IOS_DISTRIBUTION_P12_V2}"
-          echo "Length of CERTIFICATE_PASSWORD_V2: ${#CERTIFICATE_PASSWORD_V2}"
-          echo "Length of KEYCHAIN_PASSWORD: ${#KEYCHAIN_PASSWORD}"
-          echo "Length of IOS_PROVISIONING_PROFILE_V2: ${#IOS_PROVISIONING_PROFILE_V2}"
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -42,7 +29,7 @@ jobs:
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12 || { echo "Failed to decode certificate"; exit 1; }
+          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
@@ -50,51 +37,29 @@ jobs:
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision || { echo "Base64 decode failed"; exit 1; }
-          file profile.mobileprovision
-          security cms -D -i profile.mobileprovision > decoded_plist.plist || { echo "Failed to decode provisioning profile"; exit 1; }
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist) || { echo "Failed to extract UUID"; exit 1; }
-          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" decoded_plist.plist) || { echo "Failed to extract profile name"; exit 1; }
-          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
-          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f18cbe50-fcdb-44b8-bdc8-4259a646b5ae.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
       - name: Install CocoaPods dependencies
         run: |
           cd ios
           pod install --repo-update
-      - name: Configure Xcode project for Runner
-        run: |
-          # Update Runner target to use manual signing
-          /usr/libexec/PlistBuddy -c "Set :buildConfigurationList:buildConfigurations:0:buildSettings:CODE_SIGN_STYLE Manual" ios/Runner.xcodeproj/project.pbxproj
-          /usr/libexec/PlistBuddy -c "Set :buildConfigurationList:buildConfigurations:0:buildSettings:CODE_SIGN_IDENTITY 'iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)'" ios/Runner.xcodeproj/project.pbxproj
-          /usr/libexec/PlistBuddy -c "Set :buildConfigurationList:buildConfigurations:0:buildSettings:PROVISIONING_PROFILE_SPECIFIER '$PROFILE_NAME'" ios/Runner.xcodeproj/project.pbxproj
-          /usr/libexec/PlistBuddy -c "Set :buildConfigurationList:buildConfigurations:0:buildSettings:DEVELOPMENT_TEAM '$DEVELOPMENT_TEAM'" ios/Runner.xcodeproj/project.pbxproj
-          # Disable signing for Pods targets
-          sed -i '' '/CODE_SIGN_IDENTITY/d' ios/Pods/Pods.xcodeproj/project.pbxproj
-          sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' ios/Pods/Pods.xcodeproj/project.pbxproj
+          cd ..
       - name: Build IPA
-        env:
-          DEVELOPMENT_TEAM: AHVM2Z8TDL
         run: |
-          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -config Release archive -archivePath build/Runner.xcarchive \
-            -target Runner \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
-            -allowProvisioningUpdates -verbose > build_log.txt 2>&1
-          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/ExportOptions.plist -exportPath build -allowProvisioningUpdates
+          # Debug certificate and profile
+          security find-identity -v -p codesigning build.keychain
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f18cbe50-fcdb-44b8-bdc8-4259a646b5ae.mobileprovision | grep -E 'TeamIdentifier|AppIDName|UUID'
+          # Build IPA
+          flutter build ipa \
+            --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --verbose > build_log.txt 2>&1
           ls -l build/ios/ipa/ || echo "IPA directory not found"
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-      - name: Upload build log artifact
-        if: failure() || success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-build-log
-          path: build_log.txt
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
@@ -134,7 +99,7 @@ jobs:
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
         run: fastlane ios upload_to_app_store_connect
         working-directory: ${{ github.workspace }}
-      - name: Upload Fastlane report and IPA artifacts
+      - name: Upload build log and IPA
         if: always()
         uses: actions/upload-artifact@v4
         with:
