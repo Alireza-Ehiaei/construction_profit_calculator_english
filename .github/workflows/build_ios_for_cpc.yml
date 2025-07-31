@@ -39,7 +39,7 @@ jobs:
         run: |
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f18cbe50-fcdb-44b8-bdc8-4259a646b5ae.mobileprovision
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
       - name: Install CocoaPods dependencies
         run: |
@@ -51,8 +51,15 @@ jobs:
           # Debug certificate and profile
           security find-identity -v -p codesigning build.keychain
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f18cbe50-fcdb-44b8-bdc8-4259a646b5ae.mobileprovision | grep -E 'TeamIdentifier|AppIDName|UUID'
-          # Build IPA
+          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > decoded_plist.plist
+          /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" decoded_plist.plist || echo "Failed to read TeamIdentifier"
+          /usr/libexec/PlistBuddy -c "Print :AppIDName" decoded_plist.plist || echo "Failed to read AppIDName"
+          /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
+          # Build IPA with explicit signing settings
+          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
+          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
+          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
+          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
@@ -60,6 +67,9 @@ jobs:
           ls -l build/ios/ipa/ || echo "IPA directory not found"
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
+        env:
+          DEVELOPMENT_TEAM: AHVM2Z8TDL
+          PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
