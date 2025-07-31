@@ -4,13 +4,19 @@
 <dict>
     <key>method</key>
     <string>app-store</string>
-    
+
     <key>teamID</key>
     <string>AHVM2Z8TDL</string>
-    
+
     <key>signingCertificate</key>
     <string>iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)</string>
-    
+
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.tech4dev.constructionprofitcalculator</key>
+        <string>ConstructionProfitCalculatorProvisionProfile</string>
+    </dict>
+
     <key>stripSwiftSymbols</key>
     <true/>
 
