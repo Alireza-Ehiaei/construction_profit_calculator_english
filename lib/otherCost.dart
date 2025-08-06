@@ -703,7 +703,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                       color: Colors.purple[900], size: iconSizeLarge),
                                   onPressed: ()
                                   async {
-                
+                print('sss');
                                     if (numberOfSalablePropertiesController.text.isEmpty ||
                                         !isValidNumber(numberOfSalablePropertiesController.text) ||
                                        ( double.parse(numberOfSalablePropertiesController.text) == 0.0) ||
@@ -1140,6 +1140,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                       double totalCostOfFloors = 0;
                                       double totalIncomeOfFloors = 0;
                                       double totalProfitOfFloors = 0;
+
                                       for (int i = 0; i < consFloor.length; i++) {
                                         double costOfFloor = consFloor[i][2];
                                         double incomeOfFloor = consFloor[i][3];
@@ -1271,15 +1272,24 @@ class _OtherCostsState extends State<OtherCosts> {
                                       await CompleteCalculationDatabaseHelper
                                           .insertOrUpdateResultProjectData(
                                           resultProjectData_);
-                
-                                      if (costOfProject == totalCostOfFloors &&
+
+                                      NavigationService().navigateToScreen(const ResultPage1());
+
+                                  /*    if (costOfProject == totalCostOfFloors &&
                                           incomeOfProject == totalIncomeOfFloors &&
                                           profitOfProject == totalProfitOfFloors) {
-                                        NavigationService().navigateToScreen(
-                                            const ResultPage1());
-                                      }
+                                        print('Success: Project totals match the floor totals.');
+                                        NavigationService().navigateToScreen(const ResultPage1());
+                                      } else {
+                                        print('Error: Total cost, income, or profit of floors, constructions, '
+                                            'and project are not equal.');
+                                        print('Project Cost: $costOfProject, Floors Total Cost: $totalCostOfFloors');
+                                        print('Project Income: $incomeOfProject, Floors Total Income: $totalIncomeOfFloors');
+                                        print('Project Profit: $profitOfProject, Floors Total Profit: $totalProfitOfFloors');
+                                      }*/
 
-                                        if (!(widget.givenProjectName == "_oozz")){
+                                      if (!(widget.givenProjectName == "_oozz"))
+                                        {
                                     await AllProjectsPageDatabase.updateProjectOtherFields(
                                         projectName: widget.givenProjectName,       // Identifies the row to update
                                         calculationType: 'complete',           // Your calculation type to identify the row
@@ -1297,12 +1307,9 @@ class _OtherCostsState extends State<OtherCosts> {
                                               .columnAllProjectsPageProfitPercentageOfProject: profitPercentageText,
                                         });
                                     }
-                                      } /*else {
-                                      print('Error: Total cost, income, or profit of floors, constructions,'
-                                          ' and project are not equal.');
-                                    }*/
 
-                
+                                }
+                                print('sss1');
                                   },
                                 ),
                 

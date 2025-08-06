@@ -662,8 +662,10 @@ class _ResultPage1State extends State<ResultPage1> {
                               ),
                     
                                    SizedBox(height:spacingHeight ),
-                                  Visibility(visible: projectData.projectNameList.isEmpty,
-                                    child: ElevatedButton(
+
+                               //   Visibility(visible: projectData.projectNameList.isEmpty,
+                               //     child:
+                                    ElevatedButton(
                                       onPressed: () async {
                                         setState(() {
                                           _isConstructionExpanded = !_isConstructionExpanded;
@@ -688,8 +690,10 @@ class _ResultPage1State extends State<ResultPage1> {
                                           ,style:  TextStyle( fontSize: titleFontSize),),
                                       ),
                                     ),
-                                  ),
+                               //   ),
+
                                    SizedBox(height:spacingHeight),
+
                                   Visibility(
                                     visible: _isConstructionExpanded,
                                     child:  SingleChildScrollView(
@@ -801,8 +805,9 @@ class _ResultPage1State extends State<ResultPage1> {
                                   ),
                     
                                    SizedBox(height:spacingHeight ),
-                                  Visibility(visible: projectData.projectNameList.isEmpty,
-                                    child: ElevatedButton(
+                               //   Visibility(visible: projectData.projectNameList.isEmpty,
+                               //     child:
+                                    ElevatedButton(
                                       onPressed: () async {
                                         setState(() {
                                           _isFloorExpanded = !_isFloorExpanded;
@@ -827,7 +832,7 @@ class _ResultPage1State extends State<ResultPage1> {
                                             ,style:  TextStyle( fontSize: titleFontSize)),
                                       ),
                                     ),
-                                  ),
+                               //   ),
                     
                                  SizedBox(height:spacingHeight ),
                                   Visibility(

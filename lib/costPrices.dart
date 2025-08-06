@@ -24,6 +24,8 @@ class CostPrices extends StatefulWidget {
   @override
   State<CostPrices> createState() => _CostPricesState();
 }
+
+
 class _CostPricesState extends State<CostPrices> {
 
   late String projectName1;
@@ -147,7 +149,8 @@ class _CostPricesState extends State<CostPrices> {
       double costPerMeter,
       double sellPercent,
       double sellPerMeter,
-      ) async {
+      )
+  async {
     // Retrieve the data from the StartingSimilar table in the database
     ProjectStartingSimilarTableData? dataSimilarStarting =
     await CompleteCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
@@ -761,7 +764,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
     });
   }
 
-  void retrieveRowByCondition(String projectName, int cppValue) async {
+  void retrieveRowByCondition(String projectName, int cppValue) async
+  {
     //  await CompleteCalculationDatabaseHelper.retriveRowByCondition(projectName, cppValue);
   }
 
@@ -1215,6 +1219,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
           body: Container(
             color: Colors.brown[100],
             child: SafeArea(
+
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -1259,7 +1264,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                   ],
                                 ),
                               ),
-                            const SizedBox(height: 5 ),
+                              const SizedBox(height: 5 ),
+
                               Container(color: const Color(0xFF1877C5),
                                 child: Row(
                                   children: [
@@ -4041,7 +4047,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                 },
                                               );   if (userConfirmed == true) {
                                                  areaTableData.clear();
-                                              await   checkVisibility();
+                                              await checkVisibility();
                                                  for (int i = 0; i < numberOfSegmentsSaved; i++) {
                                                    int floorNumber = startingFloor;
                                                    int segmentNumber = i + 1; // Segments are usually 1-based
@@ -6173,13 +6179,13 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                       controller: _sellPricePerMeterController,
                       readOnly: !_sellPricePerMeterSelected,
                       decoration: const InputDecoration(
-                    //    hintText: 'Enter per ft²/m²',
-                        hintStyle: TextStyle(color: Colors.blueGrey),
+                        hintText: 'بر متر مربع وارد کنید',
+                        hintStyle: TextStyle(color: Colors.white54),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.all(10),
                       ),
                       keyboardType: TextInputType.number,
-                      style:  const TextStyle(color: Colors.black, fontSize: 23),
+                      style: const TextStyle(color: Colors.black, fontSize: 23),
                     ),
                   ),
                 ),

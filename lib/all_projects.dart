@@ -110,6 +110,63 @@ async {
   }
 }
 
+  static Future<int> updateProjectFinancials(NewFinancialData newFinancialData) async {
+    final db = await database;
+
+    // Fetch existing row
+    final maps = await db.query(
+      tableAllProjectsPageData,
+      where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPageCalculationType = ?',
+      whereArgs: [newFinancialData.projectName, newFinancialData.calculationName],
+    );
+
+    if (maps.isEmpty) {
+      // Insert if not exist (optional)
+      final id = await db.insert(tableAllProjectsPageData, {
+        // Map fields from newFinancialData, add defaults for missing fields
+        columnAllProjectsPageProjectName: newFinancialData.projectName,
+        columnAllProjectsPageCalculationType: newFinancialData.calculationName,
+        columnAllProjectsPageCostOfProject: newFinancialData.costOfProject,
+        columnAllProjectsPageIncomeOfProject: newFinancialData.incomeOfProject,
+        columnAllProjectsPageProfitOfProject: newFinancialData.profitOfProject,
+        columnAllProjectsPageProfitPercentageOfProject: newFinancialData.profitPercentageOfProject,
+        // Add defaults or nulls for preserved fields
+      });
+      return id;
+    }
+
+    final existingRecord = maps.first;
+
+    // Prepare updated fields keeping preserved fields from existing record:
+    final updatedMap = {
+      columnAllProjectsPageCostOfProject: newFinancialData.costOfProject,
+      columnAllProjectsPageIncomeOfProject: newFinancialData.incomeOfProject,
+      columnAllProjectsPageProfitOfProject: newFinancialData.profitOfProject,
+      columnAllProjectsPageProfitPercentageOfProject: newFinancialData.profitPercentageOfProject,
+      // Preserve these:
+      columnAllProjectsPageEnvironmentallyFriendly: existingRecord[columnAllProjectsPageEnvironmentallyFriendly],
+      columnAllProjectsPageSociallyFriendly: existingRecord[columnAllProjectsPageSociallyFriendly],
+      columnAllProjectsPageCity: existingRecord[columnAllProjectsPageCity],
+      columnAllProjectsPageStreet: existingRecord[columnAllProjectsPageStreet],
+
+      // Also keep identifying columns to avoid updating them
+      columnAllProjectsPageProjectName: newFinancialData.projectName,
+      columnAllProjectsPageCalculationType: newFinancialData.calculationName,
+    };
+
+    final id = existingRecord[columnAllProjectsPageId] as int;
+
+    await db.update(
+      tableAllProjectsPageData,
+      updatedMap,
+      where: '$columnAllProjectsPageId = ?',
+      whereArgs: [id],
+    );
+
+    return id;
+  }
+
+
 
   static Future<int> updateProjectOtherFields({
     required String projectName,
@@ -267,13 +324,13 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
   }
 
 
-  Future<bool> checkGooglePlayBillingAvailability() async {
+/*  Future<bool> checkGooglePlayBillingAvailability() async {
     if (!Platform.isAndroid) {
       return false; // Disable Google Billing on non-Android (e.g., iPad emulator)
     }
     final InAppPurchase inAppPurchase = InAppPurchase.instance;
     return await inAppPurchase.isAvailable();
-  }
+  }*/
 
   Future<void> _initializeProjectData()
   async {
@@ -621,6 +678,56 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                           }
                                         },
                                       ),
+
+                                      DataColumn(
+                                        label:  Text(
+                                          '   City  ',
+                                          style: TextStyle(
+                                              color: Colors.white,fontSize: titleFontSize
+                                          ),
+                                        ),
+                                        onSort: (columnIndex, ascending) {
+                                          setState(() {
+                                            _isProjectExistSortedAscending =
+                                                ascending;
+                                            _sortData(
+                                                data, columnIndex, ascending);
+                                            sortColumnIndex = columnIndex;
+                                          });
+                                          if (columnIndex != 0) {
+                                            for (var i = 0;
+                                            i < selectedRows.length;
+                                            i++) {
+                                              selectedRows[i] = false;
+                                            }
+                                          }
+                                        },
+                                      ),
+                                      DataColumn(
+                                        label:  Text(
+                                          'Street',
+                                          style: TextStyle(
+                                              color: Colors.white,fontSize: titleFontSize
+                                          ),
+                                        ),
+                                        onSort: (columnIndex, ascending) {
+                                          setState(() {
+                                            _isProjectExistSortedAscending =
+                                                ascending;
+                                            _sortData(
+                                                data, columnIndex, ascending);
+                                            sortColumnIndex = columnIndex;
+                                          });
+                                          if (columnIndex != 0) {
+                                            for (var i = 0;
+                                            i < selectedRows.length;
+                                            i++) {
+                                              selectedRows[i] = false;
+                                            }
+                                          }
+                                        },
+                                      ),
+
                                       DataColumn(
                                         label:  Text(
                                           'Environmentally\nFriendly',
@@ -671,54 +778,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                           }
                                         },
                                       ),
-                                      DataColumn(
-                                        label:  Text(
-                                          '   City  ',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label:  Text(
-                                          'Street',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
+
                                       DataColumn(
                                         label:  Text(
                                           'Calculation\nType',
@@ -928,69 +988,117 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                               Flexible(
                                                 flex: 1,
                                                 child: ElevatedButton(
-                                                  onPressed: () {
+                                                  onPressed: () async {
+                                                    final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
+                                                    final projectData = Provider.of<ProjectData>(context, listen: false);
+
+                                                    // Check if user already has active subscription
+                                                    if (subscriptionsProvider.hasSimpleActiveSubscription ||
+                                                        subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                                                      // Navigate directly
+                                                      projectData.setProjectName("_oozz");
+                                                      NavigationService().navigateToScreen(
+                                                        const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
+                                                        arguments: 'wwmm',
+                                                      );
+                                                      return;
+                                                    }
+
+                                                    // Show manage subscription dialog
                                                     showDialog(
                                                       context: context,
                                                       builder: (context) => AlertDialog(
                                                         title: const Text('Manage Subscription'),
-                                                        content: Text('Please restore purchases if you have already subscribed,'
-                                                            ' or subscribe now.',
-                                                            style: TextStyle(fontSize: textFontSize, color: Colors.purple)),
+                                                        content: Text(
+                                                          'Please restore purchases if you have already subscribed, or subscribe now.',
+                                                          style: TextStyle(fontSize: textFontSize, color: Colors.purple),
+                                                        ),
                                                         actions: [
                                                           TextButton(
                                                             onPressed: () async {
                                                               Navigator.of(context).pop(); // Close current dialog
-                                                              // Show loading indicator while restoring
+
+                                                              // Show loading while restoring
                                                               showDialog(
                                                                 context: context,
                                                                 barrierDismissible: false,
                                                                 builder: (context) => const Center(child: CircularProgressIndicator()),
                                                               );
+
                                                               try {
-                                                                final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
                                                                 bool restorationSuccess = await subscriptionsProvider.restorePurchases();
-                                                                Navigator.of(context, rootNavigator: true).pop(); // Remove loading
-                                                                if (restorationSuccess && (subscriptionsProvider.hasSimpleActiveSubscription
-                                                                    || subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)) {
+                                                                await Future.delayed(const Duration(seconds:1)); // allow state update
+
+                                                                Navigator.of(context, rootNavigator: true).pop(); // Close loading
+
+                                                                if  (restorationSuccess &&
+                                                                    (subscriptionsProvider.hasSimpleActiveSubscription ||
+                                                                        subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)) {
+                                                                  projectData.setProjectName("_oozz");
                                                                   NavigationService().navigateToScreen(
                                                                     const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
                                                                     arguments: 'wwmm',
                                                                   );
                                                                 } else {
-                                                                  // Show a message that restoration didn't find subscriptions
-                                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                                    const SnackBar(content: Text('No active subscriptions found. Please subscribe.')),
+                                                                  // Show clear pop-up explaining failed restoration
+                                                                  showDialog(
+                                                                    context: context,
+                                                                    builder: (_) => AlertDialog(
+                                                                      title: const Text('Restoration Unsuccessful'),
+                                                                      content: const Text(
+                                                                        'No active subscriptions were found. Please subscribe or check your App Store/Google Play account purchases.',
+                                                                      ),
+                                                                      actions: [
+                                                                        TextButton(
+                                                                          onPressed: () {
+                                                                            Navigator.of(context).pop();
+                                                                            subscriptionsProvider.showSimpleSubscriptionUI(context);
+                                                                          },
+                                                                          child: const Text('Subscribe'),
+                                                                        ),
+                                                                        TextButton(
+                                                                          onPressed: () {
+                                                                            Navigator.of(context).pop();
+                                                                          },
+                                                                          child: const Text('Cancel'),
+                                                                        ),
+                                                                      ],
+                                                                    ),
                                                                   );
-                                                                  // Optionally show subscribe UI now:
-                                                                  subscriptionsProvider.showSimpleSubscriptionUI(context);
                                                                 }
                                                               } catch (e) {
-                                                                Navigator.of(context, rootNavigator: true).pop();
+                                                                Navigator.of(context, rootNavigator: true).pop(); // Close loading
                                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                                   SnackBar(content: Text('Error restoring purchases: $e')),
                                                                 );
                                                               }
                                                             },
-                                                            child: Text('Restore Purchases',
-                                                                style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple)),
+                                                            child: Text(
+                                                              'Restore Purchases',
+                                                              style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple),
+                                                            ),
                                                           ),
                                                           TextButton(
                                                             onPressed: () {
-                                                              Navigator.of(context).pop(); // Close current dialog
-                                                              final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                                                              subscriptionsProvider.showSimpleSubscriptionUI(context); // Show subscribe UI
+                                                              Navigator.of(context).pop();
+                                                              subscriptionsProvider.showSimpleSubscriptionUI(context);
                                                             },
-                                                            child: Text('Subscribe',
-                                                                style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple)),
+                                                            child: Text(
+                                                              'Subscribe',
+                                                              style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple),
+                                                            ),
                                                           ),
                                                         ],
                                                       ),
                                                     );
                                                   },
                                                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                                                  child: Text('  Simple Calculation  ',
-                                                      style: TextStyle(fontSize: textFontSize, color: Colors.white)),
+                                                  child: Text(
+                                                    'Simple Calculation',
+                                                    style: TextStyle(fontSize: textFontSize, color: Colors.white),
+                                                  ),
                                                 )
+
                                               ),
 
                                                SizedBox(height: spacingHeight * 2),
@@ -1067,49 +1175,97 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                     final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
                                                     final projectData = Provider.of<ProjectData>(context, listen: false);
 
-                                                    // Show loading indicator while restoring purchases
+                                                    // Check if user already has active subscription
+                                                    if (subscriptionsProvider.hasCompleteActiveSubscription ||
+                                                        subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                                                      // Navigate directly
+                                                      projectData.setProjectName("_oozz");
+                                                      NavigationService().navigateToScreen(
+                                                        const LandInputs(givenProjectName: '_oozz'),
+                                                        arguments: '_oozz',
+                                                      );
+                                                      return;
+                                                    }
+
+                                                    // Show manage subscription dialog
                                                     showDialog(
                                                       context: context,
-                                                      barrierDismissible: false,
-                                                      builder: (context) => const Center(child: CircularProgressIndicator()),
+                                                      builder: (context) => AlertDialog(
+                                                        title: const Text('Manage Subscription'),
+                                                        content: Text(
+                                                          'Please restore purchases if you have already subscribed, or subscribe now.',
+                                                          style: TextStyle(fontSize: textFontSize, color: Colors.purple),
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () async {
+                                                              Navigator.of(context).pop(); // Close current dialog
+
+                                                              // Show loading while restoring purchases
+                                                              showDialog(
+                                                                context: context,
+                                                                barrierDismissible: false,
+                                                                builder: (context) => const Center(child: CircularProgressIndicator()),
+                                                              );
+
+                                                              try {
+                                                                bool restorationSuccess = await subscriptionsProvider.restorePurchases();
+                                                                await Future.delayed(const Duration(seconds: 1)); // allow subscription state to update
+
+                                                                Navigator.of(context, rootNavigator: true).pop(); // Close loading dialog
+
+                                                                if (restorationSuccess &&
+                                                                    (subscriptionsProvider.hasCompleteActiveSubscription ||
+                                                                        subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)) {
+                                                                  projectData.setProjectName("_oozz");
+                                                                  NavigationService().navigateToScreen(
+                                                                    const LandInputs(givenProjectName: '_oozz'),
+                                                                    arguments: '_oozz',
+                                                                  );
+                                                                } else {
+                                                                  // Show pop-up explaining restoration was unsuccessful
+                                                                  showDialog(
+                                                                    context: context,
+                                                                    builder: (_) => AlertDialog(
+                                                                      title: const Text('Restoration Unsuccessful'),
+                                                                      content: const Text(
+                                                                        'No active subscriptions were found. Please subscribe or check your App Store/Google Play account purchases.',
+                                                                      ),
+                                                                      actions: [
+                                                                        TextButton(
+                                                                          onPressed: () {
+                                                                            Navigator.of(context).pop();
+                                                                            subscriptionsProvider.showCompleteSubscriptionUI(context);
+                                                                          },
+                                                                          child: const Text('Subscribe'),
+                                                                        ),
+                                                                        TextButton(
+                                                                          onPressed: () => Navigator.of(context).pop(),
+                                                                          child: const Text('Cancel'),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  );
+                                                                }
+                                                              } catch (e) {
+                                                                Navigator.of(context, rootNavigator: true).pop(); // Close loading dialog
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  SnackBar(content: Text('Error restoring purchases: $e')),
+                                                                );
+                                                              }
+                                                            },
+                                                            child: Text('Restore Purchases', style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple)),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.of(context).pop();
+                                                              subscriptionsProvider.showCompleteSubscriptionUI(context);
+                                                            },
+                                                            child: Text('Subscribe', style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple)),
+                                                          ),
+                                                        ],
+                                                      ),
                                                     );
-
-                                                    try {
-                                                      // Attempt to restore previous purchases to refresh subscription status
-                                                      bool restorationSuccess = await subscriptionsProvider.restorePurchases();
-
-                                                      // Optional short delay to allow purchaseStream to update state
-                                                      await Future.delayed(const Duration(seconds: 1));
-
-                                                      // Close loading dialog
-                                                      Navigator.of(context, rootNavigator: true).pop();
-
-                                                      if (restorationSuccess &&
-                                                          (subscriptionsProvider.hasCompleteActiveSubscription ||
-                                                              subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)) {
-                                                        // Set project name as requested
-                                                        projectData.setProjectName("_oozz");
-
-                                                        // Navigate to your target screen with arguments
-                                                        NavigationService().navigateToScreen(
-                                                          const LandInputs(givenProjectName: '_oozz',),
-                                                          arguments: '_oozz',
-                                                        );
-                                                        Navigator.of(context).pop(); // Close current dialog/page if needed
-
-                                                      } else {
-                                                        // No active subscription found — Show complete subscription UI dialog
-                                                        subscriptionsProvider.showCompleteSubscriptionUI(context);
-                                                      }
-                                                    } catch (e) {
-                                                      // Close loading dialog on error
-                                                      Navigator.of(context, rootNavigator: true).pop();
-
-                                                      // Show error feedback as a Snackbar
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(content: Text('Error checking subscriptions: $e')),
-                                                      );
-                                                    }
                                                   },
                                                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                                                   child: Text(

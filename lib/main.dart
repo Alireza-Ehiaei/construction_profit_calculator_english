@@ -15,15 +15,9 @@ import 'navigation_service.dart';
 // import 'routes.dart';
 
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Create ProjectData instance
+void main() {
   final projectData = ProjectData();
   final subscriptionsProvider = SubscriptionsProvider(projectData);
-
-  // Initialize subscriptions
-//  await subscriptionsProvider.initializeSubscriptions();
 
   runApp(
     MultiProvider(
@@ -41,13 +35,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Construction Profit Calculator',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      navigatorKey: NavigationService().navigationKey,
+      routes: NavigationService().routes,
       home: MyHomePage(),
     );
   }
 }
+
+
 
 // Define the ProjectData class for updating
 class ProjectData extends ChangeNotifier {
@@ -76,45 +75,6 @@ class ProjectData extends ChangeNotifier {
 }
 
 
-/*Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Initialize Firebase
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    print("Firebase initialization failed: $e");
-  }
-
-  // Initialize subscriptions
-  final subscriptionsProvider = SubscriptionsProvider(ProjectData());
-  try {
-    await subscriptionsProvider.initializeSubscriptions();
-  } catch (e) {
-    print("Subscription initialization failed: $e");
-  }
-
-
- // await MobileAds.instance.initialize(); // Initialize the Mobile Ads SDK
-
-  // for using just testin ads make the above line comment and run this:
-*//*  RequestConfiguration requestConfiguration = RequestConfiguration(
-      testDeviceIds: ["56612CEE57EE40526F1ADA5B6AE61104"]);
-  MobileAds.instance.updateRequestConfiguration(requestConfiguration);*//*
-
-      runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (context) => ProjectData(),
-        ),
-        ChangeNotifierProvider<SubscriptionsProvider>( create: (context) =>
-            SubscriptionsProvider( Provider.of<ProjectData>(context, listen: false), ),
-        ),
-      ],
-      child: MyApp(),
-    ),
-  );
-}*/
 
 
 class MyHomePage extends StatelessWidget {
@@ -129,14 +89,11 @@ class MyHomePage extends StatelessWidget {
     'assets/images/home (13).jpeg',
     'assets/images/home (14).jpeg',
   ];
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-
-      home: HomePage(backgroundImages: backgroundImages),
-
-      navigatorKey: NavigationService().navigationKey,
-      routes: NavigationService().routes,
+    return Scaffold(
+      body: HomePage(backgroundImages: backgroundImages),
     );
   }
 }
@@ -467,88 +424,8 @@ class _HomePageState extends State<HomePage>
                       //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                      //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        const SizedBox(height: 100,),
-                  
-                        SizedBox(width: buttonWidth,
-                          child: ElevatedButton(
-                            onPressed: () {NavigationService().navigateToScreen(const ExpandedTopicsPage());
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[900], // Set the background color
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(3), // Add rounded corners
-                              ),
-                          //    padding: const EdgeInsets.all(8.0),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(0,10,0,10),
-                              child: Text(
-                                'Society & Real Estate',
-                                style: TextStyle(
-                                  fontSize: titleFontSize, // Increase the font size of the text
-                                  color: Colors.white, // Set the text color to white
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                  
-                        SizedBox(height:  spacingHeight),
-                  
-                        SizedBox(width:buttonWidth,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              NavigationService().navigateToScreen(const EnvironmentPage());
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[900], // Set the background color
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(3), // Add rounded corners
-                              ),
-                              padding: const EdgeInsets.all(8.0),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(0,10,0,10),
-                              child: Text('Environment & Real Estate',
-                                style: TextStyle(
-                                  fontSize: titleFontSize, // Increase the font size of the text
-                                  color: Colors.white, // Set the text color to white
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                  
-                        SizedBox(height:  spacingHeight),
-                  
-                        SizedBox(width: buttonWidth,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              NavigationService().navigateToScreen(const EconomicsOfConstructionPage());
-                  
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[900], // Set the background color to blue
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(0),
-                              ),
-                           //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(0,10,0,10),
-                              child: Text(
-                                'Economy & Real Estate',
-                                style: TextStyle(
-                                  fontSize: titleFontSize, // Set the font size of the text
-                                  color: Colors.white, // Set the text color to white
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                  
-                        SizedBox(height:  spacingHeight),
-                  
+                      SizedBox(height: 15* spacingHeight),
+
                         SizedBox(width: buttonWidth,
                           child: ElevatedButton(
                             onPressed: ()      {
@@ -596,23 +473,53 @@ class _HomePageState extends State<HomePage>
                            //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(0,10,0,10),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               child: Text(
-                                'ROI Calculation',
+                                'Construction\nProfit Calculators',
+                                textAlign: TextAlign.center,  // Center multiline text
                                 style: TextStyle(
-                                  fontSize: titleFontSize, // Set the font size of the text
-                                  color: Colors.black, // Set the text color to white
+                                  fontSize: titleFontSize,
+                                  color: Colors.black,
                                 ),
                               ),
                             ),
                           ),
                         ),
+
                     //    Expanded(child: SizedBox(height: MediaQuery.of(context).size.height * 0.3),)
+
+                        SizedBox(height: 3 * spacingHeight),
+
+                        SizedBox(width: buttonWidth,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              NavigationService().navigateToScreen(const RealEstateTopicsPage());
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[900], // Set the background color
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              //    padding: const EdgeInsets.all(8.0),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Text(
+                                'Real Estate\nMarket Insights',
+                                textAlign: TextAlign.center,  // Center multiline text
+                                style: TextStyle(
+                                  fontSize: titleFontSize,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),//Expanded(child: Spacer()),
-                  SizedBox(height: MediaQuery.of(context).size.height * .2,),
 
+                  SizedBox(height: MediaQuery.of(context).size.height * .2,),
 
                   Row(
                     children: [const Spacer(),
@@ -680,16 +587,17 @@ class _HomePageState extends State<HomePage>
                                                TextSpan(
                                                 text: '\nThis '
                                                     'app is designed to help through the complex and multifaceted world of real estate.'
-                                                    '\n\nThe app is divided into four main sections:\n\n'
-                                                    '1. Social Aspect:\nExplore the interplay between individual and community behaviors, and how they shape the dynamics of the real estate market across different city districts and property types.'
-                                                    '\n\n2. Environmental Aspect:\nAnalyze the environmental issues related to real estate construction and the use of existing properties, including energy efficiency, water management, and sustainability.'
-                                                    '\n\n3. Economic Insights:\nDive into the analytical theories behind the effects of different types of homes, development projects, and market activities on property prices and the overall real estate economy.'
-                                                    '\n\n4. Financial calculators:\nThe standout feature of this app is the Investment Analyzer. '
+                                                    '\n\nThe app is divided into four main sections:'
+                                                    '\n\n1. Financial calculators:\nThe standout feature of this app is the Investment Analyzer. '
                                                     'The two powerful tools provided in the return on investment (ROI) part of the app '
                                                     'allow you to input the specifications of a property or development project '
                                                     'and receive detailed projections on the potential cost benefit of the project. '
                                                     'Compare different scenarios side-by-side to make the most informed decisions '
-                                                    'for your real estate investments.',
+                                                    'for your real estate investments.'
+                                                    '\n\n2. Social Aspect:\nExplore the interplay between individual and community behaviors, and how they shape the dynamics of the real estate market across different city districts and property types.'
+                                                    '\n\n3. Environmental Aspect:\nAnalyze the environmental issues related to real estate construction and the use of existing properties, including energy efficiency, water management, and sustainability.'
+                                                    '\n\n4. Economic Insights:\nDive into the analytical theories behind the effects of different types of homes, development projects, and market activities on property prices and the overall real estate economy.'
+                                                    ,
                                                 style: TextStyle(
                                                   fontSize: textFontSize,
                                                   //  fontWeight: FontWeight.bold,
@@ -704,31 +612,18 @@ class _HomePageState extends State<HomePage>
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
+
                                                TextSpan(
-                                                text: '\n\nUnderstanding Key Factors Beyond Profitability\n',
+                                                text: '\nFinancial Calculations: Simple '
+                                                    'and Complete ROI Tools\n\n',
                                                 style: TextStyle(
                                                   fontSize: textFontSize,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                                TextSpan(
-                                                text: 'The app highlights significant factors in real estate beyond '
-                                                    'just project profitability, providing valuable insights that enable informed decision-making.\n\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                ),
-                                              ),
-                                               TextSpan(
-                                                text: 'Financial Calculations: Simple '
-                                                    'and Complete ROI Tools\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                               TextSpan(
-                                                text: 'The fourth section focuses on financial calculations, offering both '
-                                                    'simple and complete tools For calculating '
+                                                text:
+                                                    'Simple and Complete ROI Tools are calculators for calculating '
                                                     'cost and income of investment in a construction project '
                                                     'beneficial for:\n',
                                                 style: TextStyle(
@@ -773,6 +668,22 @@ class _HomePageState extends State<HomePage>
                                                   fontSize: textFontSize,
                                                 ),
                                               ),
+                                              TextSpan(
+                                                text: '\n\nUnderstanding Key Factors Beyond Profitability\n',
+                                                style: TextStyle(
+                                                  fontSize: textFontSize,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: 'In The section of real estate market Insights, the app highlights significant factors in real estate beyond '
+                                                    'just project profitability, providing valuable insights that enable informed decision-making.',
+                                                style: TextStyle(
+                                                  fontSize: textFontSize,
+                                                ),
+                                              ),
+
+
 
                                                TextSpan(
                                                 text: '\n\nROI Tool Guide', style: TextStyle(
@@ -883,7 +794,8 @@ class _HomePageState extends State<HomePage>
                                                 ),
                                               ),
                                                TextSpan(
-                                                text: '\nEconomists who are focused on analyzing and forecasting trends in the real estate market.',
+                                                text: '\nEconomists who are focused on analyzing and forecasting trends'
+                                                    ' in the real estate market.',
                                                 style: TextStyle(
                                                   fontSize: textFontSize,
                                                 ),
@@ -1020,7 +932,7 @@ class _HomePageState extends State<HomePage>
                                 );
                               },
                               icon: Icon(Icons.help_center_rounded,size:  iconSizeLarge,
-                                  color: Colors.white70),
+                                  color: Colors.white),
                             ),
                             SizedBox(height: spacingHeight),
                           /*  IconButton(
@@ -1031,7 +943,7 @@ class _HomePageState extends State<HomePage>
                             SizedBox(height:  spacingHeight ),
                             IconButton(
                               icon: Icon(Icons.email
-                                  , size:  iconSizeLarge, color: Colors.white70), // Close icon
+                                  , size:  iconSizeLarge, color: Colors.white), // Close icon
                               onPressed: () {
                                 launchEmail();
                               },

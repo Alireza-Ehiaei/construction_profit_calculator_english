@@ -172,7 +172,8 @@ class SimpleCalculationDatabase {
   }
 
   static Future<int?> insertOrUpdateSimpleCalculationAddressData(SimpleCalculationAddress1
-  simpleCalculationAddress) async {
+  simpleCalculationAddress)
+  async {
     final db = await database;
 
     // Check if a record with the same project name already exists
@@ -202,8 +203,8 @@ class SimpleCalculationDatabase {
   }
 
 
-  static Future<List<SimpleCalculationClassData>> getSimpleCalculationData(String projectName) async {
-
+  static Future<List<SimpleCalculationClassData>> getSimpleCalculationData(String projectName)
+  async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableSimpleCalculationData,
@@ -252,7 +253,8 @@ class SimpleCalculationDatabase {
   }
 
 
-  static Future<List<SimpleCalculationAddress1>> getSimpleCalculationAddressData(String projectName) async {
+  static Future<List<SimpleCalculationAddress1>> getSimpleCalculationAddressData(String projectName)
+  async {
     final db = await database; // Get a reference to the database
     final List<Map<String, dynamic>> maps = await db.query(
       tableSimpleCalculationAddress,
@@ -277,7 +279,8 @@ class SimpleCalculationDatabase {
     });
   }
 
-  static Future<void> deleteSimpleCalculationProject(String projectName) async {
+  static Future<void> deleteSimpleCalculationProject(String projectName)
+  async {
     final db = await database;
 
     // Delete from SimpleCalculationData
@@ -288,13 +291,15 @@ class SimpleCalculationDatabase {
     );
   }
 
-  static Future<void> deleteSimpleCalculationDatabase() async {
+  static Future<void> deleteSimpleCalculationDatabase()
+  async {
     final dbPath = await getApplicationDocumentsDirectory();
     final databasePath = join(dbPath.path, 'simpleCalculationDatabase1.db');
     await deleteDatabase(databasePath);
   }
 
-  static Future<List<String>> getAllSimpleCalculationProjectNames() async {
+  static Future<List<String>> getAllSimpleCalculationProjectNames()
+  async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableSimpleCalculationData,
@@ -308,13 +313,15 @@ class SimpleCalculationDatabase {
     return projectNames;
   }
 
-  static Future deleteProjectOfSimpleCalculationDatabase() async {
+  static Future deleteProjectOfSimpleCalculationDatabase()
+  async {
     await _database?.execute('DROP TABLE IF EXISTS tableSimpleCalculationData');
 
     await _database?.execute('DROP TABLE IF EXISTS tableSimpleCalculationAddress');
   }
 
-  static Future<List<String>> getAllSimpleCalculationAddressProjectNames() async {
+  static Future<List<String>> getAllSimpleCalculationAddressProjectNames()
+  async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableSimpleCalculationAddress,
@@ -328,7 +335,8 @@ class SimpleCalculationDatabase {
     return simpleCalculationAddressProjectNames;
   }
 
-  static Future<void> updateProjectNameInAllSimpleCalculationTables(String newProjectName, String oldProjectName) async {
+  static Future<void> updateProjectNameInAllSimpleCalculationTables(String newProjectName, String oldProjectName)
+  async {
     final db = await database;
     // Update project name in ProjectTableData
     await db.rawUpdate('UPDATE $tableSimpleCalculationData SET $columnSimpleCalculationProjectName = ? '
@@ -467,6 +475,8 @@ class SimpleCalculationClassData {
     };
   }
 }
+
+
 
 class SimpleCalculationAddress1 {
   final String addressTableProjectName; // Fixed variable name for clarity
@@ -654,7 +664,8 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
       String alertText,
       TextEditingController controller, {
         bool lastRow = false,
-      }) {
+      })
+  {
     final screenWidth = MediaQuery.of(context).size.width;
     const ipadBreakpoint = 850.0;
     final bool isIpad = screenWidth > ipadBreakpoint;
@@ -814,7 +825,6 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
       final double spacingHeight = isIpad ? 16.0 : 6;
 
       return Scaffold(
-
         body: Container(
           constraints: const BoxConstraints.expand(),color: Colors.black12,
 
@@ -1268,7 +1278,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                     IconButton(
                       icon:  Icon(Icons.analytics,  color: Colors.purple[900]
                         ,size: iconButtonSize * 1.3,),
-                      onPressed: () {
+                      onPressed: () async {
                         if (_landAreaController.text.isNotEmpty &&
                             isValidNumber(_landAreaController.text.replaceAll(',', '')) && // Check for valid number
                             _landPricePerMeterController.text.isNotEmpty &&
@@ -1282,7 +1292,8 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                             _buildabilityPercentageOrAreaController.text.isNotEmpty &&
                             isValidNumber(_buildabilityPercentageOrAreaController.text.replaceAll(',', '')) && // Check for valid number
             
-                            ( (buildablePercentageRunTimeBoolValue && (double.parse(_buildabilityPercentageOrAreaController.text.replaceAll(',', '')) <= 100))
+                            ( (buildablePercentageRunTimeBoolValue &&
+                                (double.parse(_buildabilityPercentageOrAreaController.text.replaceAll(',', '')) <= 100))
             
                                 || (!buildablePercentageRunTimeBoolValue &&
                                     (double.parse((_buildabilityPercentageOrAreaController.text.replaceAll(',', '')))
@@ -1301,9 +1312,10 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                           totalNumberOfFloorsValue = double.parse(_numberOfSaleableFloorsController.text) +
                               double.parse(_numberOfCommonFloorsController.text);
             
-                          double apartmentSellPricePerMeter = double.parse(apartmentSellPricePerMeterController.text.replaceAll(',', '')) ;
-            
-                          {
+                          double apartmentSellPricePerMeter =
+                          double.parse(apartmentSellPricePerMeterController.text.replaceAll(',', '')) ;
+
+                          await SimpleCalculationDatabase.getSimpleCalculationAddressData(simpleCalProjectName);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -1326,7 +1338,9 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                 ),
                               ),
                             );
-                          }
+
+
+
                         } else if ((buildablePercentageRunTimeBoolValue && _buildabilityPercentageOrAreaController.text.isNotEmpty &&
                             double.parse(_buildabilityPercentageOrAreaController.text.replaceAll(',', '')) > 100) ||
                             (!buildablePercentageRunTimeBoolValue && (double.parse((_buildabilityPercentageOrAreaController.text.replaceAll(',', '')))
@@ -1868,7 +1882,36 @@ class ResultSimpleCalculationPage extends StatefulWidget {
   @override
   State createState() => _ResultSimpleCalculationPageState();
 }
+class NewFinancialData {
+  final String projectName;
+  final String calculationName; // This identifies the calculation type
+  final String costOfProject;
+  final String incomeOfProject;
+  final String profitOfProject;
+  final String profitPercentageOfProject;
 
+  NewFinancialData({
+    required this.projectName,
+    required this.calculationName,
+    required this.costOfProject,
+    required this.incomeOfProject,
+    required this.profitOfProject,
+    required this.profitPercentageOfProject,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'projectName': projectName,
+      'calculationName': calculationName,
+      'costOfProject': costOfProject,
+      'incomeOfProject': incomeOfProject,
+      'profitOfProject': profitOfProject,
+      'profitPercentageOfProject': profitPercentageOfProject,
+    };
+  }
+
+// Override equality and hashCode if needed (optional)
+}
 class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPage> {
   late double landAreaValue;
   late double landPricePerMeter;
@@ -2115,6 +2158,18 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
     );
     // Save the simple calculation data
     await SimpleCalculationDatabase.insertOrUpdateSimpleCalculationData(updatedSimpleCalculationData);
+
+    final NewFinancialData updatedData = NewFinancialData(
+      projectName: simpleCalProjectName,
+      costOfProject: totalCostText,
+      incomeOfProject: totalIncomeText,
+      profitOfProject: profitText,
+      profitPercentageOfProject: profitPercentageText,
+      calculationName: 'simple',
+    );
+
+
+    await AllProjectsPageDatabase.updateProjectFinancials(updatedData);
   }
   }
 
@@ -2300,7 +2355,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title:  Text(''),
-                          content:  Text('Please enter a project name.',
+                          content:  const Text('Please enter a project name.',
                               style: TextStyle(fontSize: 24, )),
                           actions: <Widget>[
                             TextButton(
@@ -2436,7 +2491,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
 
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  textStyle:  TextStyle(fontSize: 18),
+                  textStyle:  const TextStyle(fontSize: 18),
                   backgroundColor: const Color.fromRGBO(
                       81, 23, 194, 1.0),
                   shape: RoundedRectangleBorder(
@@ -2516,7 +2571,8 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
       String city,
       String street,
       String calculationName,
-      ) async {
+      )
+  async {
     final Database db = await AllProjectsPageDatabase.database; // Assuming you have a reference to the database instance
 
     final Map<String, dynamic> data = {
@@ -2891,6 +2947,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                 ),
               ),
             ),
+
             SafeArea(
               top: false,
               child: Row(

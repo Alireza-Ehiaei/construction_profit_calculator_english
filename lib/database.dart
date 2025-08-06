@@ -1097,8 +1097,8 @@ class CompleteCalculationDatabaseHelper {
     await db.delete(tableName, where: '$columnName = ?', whereArgs: [value]);
   }
 
-  static Future<List<ProjectTableData>> getCostPricingDataByCpp(String projectName, int ccpValue) async {
-
+  static Future<List<ProjectTableData>> getCostPricingDataByCpp(String projectName, int ccpValue)
+  async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableCostPricing,
