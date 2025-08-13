@@ -38,7 +38,7 @@ android {
     defaultConfig {
         applicationId "com.tec4dev.construction_profit_calculator_english"
         minSdkVersion 21
-        targetSdkVersion 35
+        targetSdkVersion 33
         versionCode 18 // or any next increment
         versionName "2.5"
         multiDexEnabled true

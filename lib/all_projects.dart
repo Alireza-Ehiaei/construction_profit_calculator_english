@@ -307,19 +307,20 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
   bool isHeaderSelected = false;
   List<bool> selectedRows = [];
   List<String> favoriteLevels = List.filled(10, "");
-  int selectedRowsLength=0;
+  int selectedRowsLength = 0;
   List<String> selectedProjects = [];
+
   // Define a list to store the selected values for each row
-  List<String> selectedValues = List.filled(10, ''); // Re place 10 with the appropriate length
+  List<String> selectedValues = List.filled(
+      10, ''); // Re place 10 with the appropriate length
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
 
 
   @override
-  void initState()
-  {
+  void initState() {
     super.initState();
     _initializeProjectData(); // Assuming this is a method you have
-     // Call the new method
+    // Call the new method
 
   }
 
@@ -332,16 +333,16 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
     return await inAppPurchase.isAvailable();
   }*/
 
-  Future<void> _initializeProjectData()
-  async {
+  Future<void> _initializeProjectData() async {
     // Retrieve the data from the database
     allProjectsData = await AllProjectsPageDatabase.getAllProjectsPageData();
 
     // Initialize selectedRows based on the length of allProjectsData
     selectedRows = List.filled(allProjectsData.length, false);
-    await CompleteCalculationDatabaseHelper.deleteProjectOfCompleteCalculationDatabase('_oozz');
+    await CompleteCalculationDatabaseHelper
+        .deleteProjectOfCompleteCalculationDatabase('_oozz');
 
- //   setState(() {});
+    //   setState(() {});
   }
 
   bool? headerCheckboxValue; // State to track the value of the header checkbox
@@ -356,8 +357,8 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
     });
   }
 
-  Future<List<List<dynamic>>> _getAllProjectDataFromAllProjectsPageDatabase()
-    async {
+  Future<List<
+      List<dynamic>>> _getAllProjectDataFromAllProjectsPageDatabase() async {
     final db = await AllProjectsPageDatabase.database;
     final List<Map<String, dynamic>> maps = await db.query(
       AllProjectsPageDatabase.tableAllProjectsPageData,
@@ -382,8 +383,10 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
         map[AllProjectsPageDatabase.columnAllProjectsPageCostOfProject],
         map[AllProjectsPageDatabase.columnAllProjectsPageIncomeOfProject],
         map[AllProjectsPageDatabase.columnAllProjectsPageProfitOfProject],
-        map[AllProjectsPageDatabase.columnAllProjectsPageProfitPercentageOfProject],
-        map[AllProjectsPageDatabase.columnAllProjectsPageEnvironmentallyFriendly],
+        map[AllProjectsPageDatabase
+            .columnAllProjectsPageProfitPercentageOfProject],
+        map[AllProjectsPageDatabase
+            .columnAllProjectsPageEnvironmentallyFriendly],
         map[AllProjectsPageDatabase.columnAllProjectsPageSociallyFriendly],
         map[AllProjectsPageDatabase.columnAllProjectsPageCity],
         map[AllProjectsPageDatabase.columnAllProjectsPageStreet],
@@ -391,7 +394,9 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
       ];
     }).toList();
   }
-  List<List<dynamic>>? _sortData(List<List<dynamic>>? data, int columnIndex, bool isAscending) {
+
+  List<List<dynamic>>? _sortData(List<List<dynamic>>? data, int columnIndex,
+      bool isAscending) {
     if (data == null || data.isEmpty) {
       return null;
     }
@@ -420,16 +425,21 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
 
         if (aValue is String && bValue is String) {
           // Remove commas and percentage signs, then parse to double
-          double? aDouble = double.tryParse(aValue.replaceAll(',', '').replaceAll('%', ''));
-          double? bDouble = double.tryParse(bValue.replaceAll(',', '').replaceAll('%', ''));
+          double? aDouble = double.tryParse(
+              aValue.replaceAll(',', '').replaceAll('%', ''));
+          double? bDouble = double.tryParse(
+              bValue.replaceAll(',', '').replaceAll('%', ''));
 
           if (aDouble != null && bDouble != null) {
-            return isAscending ? aDouble.compareTo(bDouble) : bDouble.compareTo(aDouble);
+            return isAscending ? aDouble.compareTo(bDouble) : bDouble.compareTo(
+                aDouble);
           } else {
-            return isAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+            return isAscending ? aValue.compareTo(bValue) : bValue.compareTo(
+                aValue);
           }
         } else if (aValue is num && bValue is num) {
-          return isAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+          return isAscending ? aValue.compareTo(bValue) : bValue.compareTo(
+              aValue);
         } else if (aValue is bool && bValue is bool) {
           if (aValue == bValue) {
             return 0;
@@ -447,484 +457,606 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
     return data;
   }
 
+// Helper method to detect if the device is an iPad.
+  bool isIpad(BuildContext context) {
+    final size = MediaQuery
+        .of(context)
+        .size;
+    final diagonal = size.width + size.height;
+    return diagonal > 1500;
+  }
 
   @override
-  Widget build(BuildContext context) {ThemeData.dark();
+  Widget build(BuildContext context) {
+    ThemeData.dark();
+    final bool isIpadDevice = isIpad(context);
 
+    // Use LayoutBuilder to get the available space for your widget
+    return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final availableWidth = constraints.maxWidth;
 
-  final screenWidth = MediaQuery.of(context).size.width;
-// iPhone sizes (base)
-  final double buttonWidthPhone = screenWidth *  0.7;
-  const double fontSizePhone = 20.0;
-  const double titleFontSizePhone = 22.0;
-  const double iconSizeLargePhone = 30.0;
-  const double iconSizeSmallPhone = 28.0;
+          final screenWidth = MediaQuery
+              .of(context)
+              .size
+              .width;
+          // iPhone sizes (base)
+          final double buttonWidthPhone = screenWidth * 0.7;
+          const double fontSizePhone = 20.0;
+          const double titleFontSizePhone = 22.0;
+          const double iconSizeLargePhone = 30.0;
+          const double iconSizeSmallPhone = 28.0;
 
 // iPad sizes (larger)
-  final double buttonWidthPad = screenWidth *  0.5;
-  const double fontSizePad = 30.0;
-  const double titleFontSizePad = 40.0;
-  const double iconSizeLargePad = 55.0;
-  const double iconSizeSmallPad = 42.0;
+          final double buttonWidthPad = screenWidth * 0.5;
+          const double fontSizePad = 30.0;
+          const double titleFontSizePad = 40.0;
+          const double iconSizeLargePad = 55.0;
+          const double iconSizeSmallPad = 42.0;
 
-  const ipadBreakpoint = 850.0; // or your preferred breakpoint
+          // Conditionally set all your final values
+          final double buttonWidth = isIpadDevice
+              ? buttonWidthPad
+              : buttonWidthPhone;
+          final double textFontSize = isIpadDevice
+              ? fontSizePad
+              : fontSizePhone;
+          final double titleFontSize = isIpadDevice
+              ? titleFontSizePad
+              : titleFontSizePhone;
+          final double iconSizeLarge = isIpadDevice
+              ? iconSizeLargePad
+              : iconSizeLargePhone;
+          final double iconSizeSmall = isIpadDevice
+              ? iconSizeSmallPad
+              : iconSizeSmallPhone;
+          final double spacingHeight = isIpadDevice ? 16.0 : 10.0;
 
-  final bool isIpad = screenWidth > ipadBreakpoint;
 
-  final buttonWidth = isIpad ? buttonWidthPad : buttonWidthPhone;
-  final textFontSize = isIpad ? fontSizePad : fontSizePhone;
-  final titleFontSize = isIpad ? titleFontSizePad : titleFontSizePhone;
-  final iconSizeLarge = isIpad ? iconSizeLargePad : iconSizeLargePhone;
-  final iconSizeSmall = isIpad ? iconSizeSmallPad : iconSizeSmallPhone;
-  final double spacingHeight = isIpad ? 16.0 : 10.0;
+          // final navigationProvider = Provider.of<ProjectData>(context, listen: false);
+          return Consumer2<ProjectData, SubscriptionsProvider>(
+              builder: (context, projectData, subscriptionsProvider, child) {
+                return Scaffold(
 
-
-  // final navigationProvider = Provider.of<ProjectData>(context, listen: false);
-  return Consumer2<ProjectData, SubscriptionsProvider>(
-      builder: (context, projectData, subscriptionsProvider, child) {
-        return Scaffold(
-
-            body: Container(
-              color: const Color.fromRGBO(13, 110, 76, 1.0),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: FutureBuilder<List<List<dynamic>>>(
-                  future: _getAllProjectDataFromAllProjectsPageDatabase(),
-                  builder: (context, snapshot) {
-                 /*   if (snapshot.hasData) {
+                  body: Container(
+                    color: const Color.fromRGBO(13, 110, 76, 1.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: FutureBuilder<List<List<dynamic>>>(
+                        future: _getAllProjectDataFromAllProjectsPageDatabase(),
+                        builder: (context, snapshot) {
+                          /*   if (snapshot.hasData) {
                       List<List<dynamic>> data = snapshot.data!;
 */
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else {
-                      // Ensure selectedRows is initialized based on fetched data
-                      List<List<dynamic>> data = snapshot.data ?? [];
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Error: ${snapshot.error}'));
+                          } else {
+                            // Ensure selectedRows is initialized based on fetched data
+                            List<List<dynamic>> data = snapshot.data ?? [];
 
-                      // Initialize selectedRows if its length does not match data length
-                      if (selectedRows.length != data.length) {
-                        selectedRows = List.filled(data.length, false);
-                      }
-
-                      ////////////////
-                      if (!_isProjectExistSortedAscending && sortColumnIndex != 0) {
-                        data = _sortData(data, sortColumnIndex, _isProjectExistSortedAscending) ?? [];
-                      }
-                      else {
-                        data.sort((a, b) {
-                          if (sortColumnIndex != 0) { // Check if the sortColumnIndex is not 0 (excluding the first column)
-                            if (a[sortColumnIndex] is String) {
-                              return a[sortColumnIndex].compareTo(b[sortColumnIndex]);
-                            } else if (a[sortColumnIndex] is int) {
-                              return a[sortColumnIndex].toString().compareTo(b[sortColumnIndex].toString());
+                            // Initialize selectedRows if its length does not match data length
+                            if (selectedRows.length != data.length) {
+                              selectedRows = List.filled(data.length, false);
                             }
-                          }
-                          return 0;
-                        });
-                      }
-                      {
-                    return SafeArea(
-                      child: Column(
-                        children: [
-                       //   SizedBox(height: spacingHeight * 2),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.vertical,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: DataTable(
-                                    headingRowHeight: isIpad ? 90 : 50,
-                                    columnSpacing: isIpad ? 20 : 10,
-                                    horizontalMargin: isIpad ? 20 : 10,
-                                    dataRowMaxHeight: isIpad ? 70 : 50,
-                                    sortColumnIndex: sortColumnIndex,
-                                    sortAscending: _isProjectExistSortedAscending,
-                              //      headingRowHeight: titleFontSize,
-                               //     dataRowHeight: isIpad ? 40 : 20,
-                              //      dataRowMaxHeight: isIpad ? 50 : 20,
-                                    headingRowColor:
-                                        WidgetStateProperty.resolveWith<Color>(
-                                            (Set<WidgetState> states) {
-                                        return Colors.pink; // Set the background color of the header row
-                                    }),
-                                    columns: [
-                                      const DataColumn(
-                                        label: Text(''),
-                                      ),
-                                      DataColumn(
-                                        label:  Text('Project Name',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
-                      
-                                      DataColumn(
-                                        label:  Text(
-                                          'Income',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        numeric: true,
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label:  Text(
-                                          'Cost',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        numeric: true,
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                            i < selectedRows.length;
-                                            i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label:  Text(
-                                          'Profit',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        numeric: true,
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label:  Text(
-                                          'Profit %',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        numeric: true,
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
 
-                                      DataColumn(
-                                        label:  Text(
-                                          '   City  ',
-                                          style: TextStyle(
-                                              color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                            i < selectedRows.length;
-                                            i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label:  Text(
-                                          'Street',
-                                          style: TextStyle(
-                                              color: Colors.white,fontSize: titleFontSize
-                                          ),
-                                        ),
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                            i < selectedRows.length;
-                                            i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
+                            ////////////////
+                            if (!_isProjectExistSortedAscending &&
+                                sortColumnIndex != 0) {
+                              data = _sortData(data, sortColumnIndex,
+                                  _isProjectExistSortedAscending) ?? [];
+                            }
+                            else {
+                              data.sort((a, b) {
+                                if (sortColumnIndex !=
+                                    0) { // Check if the sortColumnIndex is not 0 (excluding the first column)
+                                  if (a[sortColumnIndex] is String) {
+                                    return a[sortColumnIndex].compareTo(
+                                        b[sortColumnIndex]);
+                                  } else if (a[sortColumnIndex] is int) {
+                                    return a[sortColumnIndex]
+                                        .toString()
+                                        .compareTo(
+                                        b[sortColumnIndex].toString());
+                                  }
+                                }
+                                return 0;
+                              });
+                            }
+                            {
+                              return SafeArea(
+                                child: Column(
+                                  children: [
+                                    //   SizedBox(height: spacingHeight * 2),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis.vertical,
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: DataTable(
+                                              headingRowHeight: isIpadDevice
+                                                  ? 90
+                                                  : 50,
+                                              columnSpacing: isIpadDevice
+                                                  ? 20
+                                                  : 10,
+                                              horizontalMargin: isIpadDevice
+                                                  ? 20
+                                                  : 10,
+                                              dataRowMaxHeight: isIpadDevice
+                                                  ? 70
+                                                  : 50,
+                                              sortColumnIndex: sortColumnIndex,
+                                              sortAscending: _isProjectExistSortedAscending,
+                                              //      headingRowHeight: titleFontSize,
+                                              //     dataRowHeight: isIpad ? 40 : 20,
+                                              //      dataRowMaxHeight: isIpad ? 50 : 20,
+                                              headingRowColor:
+                                              WidgetStateProperty.resolveWith<
+                                                  Color>(
+                                                      (
+                                                      Set<WidgetState> states) {
+                                                    return Colors
+                                                        .pink; // Set the background color of the header row
+                                                  }),
+                                              columns: [
+                                                const DataColumn(
+                                                  label: Text(''),
+                                                ),
+                                                DataColumn(
+                                                  label: Text('Project Name',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: titleFontSize
+                                                    ),
+                                                  ),
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
 
-                                      DataColumn(
-                                        label:  Text(
-                                          'Environmentally\nFriendly',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: textFontSize
-                                          ),
-                                        ), // New column for the text value
-                                        numeric: true,
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label:  Text(
-                                          'Socially\nFriendly',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: textFontSize
-                                          ),
-                                        ), // New column for the text value
-                                        numeric: true,
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    'Income',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: titleFontSize
+                                                    ),
+                                                  ),
+                                                  numeric: true,
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    'Cost',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: titleFontSize
+                                                    ),
+                                                  ),
+                                                  numeric: true,
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    'Profit',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: titleFontSize
+                                                    ),
+                                                  ),
+                                                  numeric: true,
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    'Profit %',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: titleFontSize
+                                                    ),
+                                                  ),
+                                                  numeric: true,
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
 
-                                      DataColumn(
-                                        label:  Text(
-                                          'Calculation\nType',
-                                          style: TextStyle(
-                                            color: Colors.white,fontSize: textFontSize
-                                          ),
-                                        ),
-                                        onSort: (columnIndex, ascending) {
-                                          setState(() {
-                                            _isProjectExistSortedAscending =
-                                                ascending;
-                                            _sortData(
-                                                data, columnIndex, ascending);
-                                            sortColumnIndex = columnIndex;
-                                          });
-                                          if (columnIndex != 0) {
-                                            for (var i = 0;
-                                                i < selectedRows.length;
-                                                i++) {
-                                              selectedRows[i] = false;
-                                            }
-                                          }
-                                        },
-                                      ),
-                                    ],
-                      
-                                    // Set the horizontal margin between columns
-                                    rows: data.asMap().entries.map((entry) {
-                                      int index = entry.key;
-                                      List<dynamic> rowData = entry.value;
-                                      Color? rowColor = index % 2 == 0
-                                          ? Colors.grey[200]
-                                          : Colors.white; // Alternate row colors
-                                      return DataRow(
-                                        color: WidgetStateProperty.all(
-                                            Color(rowColor!.value)),
-                                        cells: [
-                                          DataCell(
-                                            Checkbox(
-                                              value: selectedRows[index],
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  selectedRows[index] = value!;
-                                                });
-                                              },
+                                                DataColumn(
+                                                  label: Text(
+                                                    '   City  ',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: titleFontSize
+                                                    ),
+                                                  ),
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    'Street',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: titleFontSize
+                                                    ),
+                                                  ),
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+
+                                                DataColumn(
+                                                  label: Text(
+                                                    'Environmentally\nFriendly',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: textFontSize
+                                                    ),
+                                                  ),
+                                                  // New column for the text value
+                                                  numeric: true,
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                                DataColumn(
+                                                  label: Text(
+                                                    'Socially\nFriendly',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: textFontSize
+                                                    ),
+                                                  ),
+                                                  // New column for the text value
+                                                  numeric: true,
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+
+                                                DataColumn(
+                                                  label: Text(
+                                                    'Calculation\nType',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: textFontSize
+                                                    ),
+                                                  ),
+                                                  onSort: (columnIndex,
+                                                      ascending) {
+                                                    setState(() {
+                                                      _isProjectExistSortedAscending =
+                                                          ascending;
+                                                      _sortData(
+                                                          data, columnIndex,
+                                                          ascending);
+                                                      sortColumnIndex =
+                                                          columnIndex;
+                                                    });
+                                                    if (columnIndex != 0) {
+                                                      for (var i = 0;
+                                                      i < selectedRows.length;
+                                                      i++) {
+                                                        selectedRows[i] = false;
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                              ],
+
+                                              // Set the horizontal margin between columns
+                                              rows: data
+                                                  .asMap()
+                                                  .entries
+                                                  .map((entry) {
+                                                int index = entry.key;
+                                                List<dynamic> rowData = entry
+                                                    .value;
+                                                Color? rowColor = index % 2 == 0
+                                                    ? Colors.grey[200]
+                                                    : Colors
+                                                    .white; // Alternate row colors
+                                                return DataRow(
+                                                  color: WidgetStateProperty
+                                                      .all(
+                                                      Color(rowColor!.value)),
+                                                  cells: [
+                                                    DataCell(
+                                                      Checkbox(
+                                                        value: selectedRows[index],
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            selectedRows[index] =
+                                                            value!;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                    // Project Name
+                                                    DataCell(Text(
+                                                      rowData[1].toString(),
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+                                                    // Income
+
+                                                    DataCell(Text(
+                                                      '${rowData[3]}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+                                                    // Cost
+                                                    DataCell(Text(
+                                                      '${rowData[2]}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+
+
+                                                    // Profit
+                                                    DataCell(Text(
+                                                      '${rowData[4]}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+                                                    // Profit %
+
+                                                    DataCell(Text(
+                                                      (rowData[5] is String)
+                                                          ? '${rowData[5]}'
+                                                          : '${rowData[5]
+                                                          .toStringAsFixed(0)}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+                                                    // Environmentally Friendly
+
+                                                    DataCell(Text(
+                                                      '${rowData[6]}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+                                                    // Socially Friendly
+
+                                                    DataCell(Text(
+                                                      '${rowData[7]}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+                                                    // City
+
+                                                    DataCell(Text(
+                                                      '${rowData[8]}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+                                                    // Street
+
+                                                    DataCell(Text(
+                                                      '${rowData[9]}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+                                                    // Calculation Name
+
+                                                    DataCell(Text(
+                                                      '${rowData[10]}',
+                                                      style: TextStyle(
+                                                          fontSize: textFontSize),
+                                                    )),
+
+                                                  ],
+                                                );
+                                              }).toList(),
                                             ),
-                                          ),// Project Name
-                                          DataCell(Text(
-                                            rowData[1].toString(),
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),// Income
-                      
-                                          DataCell(Text(
-                                            '${rowData[3]}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),// Cost
-                                          DataCell(Text(
-                                            '${rowData[2]}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),
-                      
-                      
-                      // Profit
-                                          DataCell(Text(
-                                            '${rowData[4]}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),// Profit %
-                      
-                                          DataCell(Text(
-                                            (rowData[5] is String) ? '${rowData[5]}' : '${rowData[5].toStringAsFixed(0)}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),// Environmentally Friendly
-                      
-                                          DataCell(Text(
-                                            '${rowData[6]}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),// Socially Friendly
-                      
-                                          DataCell(Text(
-                                            '${rowData[7]}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),// City
-                      
-                                          DataCell(Text(
-                                            '${rowData[8]}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),// Street
-                      
-                                          DataCell(Text(
-                                            '${rowData[9]}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),// Calculation Name
-                      
-                                          DataCell(Text(
-                                            '${rowData[10]}',
-                                            style:  TextStyle(fontSize: textFontSize ),
-                                          )),
-                      
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      
-                          Row(
-                            children: [
-                              SizedBox(width: spacingHeight ),
-                              IconButton(
-                                  icon:  Icon(Icons.home,
-                                      color: Colors.white, size: iconSizeLarge),
-                                  onPressed: () {
-                                    NavigationService().navigateToScreen(
-                                      const HomePage(backgroundImages: [
-                                        'assets/images/home (1).jpeg',
-                                        'assets/images/home (2).jpeg',
-                                        'assets/images/home (4).jpeg',
-                                        'assets/images/home (7).jpeg',
-                                        'assets/images/home (11).jpeg',
-                                        'assets/images/home (12).jpeg',
-                                        'assets/images/home (13).jpeg',
-                                        'assets/images/home (14).jpeg',
-                                      ],),
-                                    );
-                                  }),
-                      
-                               SizedBox(width: spacingHeight ),
-                              IconButton(
-                                color: Colors.white,
-                                icon:  Icon(
-                                  Icons.add_circle_sharp,
-                                  size: iconSizeLarge,
-                                ),
-                                onPressed: () async {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        content: SizedBox(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                               SizedBox(height: spacingHeight * 3),
-                                             /* Flexible(
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    Row(
+                                      children: [
+                                        SizedBox(width: spacingHeight),
+                                        IconButton(
+                                            icon: Icon(Icons.home,
+                                                color: Colors.white,
+                                                size: iconSizeLarge),
+                                            onPressed: () {
+                                              NavigationService()
+                                                  .navigateToScreen(
+                                                const HomePage(
+                                                  backgroundImages: [
+                                                    'assets/images/home (1).jpeg',
+                                                    'assets/images/home (2).jpeg',
+                                                    'assets/images/home (4).jpeg',
+                                                    'assets/images/home (7).jpeg',
+                                                    'assets/images/home (11).jpeg',
+                                                    'assets/images/home (12).jpeg',
+                                                    'assets/images/home (13).jpeg',
+                                                    'assets/images/home (14).jpeg',
+                                                  ],),
+                                              );
+                                            }),
+
+                                        SizedBox(width: spacingHeight),
+                                        IconButton(
+                                          color: Colors.white,
+                                          icon: Icon(
+                                            Icons.add_circle_sharp,
+                                            size: iconSizeLarge,
+                                          ),
+                                          onPressed: () async {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  content: SizedBox(
+                                                    child: Column(
+                                                      mainAxisSize: MainAxisSize
+                                                          .min,
+                                                      children: [
+                                                        SizedBox(
+                                                            height: spacingHeight *
+                                                                3),
+                                                        /* Flexible(
                                                 flex: 1,
                                                 child: ElevatedButton(
                                                   onPressed: () async {
@@ -985,125 +1117,203 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                 ),
                                               ),*/
 
-                                              Flexible(
-                                                flex: 1,
-                                                child: ElevatedButton(
-                                                  onPressed: () async {
-                                                    final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                                                    final projectData = Provider.of<ProjectData>(context, listen: false);
+                                                        Flexible(
+                                                            flex: 1,
+                                                            child: ElevatedButton(
+                                                              onPressed: () async {
+                                                                final subscriptionsProvider = Provider
+                                                                    .of<
+                                                                    SubscriptionsProvider>(
+                                                                    context,
+                                                                    listen: false);
+                                                                final projectData = Provider
+                                                                    .of<
+                                                                    ProjectData>(
+                                                                    context,
+                                                                    listen: false);
 
-                                                    // Check if user already has active subscription
-                                                    if (subscriptionsProvider.hasSimpleActiveSubscription ||
-                                                        subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
-                                                      // Navigate directly
-                                                      projectData.setProjectName("_oozz");
-                                                      NavigationService().navigateToScreen(
-                                                        const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
-                                                        arguments: 'wwmm',
-                                                      );
-                                                      return;
-                                                    }
-
-                                                    // Show manage subscription dialog
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) => AlertDialog(
-                                                        title: const Text('Manage Subscription'),
-                                                        content: Text(
-                                                          'Please restore purchases if you have already subscribed, or subscribe now.',
-                                                          style: TextStyle(fontSize: textFontSize, color: Colors.purple),
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () async {
-                                                              Navigator.of(context).pop(); // Close current dialog
-
-                                                              // Show loading while restoring
-                                                              showDialog(
-                                                                context: context,
-                                                                barrierDismissible: false,
-                                                                builder: (context) => const Center(child: CircularProgressIndicator()),
-                                                              );
-
-                                                              try {
-                                                                bool restorationSuccess = await subscriptionsProvider.restorePurchases();
-                                                                await Future.delayed(const Duration(seconds:1)); // allow state update
-
-                                                                Navigator.of(context, rootNavigator: true).pop(); // Close loading
-
-                                                                if  (restorationSuccess &&
-                                                                    (subscriptionsProvider.hasSimpleActiveSubscription ||
-                                                                        subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)) {
-                                                                  projectData.setProjectName("_oozz");
-                                                                  NavigationService().navigateToScreen(
-                                                                    const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
+                                                                // Check if user already has active subscription
+                                                                if (1==1){ /*(subscriptionsProvider
+                                                                    .hasSimpleActiveSubscription ||
+                                                                    subscriptionsProvider
+                                                                        .hasCompletePlusSimpleCalculationProductId) {*/
+                                                                  // Navigate directly
+                                                                  projectData
+                                                                      .setProjectName(
+                                                                      "_oozz");
+                                                                  NavigationService()
+                                                                      .navigateToScreen(
+                                                                    const SimpleCalculationPage1(
+                                                                        givenSimpleProjectName: 'wwmm'),
                                                                     arguments: 'wwmm',
                                                                   );
-                                                                } else {
-                                                                  // Show clear pop-up explaining failed restoration
-                                                                  showDialog(
-                                                                    context: context,
-                                                                    builder: (_) => AlertDialog(
-                                                                      title: const Text('Restoration Unsuccessful'),
-                                                                      content: const Text(
-                                                                        'No active subscriptions were found. Please subscribe or check your App Store/Google Play account purchases.',
-                                                                      ),
-                                                                      actions: [
-                                                                        TextButton(
-                                                                          onPressed: () {
-                                                                            Navigator.of(context).pop();
-                                                                            subscriptionsProvider.showSimpleSubscriptionUI(context);
-                                                                          },
-                                                                          child: const Text('Subscribe'),
-                                                                        ),
-                                                                        TextButton(
-                                                                          onPressed: () {
-                                                                            Navigator.of(context).pop();
-                                                                          },
-                                                                          child: const Text('Cancel'),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  );
+                                                                  return;
                                                                 }
-                                                              } catch (e) {
-                                                                Navigator.of(context, rootNavigator: true).pop(); // Close loading
-                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                  SnackBar(content: Text('Error restoring purchases: $e')),
+
+                                                                // Show manage subscription dialog
+                                                                showDialog(
+                                                                  context: context,
+                                                                  builder: (
+                                                                      context) =>
+                                                                      AlertDialog(
+                                                                        title: const Text(
+                                                                            'Manage Subscription'),
+                                                                        content: Text(
+                                                                          'Please restore purchases if you have already subscribed, or subscribe now.',
+                                                                          style: TextStyle(
+                                                                              fontSize: textFontSize,
+                                                                              color: Colors
+                                                                                  .purple),
+                                                                        ),
+                                                                        actions: [
+                                                                          TextButton(
+                                                                            onPressed: () async {
+                                                                              // Show a loading dialog first, using the current context
+                                                                              showDialog(
+                                                                                context: context,
+                                                                                barrierDismissible: false,
+                                                                                builder: (
+                                                                                    BuildContext loadingContext) {
+                                                                                  return const Center(
+                                                                                      child: CircularProgressIndicator());
+                                                                                },
+                                                                              );
+
+                                                                              try {
+                                                                                bool restorationSuccess = await subscriptionsProvider
+                                                                                    .restorePurchases();
+                                                                                // Don't use a fixed delay; the restoration is already complete.
+
+                                                                                // Close the loading dialog using the context we just created for it
+                                                                                Navigator
+                                                                                    .of(
+                                                                                    context,
+                                                                                    rootNavigator: true)
+                                                                                    .pop();
+
+                                                                                if (restorationSuccess &&
+                                                                                    (subscriptionsProvider
+                                                                                        .hasSimpleActiveSubscription ||
+                                                                                        subscriptionsProvider
+                                                                                            .hasCompletePlusSimpleCalculationProductId)) {
+                                                                                  // If restoration is successful, navigate to the next page
+                                                                                  projectData
+                                                                                      .setProjectName(
+                                                                                      "_oozz");
+                                                                                  NavigationService()
+                                                                                      .navigateToScreen(
+                                                                                    const SimpleCalculationPage1(
+                                                                                        givenSimpleProjectName: 'wwmm'),
+                                                                                    arguments: 'wwmm',
+                                                                                  );
+                                                                                } else {
+                                                                                  // If restoration fails, show the "Restoration Unsuccessful" dialog
+                                                                                  showDialog(
+                                                                                    context: context,
+                                                                                    builder: (
+                                                                                        _) =>
+                                                                                        AlertDialog(
+                                                                                          title: const Text(
+                                                                                              'Restoration Unsuccessful'),
+                                                                                          content: const Text(
+                                                                                            'No active subscriptions were found. Please subscribe or check your App Store/Google Play account purchases.',
+                                                                                          ),
+                                                                                          actions: [
+                                                                                            TextButton(
+                                                                                              onPressed: () {
+                                                                                                Navigator
+                                                                                                    .of(
+                                                                                                    context)
+                                                                                                    .pop();
+                                                                                                subscriptionsProvider
+                                                                                                    .showSimpleSubscriptionUI(
+                                                                                                    context);
+                                                                                              },
+                                                                                              child: const Text(
+                                                                                                  'Subscribe'),
+                                                                                            ),
+                                                                                            TextButton(
+                                                                                              onPressed: () {
+                                                                                                Navigator
+                                                                                                    .of(
+                                                                                                    context)
+                                                                                                    .pop();
+                                                                                              },
+                                                                                              child: const Text(
+                                                                                                  'Cancel'),
+                                                                                            ),
+                                                                                          ],
+                                                                                        ),
+                                                                                  );
+                                                                                }
+                                                                              } catch (e) {
+                                                                                // Ensure the loading dialog is closed even if an error occurs
+                                                                                Navigator
+                                                                                    .of(
+                                                                                    context,
+                                                                                    rootNavigator: true)
+                                                                                    .pop();
+
+                                                                                ScaffoldMessenger
+                                                                                    .of(
+                                                                                    context)
+                                                                                    .showSnackBar(
+                                                                                  SnackBar(
+                                                                                      content: Text(
+                                                                                          'Error restoring purchases: $e')),
+                                                                                );
+                                                                              }
+                                                                            },
+                                                                            child: Text(
+                                                                              'Restore Purchases',
+                                                                              style: TextStyle(
+                                                                                  fontSize: textFontSize,
+                                                                                  color: Colors
+                                                                                      .deepPurple),
+                                                                            ),
+                                                                          ),
+                                                                          TextButton(
+                                                                            onPressed: () {
+                                                                              Navigator
+                                                                                  .of(
+                                                                                  context)
+                                                                                  .pop();
+                                                                              subscriptionsProvider
+                                                                                  .showSimpleSubscriptionUI(
+                                                                                  context);
+                                                                            },
+                                                                            child: Text(
+                                                                              'Subscribe',
+                                                                              style: TextStyle(
+                                                                                  fontSize: textFontSize,
+                                                                                  color: Colors
+                                                                                      .deepPurple),
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                 );
-                                                              }
-                                                            },
-                                                            child: Text(
-                                                              'Restore Purchases',
-                                                              style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple),
-                                                            ),
-                                                          ),
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(context).pop();
-                                                              subscriptionsProvider.showSimpleSubscriptionUI(context);
-                                                            },
-                                                            child: Text(
-                                                              'Subscribe',
-                                                              style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                                                  child: Text(
-                                                    'Simple Calculation',
-                                                    style: TextStyle(fontSize: textFontSize, color: Colors.white),
-                                                  ),
-                                                )
+                                                              },
+                                                              style: ElevatedButton
+                                                                  .styleFrom(
+                                                                  backgroundColor: Colors
+                                                                      .blue),
+                                                              child: Text(
+                                                                'Simple Calculation',
+                                                                style: TextStyle(
+                                                                    fontSize: textFontSize,
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
+                                                            )
 
-                                              ),
+                                                        ),
 
-                                               SizedBox(height: spacingHeight * 2),
+                                                        SizedBox(
+                                                            height: spacingHeight *
+                                                                2),
 
-                                              /*Flexible(
+                                                        /*Flexible(
                                                 flex: 1,
                                                 child: ElevatedButton(
                                                   onPressed: () async {
@@ -1168,116 +1378,216 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                               ),*/
 
 
-                                              Flexible(
-                                                flex: 1,
-                                                child: ElevatedButton(
-                                                  onPressed: () async {
-                                                    final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                                                    final projectData = Provider.of<ProjectData>(context, listen: false);
+                                                        Flexible(
+                                                            flex: 1,
+                                                            child: ElevatedButton(
+                                                              onPressed: () async {
+                                                                final subscriptionsProvider = Provider
+                                                                    .of<
+                                                                    SubscriptionsProvider>(
+                                                                    context,
+                                                                    listen: false);
+                                                                final projectData = Provider
+                                                                    .of<
+                                                                    ProjectData>(
+                                                                    context,
+                                                                    listen: false);
 
-                                                    // Check if user already has active subscription
-                                                    if (subscriptionsProvider.hasCompleteActiveSubscription ||
-                                                        subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
-                                                      // Navigate directly
-                                                      projectData.setProjectName("_oozz");
-                                                      NavigationService().navigateToScreen(
-                                                        const LandInputs(givenProjectName: '_oozz'),
-                                                        arguments: '_oozz',
-                                                      );
-                                                      return;
-                                                    }
-
-                                                    // Show manage subscription dialog
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) => AlertDialog(
-                                                        title: const Text('Manage Subscription'),
-                                                        content: Text(
-                                                          'Please restore purchases if you have already subscribed, or subscribe now.',
-                                                          style: TextStyle(fontSize: textFontSize, color: Colors.purple),
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () async {
-                                                              Navigator.of(context).pop(); // Close current dialog
-
-                                                              // Show loading while restoring purchases
-                                                              showDialog(
-                                                                context: context,
-                                                                barrierDismissible: false,
-                                                                builder: (context) => const Center(child: CircularProgressIndicator()),
-                                                              );
-
-                                                              try {
-                                                                bool restorationSuccess = await subscriptionsProvider.restorePurchases();
-                                                                await Future.delayed(const Duration(seconds: 1)); // allow subscription state to update
-
-                                                                Navigator.of(context, rootNavigator: true).pop(); // Close loading dialog
-
-                                                                if (restorationSuccess &&
-                                                                    (subscriptionsProvider.hasCompleteActiveSubscription ||
-                                                                        subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)) {
-                                                                  projectData.setProjectName("_oozz");
-                                                                  NavigationService().navigateToScreen(
-                                                                    const LandInputs(givenProjectName: '_oozz'),
+                                                                // Check if user already has active subscription
+                                                                if (1==1){ /*(subscriptionsProvider
+                                                                    .hasCompleteActiveSubscription ||
+                                                                    subscriptionsProvider
+                                                                        .hasCompletePlusSimpleCalculationProductId) {*/
+                                                                  // Navigate directly
+                                                                  projectData
+                                                                      .setProjectName(
+                                                                      "_oozz");
+                                                                  NavigationService()
+                                                                      .navigateToScreen(
+                                                                    const LandInputs(
+                                                                        givenProjectName: '_oozz'),
                                                                     arguments: '_oozz',
                                                                   );
-                                                                } else {
-                                                                  // Show pop-up explaining restoration was unsuccessful
-                                                                  showDialog(
-                                                                    context: context,
-                                                                    builder: (_) => AlertDialog(
-                                                                      title: const Text('Restoration Unsuccessful'),
-                                                                      content: const Text(
-                                                                        'No active subscriptions were found. Please subscribe or check your App Store/Google Play account purchases.',
-                                                                      ),
-                                                                      actions: [
-                                                                        TextButton(
-                                                                          onPressed: () {
-                                                                            Navigator.of(context).pop();
-                                                                            subscriptionsProvider.showCompleteSubscriptionUI(context);
-                                                                          },
-                                                                          child: const Text('Subscribe'),
-                                                                        ),
-                                                                        TextButton(
-                                                                          onPressed: () => Navigator.of(context).pop(),
-                                                                          child: const Text('Cancel'),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  );
+                                                                  return;
                                                                 }
-                                                              } catch (e) {
-                                                                Navigator.of(context, rootNavigator: true).pop(); // Close loading dialog
-                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                  SnackBar(content: Text('Error restoring purchases: $e')),
+
+                                                                // Show manage subscription dialog
+                                                                showDialog(
+                                                                  context: context,
+                                                                  builder: (
+                                                                      context) =>
+                                                                      AlertDialog(
+                                                                        title: const Text(
+                                                                            'Manage Subscription'),
+                                                                        content: Text(
+                                                                          'Please restore purchases if you have already subscribed, or subscribe now.',
+                                                                          style: TextStyle(
+                                                                              fontSize: textFontSize,
+                                                                              color: Colors
+                                                                                  .purple),
+                                                                        ),
+                                                                        actions: [
+                                                                          TextButton(
+                                                                            onPressed: () async {
+                                                                              // Show a loading dialog using the current valid context
+                                                                              showDialog(
+                                                                                context: context,
+                                                                                barrierDismissible: false,
+                                                                                builder: (
+                                                                                    BuildContext loadingContext) {
+                                                                                  return const Center(
+                                                                                      child: CircularProgressIndicator());
+                                                                                },
+                                                                              );
+
+                                                                              try {
+                                                                                bool restorationSuccess = await subscriptionsProvider
+                                                                                    .restorePurchases();
+
+                                                                                // Immediately close the loading dialog as soon as the task is done
+                                                                                // We use the context from the loading dialog's builder for robustness
+                                                                                Navigator
+                                                                                    .of(
+                                                                                    context,
+                                                                                    rootNavigator: true)
+                                                                                    .pop();
+
+                                                                                // Close the initial subscription dialog (the parent of this button)
+                                                                                // before navigating or showing the final result.
+                                                                                Navigator
+                                                                                    .of(
+                                                                                    context)
+                                                                                    .pop();
+
+                                                                                if (restorationSuccess &&
+                                                                                    (subscriptionsProvider
+                                                                                        .hasCompleteActiveSubscription ||
+                                                                                        subscriptionsProvider
+                                                                                            .hasCompletePlusSimpleCalculationProductId)) {
+                                                                                  // Navigate to the next screen on success
+                                                                                  projectData
+                                                                                      .setProjectName(
+                                                                                      "_oozz");
+                                                                                  NavigationService()
+                                                                                      .navigateToScreen(
+                                                                                    const LandInputs(
+                                                                                        givenProjectName: '_oozz'),
+                                                                                    arguments: '_oozz',
+                                                                                  );
+                                                                                } else {
+                                                                                  // Show the "Restoration Unsuccessful" dialog on failure
+                                                                                  showDialog(
+                                                                                    context: context,
+                                                                                    builder: (
+                                                                                        _) =>
+                                                                                        AlertDialog(
+                                                                                          title: const Text(
+                                                                                              'Restoration Unsuccessful'),
+                                                                                          content: const Text(
+                                                                                            'No active subscriptions were found. Please subscribe or check your App Store/Google Play account purchases.',
+                                                                                          ),
+                                                                                          actions: [
+                                                                                            TextButton(
+                                                                                              onPressed: () {
+                                                                                                Navigator
+                                                                                                    .of(
+                                                                                                    context)
+                                                                                                    .pop();
+                                                                                                subscriptionsProvider
+                                                                                                    .showCompleteSubscriptionUI(
+                                                                                                    context);
+                                                                                              },
+                                                                                              child: const Text(
+                                                                                                  'Subscribe'),
+                                                                                            ),
+                                                                                            TextButton(
+                                                                                              onPressed: () =>
+                                                                                                  Navigator
+                                                                                                      .of(
+                                                                                                      context)
+                                                                                                      .pop(),
+                                                                                              child: const Text(
+                                                                                                  'Cancel'),
+                                                                                            ),
+                                                                                          ],
+                                                                                        ),
+                                                                                  );
+                                                                                }
+                                                                              } catch (e) {
+                                                                                // Ensure the loading dialog is closed even if an error occurs
+                                                                                Navigator
+                                                                                    .of(
+                                                                                    context,
+                                                                                    rootNavigator: true)
+                                                                                    .pop();
+                                                                                // Also close the parent dialog if still open
+                                                                                if (Navigator
+                                                                                    .of(
+                                                                                    context)
+                                                                                    .canPop()) {
+                                                                                  Navigator
+                                                                                      .of(
+                                                                                      context)
+                                                                                      .pop();
+                                                                                }
+
+                                                                                ScaffoldMessenger
+                                                                                    .of(
+                                                                                    context)
+                                                                                    .showSnackBar(
+                                                                                  SnackBar(
+                                                                                      content: Text(
+                                                                                          'Error restoring purchases: $e')),
+                                                                                );
+                                                                              }
+                                                                            },
+                                                                            child: Text(
+                                                                                'Restore Purchases',
+                                                                                style: TextStyle(
+                                                                                    fontSize: textFontSize,
+                                                                                    color: Colors
+                                                                                        .deepPurple)),
+                                                                          ),
+                                                                          TextButton(
+                                                                            onPressed: () {
+                                                                              Navigator
+                                                                                  .of(
+                                                                                  context)
+                                                                                  .pop();
+                                                                              subscriptionsProvider
+                                                                                  .showCompleteSubscriptionUI(
+                                                                                  context);
+                                                                            },
+                                                                            child: Text(
+                                                                                'Subscribe',
+                                                                                style: TextStyle(
+                                                                                    fontSize: textFontSize,
+                                                                                    color: Colors
+                                                                                        .deepPurple)),
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                 );
-                                                              }
-                                                            },
-                                                            child: Text('Restore Purchases', style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple)),
-                                                          ),
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(context).pop();
-                                                              subscriptionsProvider.showCompleteSubscriptionUI(context);
-                                                            },
-                                                            child: Text('Subscribe', style: TextStyle(fontSize: textFontSize, color: Colors.deepPurple)),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                                                  child: Text(
-                                                    'Complete Calculation',
-                                                    style: TextStyle(fontSize: textFontSize, color: Colors.white),
-                                                  ),
-                                                )
-                                              ),
+                                                              },
+                                                              style: ElevatedButton
+                                                                  .styleFrom(
+                                                                  backgroundColor: Colors
+                                                                      .blue),
+                                                              child: Text(
+                                                                'Complete Calculation',
+                                                                style: TextStyle(
+                                                                    fontSize: textFontSize,
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
+                                                            )
+                                                        ),
 
-                                               SizedBox(height: spacingHeight * 3),
+                                                        SizedBox(
+                                                            height: spacingHeight *
+                                                                3),
 
-                                            /*   SizedBox(height: spacingHeight * 1.6,),
+                                                        /*   SizedBox(height: spacingHeight * 1.6,),
                                               Flexible(flex: 1,
                                                 child: ElevatedButton(
                                                   onPressed: () async {
@@ -1506,11 +1816,11 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                       }
                       
                                                       // Proceed with checking subscription status and navigation
-                                                    *//*  if (subscriptionsProvider.hasCompleteActiveSubscription ||
-                                                          subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)*//*
+                                                    */ /*  if (subscriptionsProvider.hasCompleteActiveSubscription ||
+                                                          subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)*/ /*
                       
                                                       if (1==1){
-                                                   *//*     final projectData = Provider.of<ProjectData>(context, listen: false);
+                                                   */ /*     final projectData = Provider.of<ProjectData>(context, listen: false);
                                                         await CompleteCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
                                                         await CompleteCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
                                                         final projectNames = await CompleteCalculationDatabaseHelper.getAllProjectNames();
@@ -1518,7 +1828,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           await CompleteCalculationDatabaseHelper.deleteProjectOfCompleteCalculationDatabase("_oozz");
                                                         }
                                                         projectData.projectNameList.clear();
-                                                        projectData.setProjectName('_oozz');*//*
+                                                        projectData.setProjectName('_oozz');*/ /*
                                                         // Navigate to Land Inputs Page
                                                         NavigationService().navigateToScreen(
                                                           const LandInputs(givenProjectName: '_oozz'),
@@ -1543,335 +1853,414 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                       
                                               ),
                                                SizedBox(height: spacingHeight * 1.6,),*/
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                      
-                              SizedBox(width: spacingHeight  ),
-                      
-                      
-                                IconButton(
-                                  color: Colors.white,
-                                  icon:
-                                       Icon(Icons.remove_red_eye, size: iconSizeLarge),
-                                  onPressed: () async {
-                                    // Clear the list of all project data to ensure it starts fresh.
-                                    allProjectsData.clear();
-                      
-                                    // Update the user interface to reflect that there are currently no projects available.
-                                    setState(() {});
-                      
-                                    // Count how many projects have been selected by checking the selectedRows list for true values.
-                                    int trueCount = selectedRows.where((element) => element).length;
-                      
-                      
-                                    // Clear the project name list in the projectData object to prepare for new selections.
-                                    projectData.projectNameList.clear();
-                      
-                                    // Iterate through the selectedRows list to find which projects have been selected.
-                                    for (int i = 0; i < selectedRows.length; i++) {
-                                      // If the current row is selected, add the corresponding project to the selectedProjects list.
-                                      if (selectedRows[i]) {
-                                        selectedProjects.add(snapshot.data![i][1]);
-                                        projectData.projectNameList.add(snapshot.data![i][1]);
-                                      }
-                                    }
-                      
-                                    // Check if no projects have been selected.
-                                    if (selectedProjects.isEmpty) {
-                      
-                                      // Show a dialog to inform the user that they need to select a project.
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title:  Text('Error',style: TextStyle(
-                                                color: Colors.black54,fontSize: titleFontSize
-                                            ),),
-                                            content:  Text('Please select a project.',
-                                              style: TextStyle(
-                                                fontSize: textFontSize,
-                                                color: Colors.black45, // Set the text color to white
-                                              ),),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child:  Text('OK',style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  color: Colors.red, // Set the text color to white
-                                                ),),
-                                                onPressed: () {
-                                                  // Close the dialog when the user presses the OK button.
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    } else if (trueCount == 1)
-                                    {
-                                      int selectedIndex =selectedRows.indexOf(true);
-                                      String calculationType =snapshot.data![selectedIndex][10];
-                                      String projectName =snapshot.data![selectedIndex][1];
-                      
-                                      if (calculationType == 'complete') {
-                                        projectData.setProjectName(projectName);
-                                        projectData.projectNameList.clear();
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => const ResultPage1(),
-                                          ),
-                                        );
-                                      }
-                                      else if
-                                      (calculationType == 'simple') {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                   ResultSimpleCalculationPage(
-                                                     shouldRetrieveData: 1,
-                                                     givenResultSimpleProjectName: projectName,
-                                                    landAreaValue: 0,
-                                                    landPricePerMeter: 0,
-                                                    buildabilityPercentageOrAreaValue: 0,
-                                                    floorCommonAreaValue: 0,
-                                                    otherCostValue: 0,
-                                                    permissionPerMeterBoolValue: 0,
-                                                    permissionPerMeterOrTotalCostValue: 0,
-                                                    totalNumberOfFloorsValue: 0,
-                                                    numberOfSaleableFloorsValue: 0,
-                                                    apartmentSellPricePerMeterValue: 0,
-                                                    buildablePercentageBoolValueResult: 0,
-                                                    constructionCostPerMeterValue: 0,
-                                                    totalNumberOfPropertiesValue: 0,
+                                                      ],
                                                     ),
-                                            ),
-                                          );
-                                      }
-                                    }
-                                    else if (trueCount > 1) {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title:  Text(''),
-                                            content:  Text('Please select just one project.',
-                                              style: TextStyle(
-                                                fontSize: textFontSize,
-                                                color: Colors.black45
-                                                ,
-                                              ),),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child:  Text('OK',   style: TextStyle(
-                                                  fontSize: isIpad ? 33 : 20,
-                                                  fontWeight: FontWeight.bold,
-                                                ),),
-                                                onPressed: () {
-                                                  // Close the dialog when the user presses the OK button.
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                      
-                                    }
-                                  },
-                                ),
-                      
-                               SizedBox(width: spacingHeight  ),
-                              if (allProjectsData.isNotEmpty)
-                                IconButton(
-                                  icon:  Icon(Icons.delete,
-                                      color: Colors.white, size: iconSizeLarge),
-                                  onPressed: () {
-                                    for (int i = 0;
-                                        i < selectedRows.length;
-                                        i++) {
-                                      if (selectedRows[i]) {selectedProjects.add(snapshot.data![i][1]);
-                                      }
-                                    }
-                                    if (selectedProjects.isEmpty) {
-                                      // Show a pop-up message if no project is selected
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title:
-                                                 Text('No Project Selected',  style: TextStyle(fontSize: textFontSize, )),
-                                            content:  Text('Please select a project.', style: TextStyle(
-                                              fontSize: textFontSize,color: Colors.black45,fontWeight: FontWeight.bold,
-                                            ),),
-                                            actions: <Widget>[
-                                              TextButton(child:  Text('OK',style: TextStyle(
-                                                fontSize: textFontSize,
-                                                color: Colors.red, // Set the text color to white
-                                              ),),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    }
-                                    else {
-                                      // Show a confirmation pop-up before deleting the projects
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title:  Text('Confirm Deletion'
-                                                ,  style: TextStyle(fontSize: textFontSize, )),
-                                            content:  Text(
-                                                'Are you sure you want to delete the selected project?'
-                                                ,  style: TextStyle(fontSize: textFontSize, )),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child:  Text('Cancel'
-                                                    ,  style: TextStyle(fontSize: textFontSize, )),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                              TextButton(
-                                                child:  Text('Yes'
-                                                    ,  style: TextStyle(fontSize: textFontSize, )),
-                                                onPressed: () async {
-                                                  // Proceed with the deletion of the selected projects
-                                                  for (String projectName in selectedProjects) {
-                                                  await CompleteCalculationDatabaseHelper.deleteProjectOfCompleteCalculationDatabase(projectName);
-                                                  await SimpleCalculationDatabase
-                                                      .deleteProjectOfSimpleCalculationDatabase();
-                                                  await AllProjectsPageDatabase.deleteProjectFromAllProjectsPageData(projectName);
-                                                  }
-                                                  // Initialize an empty list to store the deleted indexes
-                                                  List<int> deletedIndexes = [];
-                      
-                                                  for (int i = 0;
-                                                      i < selectedRows.length;
-                                                      i++) {
-                                                    if (selectedRows[i]) {
-                                                      // If the row is selected, add its index to the deletedIndexes list
-                                                      deletedIndexes.add(i);
-                                                    }
-                                                  }
-                                                  deleteProjects(deletedIndexes);
-                      
-                                                  // Retrieve the updated project data
-                                                  //     List<List<dynamic>> updatedProjectData = await _getAllProjectData();
-                      
-                                                  // Update the data list with the updated project data
-                                                  setState(() {});
-                      
-                                                  // Show a message at the bottom of the screen
-                                                  if (mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text('Selected project(s) have been deleted.'),
-                                                        backgroundColor: Color(0xFF9A87BE),
-                                                      ),
-                                                    );
-                                                  }
-                                                  Navigator.of(context).pop();
-                                                  // Close the bottom sheet
-                      
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    }
-                                  },
-                                ),
-                      
-                               SizedBox(width: spacingHeight  ),
-                      
-                              IconButton(
-                                icon:  Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                  size: iconSizeLarge,
-                                ),
-                                onPressed: () async {
-                                  // Show an alert dialog to confirm deletion
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context)
-                                    {
-                                      return AlertDialog(
-                                        title:  Text('Delete All Projects'
-                                            ,  style: TextStyle(fontSize: textFontSize, )),
-                                        content:  Text(
-                                            'This icon allows you to delete all projects either from simple '
-                                                'calculation type or complete calculation, or refresh the app to resolve potential issues.'
-                                            '\n\nAre you sure you want to delete all project(s) or refresh the app? '
-                                                'If you press Yes you need to open app again.'
-                                            ,  style: TextStyle(fontSize: textFontSize, )),
-                                        actions: [
-                                          TextButton(
-                                            child:  Text('Cancel',
-                                              style: TextStyle(fontSize: textFontSize, color: Colors.blue,),),
-                                            onPressed: () {
-                                              Navigator.of(context)
-                                                  .pop(); // Close the dialog
-                                            },
-                                          ),
-                                          ElevatedButton(
-                                            child:  Text('Yes', style:
-                                            TextStyle(fontSize: textFontSize, color: Colors.blue,),),
-                                            onPressed: () async {
-                      
-                                              // Delete all projects
-                                              await CompleteCalculationDatabaseHelper
-                                                  .deleteCompleteCalculationDatabaseHelper();
-                      
-                                              await AllProjectsPageDatabase
-                                                  .deleteAllProjectsPageDatabase();
-                      
-                                              await SimpleCalculationDatabase
-                                                  .deleteSimpleCalculationDatabase();
-                      
-                                              allProjectsData.clear();
-                                              await showDialog(
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                        ),
+
+                                        SizedBox(width: spacingHeight),
+
+
+                                        IconButton(
+                                          color: Colors.white,
+                                          icon:
+                                          Icon(Icons.remove_red_eye,
+                                              size: iconSizeLarge),
+                                          onPressed: () async {
+                                            // Clear the list of all project data to ensure it starts fresh.
+                                            allProjectsData.clear();
+
+                                            // Update the user interface to reflect that there are currently no projects available.
+                                            setState(() {});
+
+                                            // Count how many projects have been selected by checking the selectedRows list for true values.
+                                            int trueCount = selectedRows
+                                                .where((element) => element)
+                                                .length;
+
+
+                                            // Clear the project name list in the projectData object to prepare for new selections.
+                                            projectData.projectNameList.clear();
+
+                                            // Iterate through the selectedRows list to find which projects have been selected.
+                                            for (int i = 0; i <
+                                                selectedRows.length; i++) {
+                                              // If the current row is selected, add the corresponding project to the selectedProjects list.
+                                              if (selectedRows[i]) {
+                                                selectedProjects.add(
+                                                    snapshot.data![i][1]);
+                                                projectData.projectNameList.add(
+                                                    snapshot.data![i][1]);
+                                              }
+                                            }
+
+                                            // Check if no projects have been selected.
+                                            if (selectedProjects.isEmpty) {
+                                              // Show a dialog to inform the user that they need to select a project.
+                                              showDialog(
                                                 context: context,
-                                                builder: (BuildContext context)
-                                                {
-                                                  return
-                                                    AlertDialog(
-                                                      title:  Text(''),
-                                                      content:  Text('Please close the app and open it again.'
-                                                          ,style: TextStyle(fontSize:  textFontSize ,)),
+                                                builder: (
+                                                    BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Text(
+                                                      'Error', style: TextStyle(
+                                                        color: Colors.black54,
+                                                        fontSize: titleFontSize
+                                                    ),),
+                                                    content: Text(
+                                                      'Please select a project.',
+                                                      style: TextStyle(
+                                                        fontSize: textFontSize,
+                                                        color: Colors
+                                                            .black45, // Set the text color to white
+                                                      ),),
+                                                    actions: <Widget>[
+                                                      TextButton(
+                                                        child: Text('OK',
+                                                          style: TextStyle(
+                                                            fontSize: textFontSize,
+                                                            color: Colors
+                                                                .red, // Set the text color to white
+                                                          ),),
+                                                        onPressed: () {
+                                                          // Close the dialog when the user presses the OK button.
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            } else if (trueCount == 1) {
+                                              int selectedIndex = selectedRows
+                                                  .indexOf(true);
+                                              String calculationType = snapshot
+                                                  .data![selectedIndex][10];
+                                              String projectName = snapshot
+                                                  .data![selectedIndex][1];
+
+                                              if (calculationType ==
+                                                  'complete') {
+                                                projectData.setProjectName(
+                                                    projectName);
+                                                projectData.projectNameList
+                                                    .clear();
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (
+                                                        context) => const ResultPage1(),
+                                                  ),
+                                                );
+                                              }
+                                              else if
+                                              (calculationType == 'simple') {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ResultSimpleCalculationPage(
+                                                          shouldRetrieveData: 1,
+                                                          givenResultSimpleProjectName: projectName,
+                                                          landAreaValue: 0,
+                                                          landPricePerMeter: 0,
+                                                          buildabilityPercentageOrAreaValue: 0,
+                                                          floorCommonAreaValue: 0,
+                                                          otherCostValue: 0,
+                                                          permissionPerMeterBoolValue: 0,
+                                                          permissionPerMeterOrTotalCostValue: 0,
+                                                          totalNumberOfFloorsValue: 0,
+                                                          numberOfSaleableFloorsValue: 0,
+                                                          apartmentSellPricePerMeterValue: 0,
+                                                          buildablePercentageBoolValueResult: 0,
+                                                          constructionCostPerMeterValue: 0,
+                                                          totalNumberOfPropertiesValue: 0,
+                                                        ),
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                            else if (trueCount > 1) {
+                                              showDialog(
+                                                context: context,
+                                                builder: (
+                                                    BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Text(''),
+                                                    content: Text(
+                                                      'Please select just one project.',
+                                                      style: TextStyle(
+                                                        fontSize: textFontSize,
+                                                        color: Colors.black45
+                                                        ,
+                                                      ),),
+                                                    actions: <Widget>[
+                                                      TextButton(
+                                                        child: Text('OK',
+                                                          style: TextStyle(
+                                                            fontSize: isIpadDevice
+                                                                ? 33
+                                                                : 20,
+                                                            fontWeight: FontWeight
+                                                                .bold,
+                                                          ),),
+                                                        onPressed: () {
+                                                          // Close the dialog when the user presses the OK button.
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            }
+                                          },
+                                        ),
+
+                                        SizedBox(width: spacingHeight),
+                                        if (allProjectsData.isNotEmpty)
+                                          IconButton(
+                                            icon: Icon(Icons.delete,
+                                                color: Colors.white,
+                                                size: iconSizeLarge),
+                                            onPressed: () {
+                                              for (int i = 0;
+                                              i < selectedRows.length;
+                                              i++) {
+                                                if (selectedRows[i]) {
+                                                  selectedProjects.add(
+                                                      snapshot.data![i][1]);
+                                                }
+                                              }
+                                              if (selectedProjects.isEmpty) {
+                                                // Show a pop-up message if no project is selected
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (
+                                                      BuildContext context) {
+                                                    return AlertDialog(
+                                                      title:
+                                                      Text(
+                                                          'No Project Selected',
+                                                          style: TextStyle(
+                                                            fontSize: textFontSize,)),
+                                                      content: Text(
+                                                        'Please select a project.',
+                                                        style: TextStyle(
+                                                          fontSize: textFontSize,
+                                                          color: Colors.black45,
+                                                          fontWeight: FontWeight
+                                                              .bold,
+                                                        ),),
                                                       actions: <Widget>[
-                                                        TextButton(
+                                                        TextButton(child: Text(
+                                                          'OK',
+                                                          style: TextStyle(
+                                                            fontSize: textFontSize,
+                                                            color: Colors
+                                                                .red, // Set the text color to white
+                                                          ),),
                                                           onPressed: () {
-                                                            Navigator.of(context).pop();
+                                                            Navigator.of(
+                                                                context).pop();
                                                           },
-                                                          child:  Text('OK',
-                                                              style: TextStyle(fontSize:  textFontSize ,)),
                                                         ),
                                                       ],
                                                     );
-                                                },
-                                              );
-                      
-                      
-                                              // Update the UI to reflect the absence of projects
-                                              setState(() {});
-                      
-                                              // Push the HomePage onto the stack
-                                        /*      NavigationService().navigateToScreen(
+                                                  },
+                                                );
+                                              }
+                                              else {
+                                                // Show a confirmation pop-up before deleting the projects
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (
+                                                      BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: Text(
+                                                          'Confirm Deletion'
+                                                          , style: TextStyle(
+                                                        fontSize: textFontSize,)),
+                                                      content: Text(
+                                                          'Are you sure you want to delete the selected project?'
+                                                          , style: TextStyle(
+                                                        fontSize: textFontSize,)),
+                                                      actions: <Widget>[
+                                                        TextButton(
+                                                          child: Text('Cancel'
+                                                              ,
+                                                              style: TextStyle(
+                                                                fontSize: textFontSize,)),
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                context).pop();
+                                                          },
+                                                        ),
+                                                        TextButton(
+                                                          child: Text('Yes'
+                                                              ,
+                                                              style: TextStyle(
+                                                                fontSize: textFontSize,)),
+                                                          onPressed: () async {
+                                                            // Proceed with the deletion of the selected projects
+                                                            for (String projectName in selectedProjects) {
+                                                              await CompleteCalculationDatabaseHelper
+                                                                  .deleteProjectOfCompleteCalculationDatabase(
+                                                                  projectName);
+                                                              await SimpleCalculationDatabase
+                                                                  .deleteProjectOfSimpleCalculationDatabase();
+                                                              await AllProjectsPageDatabase
+                                                                  .deleteProjectFromAllProjectsPageData(
+                                                                  projectName);
+                                                            }
+                                                            // Initialize an empty list to store the deleted indexes
+                                                            List<
+                                                                int> deletedIndexes = [
+                                                            ];
+
+                                                            for (int i = 0;
+                                                            i < selectedRows
+                                                                .length;
+                                                            i++) {
+                                                              if (selectedRows[i]) {
+                                                                // If the row is selected, add its index to the deletedIndexes list
+                                                                deletedIndexes
+                                                                    .add(i);
+                                                              }
+                                                            }
+                                                            deleteProjects(
+                                                                deletedIndexes);
+
+                                                            // Retrieve the updated project data
+                                                            //     List<List<dynamic>> updatedProjectData = await _getAllProjectData();
+
+                                                            // Update the data list with the updated project data
+                                                            setState(() {});
+
+                                                            // Show a message at the bottom of the screen
+                                                            if (mounted) {
+                                                              ScaffoldMessenger
+                                                                  .of(context)
+                                                                  .showSnackBar(
+                                                                const SnackBar(
+                                                                  content: Text(
+                                                                      'Selected project(s) have been deleted.'),
+                                                                  backgroundColor: Color(
+                                                                      0xFF9A87BE),
+                                                                ),
+                                                              );
+                                                            }
+                                                            Navigator.of(
+                                                                context).pop();
+                                                            // Close the bottom sheet
+
+                                                          },
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              }
+                                            },
+                                          ),
+
+                                        SizedBox(width: spacingHeight),
+
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                            size: iconSizeLarge,
+                                          ),
+                                          onPressed: () async {
+                                            // Show an alert dialog to confirm deletion
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title: Text(
+                                                      'Delete All Projects'
+                                                      , style: TextStyle(
+                                                    fontSize: textFontSize,)),
+                                                  content: Text(
+                                                      'This icon allows you to delete all projects either from simple '
+                                                          'calculation type or complete calculation, or refresh the app to resolve potential issues.'
+                                                          '\n\nAre you sure you want to delete all project(s) or refresh the app? '
+                                                          'If you press Yes you need to open app again.'
+                                                      , style: TextStyle(
+                                                    fontSize: textFontSize,)),
+                                                  actions: [
+                                                    TextButton(
+                                                      child: Text('Cancel',
+                                                        style: TextStyle(
+                                                          fontSize: textFontSize,
+                                                          color: Colors
+                                                              .blue,),),
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop(); // Close the dialog
+                                                      },
+                                                    ),
+                                                    ElevatedButton(
+                                                      child: Text('Yes', style:
+                                                      TextStyle(
+                                                        fontSize: textFontSize,
+                                                        color: Colors.blue,),),
+                                                      onPressed: () async {
+                                                        // Delete all projects
+                                                        await CompleteCalculationDatabaseHelper
+                                                            .deleteCompleteCalculationDatabaseHelper();
+
+                                                        await AllProjectsPageDatabase
+                                                            .deleteAllProjectsPageDatabase();
+
+                                                        await SimpleCalculationDatabase
+                                                            .deleteSimpleCalculationDatabase();
+
+                                                        allProjectsData.clear();
+                                                        await showDialog(
+                                                          context: context,
+                                                          builder: (
+                                                              BuildContext context) {
+                                                            return
+                                                              AlertDialog(
+                                                                title: Text(''),
+                                                                content: Text(
+                                                                    'Please close the app and open it again.'
+                                                                    ,
+                                                                    style: TextStyle(
+                                                                      fontSize: textFontSize,)),
+                                                                actions: <
+                                                                    Widget>[
+                                                                  TextButton(
+                                                                    onPressed: () {
+                                                                      Navigator
+                                                                          .of(
+                                                                          context)
+                                                                          .pop();
+                                                                    },
+                                                                    child: Text(
+                                                                        'OK',
+                                                                        style: TextStyle(
+                                                                          fontSize: textFontSize,)),
+                                                                  ),
+                                                                ],
+                                                              );
+                                                          },
+                                                        );
+
+
+                                                        // Update the UI to reflect the absence of projects
+                                                        setState(() {});
+
+                                                        // Push the HomePage onto the stack
+                                                        /*      NavigationService().navigateToScreen(
                                                 const HomePage(backgroundImages: [
                                                   'assets/images/home (1).jpeg',
                                                   'assets/images/home (2).jpeg',
@@ -1884,268 +2273,304 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                 ],),
                                               );
                       */
-                      
-                      
-                                              // Close the dialog
-                                              if (mounted) {
-                                                Navigator.of(context).pop();
-                                              }
-                      
-                                            },
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                              const Expanded(
-                                child: SizedBox.shrink(),
-                              ),
-                              //      if (allProjectsData.isNotEmpty)
-                              IconButton(
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title:  Text('Introduction', style: TextStyle(
-                                          fontSize: titleFontSize,color: Colors.pink,fontWeight: FontWeight.bold,
-                                        ),),
-                                        content: SingleChildScrollView(
-                                          child: Text.rich(
-                                            TextSpan(
-                                              children: [
-                      
-                                                TextSpan(
-                                                  text: '\nAdding a New Project',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: '\nIf you want to start a new project, you should press ',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                                                 WidgetSpan(
-                                                  child: Icon(
-                                                    Icons.add_circle_sharp, // The icon you want to display
-                                                    size: iconSizeSmall, // Set the size of the icon
-                                                    color: Colors.black, // Set the color of the icon
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: '. When you press this icon, a dialog will pop up asking you'
-                                                      ' to select whether you want to perform a simple calculation or '
-                                                      'a complete calculation. If you choose to proceed with the simple '
-                                                      'calculation, you\'ll get a quick estimate of the project\'s cost-benefit. '
-                                                      'If you choose to proceed with the complete calculation, you\'ll '
-                                                      'get a more detailed and comprehensive analysis. Once you\'ve '
-                                                      'entered the data, you can save the project and it will be '
-                                                      'added to the list of saved projects.',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                      
-                                                 TextSpan(
-                                                  text: '\n\nViewing Project Details',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: '\nWhen you save a project, it will be listed in the table at the top of the page. '
-                                                      'You can view the details of each project by selecting that project in the '
-                                                      'list and pressing ',  style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                ),
-                                                ),
-                                                 WidgetSpan(
-                                                  child: Icon(
-                                                    Icons.remove_red_eye, // The icon you want to display
-                                                    size: iconSizeSmall, // Set the size of the icon
-                                                    color: Colors.black, // Set the color of the icon
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: '. This will take you to the project\'s result page, '
-                                                      'where you can see all the results of that project based '
-                                                      'on the data you entered when you created the project. '
-                                                      'However, you can also view key results in a summary table, '
-                                                      'allowing you to compare different projects saved from either '
-                                                      'the simple or complete calculations. You can sort the rows '
-                                                      'by pressing the title of each column in the table. For example, '
-                                                      'if you want to sort the projects based on cost, simply click on '
-                                                      'the "Cost" header in the table.',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: '\n\nBack to First Page',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: '\nIf you want to go back to the main page, press ',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                                                 WidgetSpan(
-                                                  child: Icon(
-                                                    Icons.home, // The icon you want to display
-                                                    size: iconSizeSmall, // Set the size of the icon
-                                                    color: Colors.black, // Set the color of the icon
-                                                  ),
-                                                ),
-                      
-                                                 TextSpan(
-                                                  text: '.\n\nDeleting a Project',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                      
-                                                 TextSpan(
-                                                  text: '\nTo delete a specific project, select the project '
-                                                      'you want to delete from the table at the top of '
-                                                      'the page and press white ',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                                                 WidgetSpan(
-                                                  child: Icon(
-                                                    Icons.delete, // The icon you want to display
-                                                    size: iconSizeSmall, // Set the size of the icon
-                                                    color: Colors.black, // Set the color of the icon
-                                                  ),
-                                                ),
-                      
-                                                 TextSpan(
-                                                  text: '.\n\nDeleting All Projects',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: '\nIf you want to delete all the projects you have saved, press ',       style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                ),
-                                                ),
-                                                 WidgetSpan(
-                                                  child: Icon(
-                                                    Icons.delete, // The icon you want to display
-                                                    size: iconSizeSmall, // Set the size of the icon
-                                                    color: Colors.red, // Set the color of the icon
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: '. This will delete all the projects shown in the table at the top of the page.',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                      
-                                                 TextSpan(
-                                                  text: '\n\nSaving a Project',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                      
-                                                 TextSpan(
-                                                  text: '\nTo save a specific project, in the result page of that project press '
-                                                    ,
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                                                 WidgetSpan(
-                                                  child: Icon(
-                                                    Icons.save, // The icon you want to display
-                                                    size: iconSizeSmall, // Set the size of the icon
-                                                    color: Colors.black, // Set the color of the icon
-                                                  ),
-                                                ),
-                                                 TextSpan(
-                                                  text: ' When saving a project, you will be asked to enter your project’s social and environmental friendliness level. '
-                                                      'You can use the information provided on the first page of the app and, it\'s better, consult with specialists to assign '
-                                                      'a value from 1 to 10 (where 10 is the best and 1 is the worst). Among projects with equal profitability, this rating '
-                                                      'helps you compare which project better aligns with social and environmental goals.',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                      
-                      
-                                                 TextSpan(
-                                                  text: '\n\nIt\'s important to note that the calculations in this app '
-                                                      'provide results for your investment without factoring in the'
-                                                      ' duration of the project. Typically, you should divide your project '
-                                                      'profit by the number of years from the start of construction to the '
-                                                      'sale of all properties. For example, if a project yields a 40% profit '
-                                                      'and can be constructed in 1.5 years with an additional six months for '
-                                                      'selling, your annual profit would be 20%.'
-                                                      '\n\nLarger projects usually require more time to construct and sell. Therefore, '
-                                                      'if a project has a 60% profit over three years, you might consider two '
-                                                      'smaller projects, each with a 60% profit, that can be completed and '
-                                                      'realized in two years. By choosing the second option, you can achieve '
-                                                      'a 60% profit on your investment one year sooner with higher annual profit.\n\n',
-                                                  style: TextStyle(
-                                                    fontSize: textFontSize,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
+
+
+                                                        // Close the dialog
+                                                        if (mounted) {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        }
+                                                      },
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
                                         ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child:  Text('OK',   style: TextStyle(
-                                               fontSize: titleFontSize,
-                                              fontWeight: FontWeight.bold,
-                                            ),),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                                icon:  Icon(Icons.help_center_rounded,
-                                  color: Colors.white,size: iconSizeLarge,),
-                              ),
-                               SizedBox(width: spacingHeight * 2 ),
-                            ],
-                          ),
-                          // const MyBannerAdWidget(),
-                       SizedBox(height: spacingHeight ),
-                            ],
-                          ),
-                    );
-                      }
-                    }
-                  },
-                ),
-              ),
-            ),
+                                        const Expanded(
+                                          child: SizedBox.shrink(),
+                                        ),
+                                        //      if (allProjectsData.isNotEmpty)
+                                        IconButton(
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title: Text('Introduction',
+                                                    style: TextStyle(
+                                                      fontSize: titleFontSize,
+                                                      color: Colors.pink,
+                                                      fontWeight: FontWeight
+                                                          .bold,
+                                                    ),),
+                                                  content: SingleChildScrollView(
+                                                    child: Text.rich(
+                                                      TextSpan(
+                                                        children: [
+
+                                                          TextSpan(
+                                                            text: '\nAdding a New Project',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                              fontWeight: FontWeight
+                                                                  .bold,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '\nIf you want to start a new project, you should press ',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          WidgetSpan(
+                                                            child: Icon(
+                                                              Icons
+                                                                  .add_circle_sharp,
+                                                              // The icon you want to display
+                                                              size: iconSizeSmall,
+                                                              // Set the size of the icon
+                                                              color: Colors
+                                                                  .black, // Set the color of the icon
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '. When you press this icon, a dialog will pop up asking you'
+                                                                ' to select whether you want to perform a simple calculation or '
+                                                                'a complete calculation. If you choose to proceed with the simple '
+                                                                'calculation, you\'ll get a quick estimate of the project\'s cost-benefit. '
+                                                                'If you choose to proceed with the complete calculation, you\'ll '
+                                                                'get a more detailed and comprehensive analysis. Once you\'ve '
+                                                                'entered the data, you can save the project and it will be '
+                                                                'added to the list of saved projects.',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+
+                                                          TextSpan(
+                                                            text: '\n\nViewing Project Details',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                              fontWeight: FontWeight
+                                                                  .bold,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '\nWhen you save a project, it will be listed in the table at the top of the page. '
+                                                                'You can view the details of each project by selecting that project in the '
+                                                                'list and pressing ',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          WidgetSpan(
+                                                            child: Icon(
+                                                              Icons
+                                                                  .remove_red_eye,
+                                                              // The icon you want to display
+                                                              size: iconSizeSmall,
+                                                              // Set the size of the icon
+                                                              color: Colors
+                                                                  .black, // Set the color of the icon
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '. This will take you to the project\'s result page, '
+                                                                'where you can see all the results of that project based '
+                                                                'on the data you entered when you created the project. '
+                                                                'However, you can also view key results in a summary table, '
+                                                                'allowing you to compare different projects saved from either '
+                                                                'the simple or complete calculations. You can sort the rows '
+                                                                'by pressing the title of each column in the table. For example, '
+                                                                'if you want to sort the projects based on cost, simply click on '
+                                                                'the "Cost" header in the table.',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '\n\nBack to First Page',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                              fontWeight: FontWeight
+                                                                  .bold,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '\nIf you want to go back to the main page, press ',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          WidgetSpan(
+                                                            child: Icon(
+                                                              Icons.home,
+                                                              // The icon you want to display
+                                                              size: iconSizeSmall,
+                                                              // Set the size of the icon
+                                                              color: Colors
+                                                                  .black, // Set the color of the icon
+                                                            ),
+                                                          ),
+
+                                                          TextSpan(
+                                                            text: '.\n\nDeleting a Project',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                              fontWeight: FontWeight
+                                                                  .bold,
+                                                            ),
+                                                          ),
+
+                                                          TextSpan(
+                                                            text: '\nTo delete a specific project, select the project '
+                                                                'you want to delete from the table at the top of '
+                                                                'the page and press white ',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          WidgetSpan(
+                                                            child: Icon(
+                                                              Icons.delete,
+                                                              // The icon you want to display
+                                                              size: iconSizeSmall,
+                                                              // Set the size of the icon
+                                                              color: Colors
+                                                                  .black, // Set the color of the icon
+                                                            ),
+                                                          ),
+
+                                                          TextSpan(
+                                                            text: '.\n\nDeleting All Projects',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                              fontWeight: FontWeight
+                                                                  .bold,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '\nIf you want to delete all the projects you have saved, press ',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          WidgetSpan(
+                                                            child: Icon(
+                                                              Icons.delete,
+                                                              // The icon you want to display
+                                                              size: iconSizeSmall,
+                                                              // Set the size of the icon
+                                                              color: Colors
+                                                                  .red, // Set the color of the icon
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '. This will delete all the projects shown in the table at the top of the page.',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+
+                                                          TextSpan(
+                                                            text: '\n\nSaving a Project',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                              fontWeight: FontWeight
+                                                                  .bold,
+                                                            ),
+                                                          ),
+
+                                                          TextSpan(
+                                                            text: '\nTo save a specific project, in the result page of that project press '
+                                                            ,
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          WidgetSpan(
+                                                            child: Icon(
+                                                              Icons.save,
+                                                              // The icon you want to display
+                                                              size: iconSizeSmall,
+                                                              // Set the size of the icon
+                                                              color: Colors
+                                                                  .black, // Set the color of the icon
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: ' When saving a project, you will be asked to enter your project’s social and environmental friendliness level. '
+                                                                'You can use the information provided on the first page of the app and, it\'s better, consult with specialists to assign '
+                                                                'a value from 1 to 10 (where 10 is the best and 1 is the worst). Among projects with equal profitability, this rating '
+                                                                'helps you compare which project better aligns with social and environmental goals.',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+
+
+                                                          TextSpan(
+                                                            text: '\n\nIt\'s important to note that the calculations in this app '
+                                                                'provide results for your investment without factoring in the'
+                                                                ' duration of the project. Typically, you should divide your project '
+                                                                'profit by the number of years from the start of construction to the '
+                                                                'sale of all properties. For example, if a project yields a 40% profit '
+                                                                'and can be constructed in 1.5 years with an additional six months for '
+                                                                'selling, your annual profit would be 20%.'
+                                                                '\n\nLarger projects usually require more time to construct and sell. Therefore, '
+                                                                'if a project has a 60% profit over three years, you might consider two '
+                                                                'smaller projects, each with a 60% profit, that can be completed and '
+                                                                'realized in two years. By choosing the second option, you can achieve '
+                                                                'a 60% profit on your investment one year sooner with higher annual profit.\n\n',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                      child: Text(
+                                                        'OK', style: TextStyle(
+                                                        fontSize: titleFontSize,
+                                                        fontWeight: FontWeight
+                                                            .bold,
+                                                      ),),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                          icon: Icon(Icons.help_center_rounded,
+                                            color: Colors.white,
+                                            size: iconSizeLarge,),
+                                        ),
+                                        SizedBox(width: spacingHeight * 2),
+                                      ],
+                                    ),
+                                    // const MyBannerAdWidget(),
+                                    SizedBox(height: spacingHeight),
+                                  ],
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              }
           );
-        }
-    );
+        });
   }
 }
-

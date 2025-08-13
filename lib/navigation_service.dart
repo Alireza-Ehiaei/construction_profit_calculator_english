@@ -8,7 +8,6 @@ import 'main.dart';
 import 'otherCost.dart';
 import 'costPrices.dart';
 
-
 class NavigationService {
   static final NavigationService _instance = NavigationService._internal();
 

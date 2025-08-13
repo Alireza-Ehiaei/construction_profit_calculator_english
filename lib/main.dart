@@ -349,58 +349,76 @@ class _HomePageState extends State<HomePage>
     return username == 'demoUser' && password == 'demo123Password';
   }
 
+
+  // Helper method to detect if the device is an iPad.
+  bool isIpad(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final diagonal = size.width + size.height;
+    return diagonal > 1500;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isIpadDevice = isIpad(context);
 
-    final screenWidth = MediaQuery.of(context).size.width;
-// iPhone sizes (base)
-    final double buttonWidthPhone = screenWidth *  0.7;
-    const double textFieldFontSize = 20.0;
-    const double titleFontSizePhone = 22.0;
-    const double iconSizeLargePhone = 30.0;
-    const double iconSizeSmallPhone = 28.0;
+    return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      final availableWidth = constraints.maxWidth;
 
-// iPad sizes (larger)
-    final double buttonWidthPad = screenWidth *  0.5;
-    const double fontSizePad = 37.0;
-    const double titleFontSizePad = 40.0;
-    const double iconSizeLargePad = 55.0;
-    const double iconSizeSmallPad = 42.0;
+      // iPhone sizes (base)
+      const double fontSizePhone = 20.0;
+      const double titleFontSizePhone = 22.0;
+      const double iconSizeLargePhone = 30.0;
+      const double iconSizeSmallPhone = 28.0;
+      const double textFieldFontSizePhone = 18.0;
+      const double paddingPhone = 16.0;
+      const double spacingHeightPhone = 10.0;
+      final double buttonWidthPhone = availableWidth * 0.7;
 
-    const ipadBreakpoint = 850.0; // or your preferred breakpoint
+      // iPad sizes (larger)
+      const double fontSizePad = 30.0;
+      const double titleFontSizePad = 40.0;
+      const double iconSizeLargePad = 55.0;
+      const double iconSizeSmallPad = 42.0;
+      const double textFieldFontSizePad = 26.0;
+      const double paddingPad = 32.0;
+      const double spacingHeightPad = 16.0;
+      final double buttonWidthPad = availableWidth * 0.5;
 
-    final bool isIpad = screenWidth > ipadBreakpoint;
+      // Conditionally set all your final values
+      final double buttonWidth = isIpadDevice ? buttonWidthPad : buttonWidthPhone;
+      final double textFontSize = isIpadDevice ? fontSizePad : fontSizePhone;
+      final double titleFontSize = isIpadDevice ? titleFontSizePad : titleFontSizePhone;
+      final double iconSizeLarge = isIpadDevice ? iconSizeLargePad : iconSizeLargePhone;
+      final double iconSizeSmall = isIpadDevice ? iconSizeSmallPad : iconSizeSmallPhone;
+      final double textFieldFontSize = isIpadDevice ? textFieldFontSizePad : textFieldFontSizePhone;
+      final double padding = isIpadDevice ? paddingPad : paddingPhone;
+      final double spacingHeight = isIpadDevice ? spacingHeightPad : spacingHeightPhone;
 
-    final buttonWidth = isIpad ? buttonWidthPad : buttonWidthPhone;
-    final textFontSize = isIpad ? fontSizePad : textFieldFontSize;
-    final titleFontSize = isIpad ? titleFontSizePad : titleFontSizePhone;
-    final iconSizeLarge = isIpad ? iconSizeLargePad : iconSizeLargePhone;
-    final iconSizeSmall = isIpad ? iconSizeSmallPad : iconSizeSmallPhone;
-    final double spacingHeight = isIpad ? 16.0 : 10.0;
 
-
-    //final navigationProvider = Provider.of<ProjectData>(context, listen: false);
+      //final navigationProvider = Provider.of<ProjectData>(context, listen: false);
     final randomIndex = Random().nextInt(widget.backgroundImages.length);
 
-    return  Scaffold(
-      body: Container(
-        constraints: const BoxConstraints.expand(),
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(widget.backgroundImages[randomIndex]), // Use widget.backgroundImages
-            fit: BoxFit.fill,
+    return Scaffold(
+        body: Container(
+          constraints: const BoxConstraints.expand(),
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(widget.backgroundImages[randomIndex]),
+              // Use widget.backgroundImages
+              fit: BoxFit.fill,
+            ),
           ),
-        ),
-    
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SafeArea(
-              child: Column(
-                  
-                children: [
 
-                /*  Row(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SafeArea(
+                child: Column(
+
+                  children: [
+
+                    /*  Row(
                     children: [
                       SizedBox(
                         width: 50, // Width of the hidden button
@@ -418,551 +436,579 @@ class _HomePageState extends State<HomePage>
               Expanded( child: Container(), ),// This will ensure the GestureDetector stays at the start ),
                     ],
                   ),*/
-                  
-                  Center(
-                    child: Column(   crossAxisAlignment: CrossAxisAlignment.center,
-                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                     //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                      SizedBox(height: 15* spacingHeight),
 
-                        SizedBox(width: buttonWidth,
-                          child: ElevatedButton(
-                            onPressed: ()      {
-                              if (1 == 1) {
-                              NavigationService().navigateToScreen(const AllProjectsPage());
-                               /* Navigator.push(
+                    Center(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          SizedBox(height: 15 * spacingHeight),
+
+                          SizedBox(width: buttonWidth,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (1 == 1) {
+                                  NavigationService().navigateToScreen(
+                                      const AllProjectsPage());
+                                  /* Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (context) => AllProjectsPage()),
                                 );*/
-                              } else {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text('Error',style: TextStyle(
-                                        fontSize: textFontSize,)),
-                                      content: Text('Please fill all required fields.'
-                                          ,style: TextStyle(
-                                        fontSize: textFontSize,)),
-                                      actions: [
-                                        TextButton(
-                                          child: const Text(
-                                              'Please fill all required fields. Inputs should be valid numbers '
-                                                  '(digits and an optional decimal point only, like: 123, 123.5, '
-                                                  '0.66) and must not include letters (e.g., a, b, c) or symbols '
-                                                  '(e.g., \$, %, &). Additionally, trailing (e.g., .1)'
-                                                  ' decimal points are not allowed.\n\n',
-                                              style: TextStyle(
-                                                fontSize: textFieldFontSize,)),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:  Colors.deepOrange, //fromRGBO(197, 158, 4, 1.0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                } else {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text('Error', style: TextStyle(
+                                          fontSize: textFontSize,)),
+                                        content: Text(
+                                            'Please fill all required fields.'
+                                            , style: TextStyle(
+                                          fontSize: textFontSize,)),
+                                        actions: [
+                                          TextButton(
+                                            child: Text(
+                                                'Please fill all required fields. Inputs should be valid numbers '
+                                                    '(digits and an optional decimal point only, like: 123, 123.5, '
+                                                    '0.66) and must not include letters (e.g., a, b, c) or symbols '
+                                                    '(e.g., \$, %, &). Additionally, trailing (e.g., .1)'
+                                                    ' decimal points are not allowed.\n\n',
+                                                style: TextStyle(
+                                                  fontSize: textFieldFontSize,)),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepOrange,
+                                //fromRGBO(197, 158, 4, 1.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                               ),
-                           //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              child: Text(
-                                'Construction\nProfit Calculators',
-                                textAlign: TextAlign.center,  // Center multiline text
-                                style: TextStyle(
-                                  fontSize: titleFontSize,
-                                  color: Colors.black,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10),
+                                child: Text(
+                                  'Construction\nProfit Calculators',
+                                  textAlign: TextAlign.center,
+                                  // Center multiline text
+                                  style: TextStyle(
+                                    fontSize: titleFontSize,
+                                    color: Colors.black,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
 
-                    //    Expanded(child: SizedBox(height: MediaQuery.of(context).size.height * 0.3),)
+                          //    Expanded(child: SizedBox(height: MediaQuery.of(context).size.height * 0.3),)
 
-                        SizedBox(height: 3 * spacingHeight),
+                          SizedBox(height: 3 * spacingHeight),
 
-                        SizedBox(width: buttonWidth,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              NavigationService().navigateToScreen(const RealEstateTopicsPage());
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[900], // Set the background color
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              //    padding: const EdgeInsets.all(8.0),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              child: Text(
-                                'Real Estate\nMarket Insights',
-                                textAlign: TextAlign.center,  // Center multiline text
-                                style: TextStyle(
-                                  fontSize: titleFontSize,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),//Expanded(child: Spacer()),
-
-                  SizedBox(height: MediaQuery.of(context).size.height * .2,),
-
-                  Row(
-                    children: [const Spacer(),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.green[900], //.withValues(alpha: 0.7),
-                          //    shape: BoxShape.circle, // Makes the background circular. Remove if you want a rectangle.
-                        ),
-                        child: Column(mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                        //    SizedBox(height:  spacingHeight ),
-                            IconButton(
+                          SizedBox(width: buttonWidth,
+                            child: ElevatedButton(
                               onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      //     title: const Text('Error'),
-                                      content: SingleChildScrollView(
-                                        child: Text.rich(
-                                          TextSpan(
-                                            children: [
-                                              TextSpan(
-                                                text: '\nWelcome to your comprehensive real estate companion app.'
-                                                    ' Starting here you will find:\n\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.normal,
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                text: '• App Overview\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,color: Colors.blue,
-                                                ),
-                                              ),
-                                               TextSpan(
-                                                text: '• App Benefits\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,color: Colors.blue,
-                                                ),
-                                              ),
-                                               TextSpan(
-                                                text: '• ROI Tool Guidance\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,color: Colors.blue,
-                                                ),
-                                              ),
-                                               TextSpan(
-                                                text: '• Audiences',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,color: Colors.blue,
-                                                ),
-                                              ),
+                                NavigationService().navigateToScreen(
+                                    const RealEstateTopicsPage());
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green[900],
+                                // Set the background color
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                //    padding: const EdgeInsets.all(8.0),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10),
+                                child: Text(
+                                  'Real Estate\nMarket Insights',
+                                  textAlign: TextAlign.center,
+                                  // Center multiline text
+                                  style: TextStyle(
+                                    fontSize: titleFontSize,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ), //Expanded(child: Spacer()),
 
-                                               TextSpan(
-                                                text: '\n\nApp Overview', style: TextStyle(
-                                                fontSize: textFontSize,color: Colors.pink,fontWeight: FontWeight.bold,
-                                              ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nThis '
-                                                    'app is designed to help through the complex and multifaceted world of real estate.'
-                                                    '\n\nThe app is divided into four main sections:'
-                                                    '\n\n1. Financial calculators:\nThe standout feature of this app is the Investment Analyzer. '
-                                                    'The two powerful tools provided in the return on investment (ROI) part of the app '
-                                                    'allow you to input the specifications of a property or development project '
-                                                    'and receive detailed projections on the potential cost benefit of the project. '
-                                                    'Compare different scenarios side-by-side to make the most informed decisions '
-                                                    'for your real estate investments.'
-                                                    '\n\n2. Social Aspect:\nExplore the interplay between individual and community behaviors, and how they shape the dynamics of the real estate market across different city districts and property types.'
-                                                    '\n\n3. Environmental Aspect:\nAnalyze the environmental issues related to real estate construction and the use of existing properties, including energy efficiency, water management, and sustainability.'
-                                                    '\n\n4. Economic Insights:\nDive into the analytical theories behind the effects of different types of homes, development projects, and market activities on property prices and the overall real estate economy.'
-                                                    ,
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  //  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
+                    SizedBox(height: MediaQuery
+                        .of(context)
+                        .size
+                        .height * .2,),
 
-                                               TextSpan(
-                                                text: '\n\n\nBenefits of the App',
-                                                style: TextStyle(
-                                                  fontSize: titleFontSize,
-                                                  color: Colors.pink,
-                                                  fontWeight: FontWeight.bold,
+                    Row(
+                      children: [const Spacer(),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.green[900], //.withValues(alpha: 0.7),
+                            //    shape: BoxShape.circle, // Makes the background circular. Remove if you want a rectangle.
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              //    SizedBox(height:  spacingHeight ),
+                              IconButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        //     title: const Text('Error'),
+                                        content: SingleChildScrollView(
+                                          child: Text.rich(
+                                            TextSpan(
+                                              children: [
+                                                TextSpan(
+                                                  text: '\nWelcome to your comprehensive real estate companion app.'
+                                                      ' Starting here you will find:\n\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight
+                                                        .normal,
+                                                  ),
                                                 ),
-                                              ),
+                                                TextSpan(
+                                                  text: '• App Overview\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: '• App Benefits\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: '• ROI Tool Guidance\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: '• Audiences',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
 
-                                               TextSpan(
-                                                text: '\nFinancial Calculations: Simple '
-                                                    'and Complete ROI Tools\n\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nApp Overview',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    color: Colors.pink,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text:
-                                                    'Simple and Complete ROI Tools are calculators for calculating '
-                                                    'cost and income of investment in a construction project '
-                                                    'beneficial for:\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nThis '
+                                                      'app is designed to help through the complex and multifaceted world of real estate.'
+                                                      '\n\nThe app is divided into four main sections:'
+                                                      '\n\n1. Financial calculators:\nThe standout feature of this app is the Investment Analyzer. '
+                                                      'The two powerful tools provided in the return on investment (ROI) part of the app '
+                                                      'allow you to input the specifications of a property or development project '
+                                                      'and receive detailed projections on the potential cost benefit of the project. '
+                                                      'Compare different scenarios side-by-side to make the most informed decisions '
+                                                      'for your real estate investments.'
+                                                      '\n\n2. Social Aspect:\nExplore the interplay between individual and community behaviors, and how they shape the dynamics of the real estate market across different city districts and property types.'
+                                                      '\n\n3. Environmental Aspect:\nAnalyze the environmental issues related to real estate construction and the use of existing properties, including energy efficiency, water management, and sustainability.'
+                                                      '\n\n4. Economic Insights:\nDive into the analytical theories behind the effects of different types of homes, development projects, and market activities on property prices and the overall real estate economy.'
+                                                  ,
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    //  fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '• Users Lacking Calculation Knowledge: The app simplifies the process for those unfamiliar with assessing costs and profits.\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+
+                                                TextSpan(
+                                                  text: '\n\n\nBenefits of the App',
+                                                  style: TextStyle(
+                                                    fontSize: titleFontSize,
+                                                    color: Colors.pink,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '• Experienced Users: Some may be prone to calculation errors due to oversight or laziness. The app helps minimize these risks with a straightforward interface.\n\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+
+                                                TextSpan(
+                                                  text: '\nFinancial Calculations: Simple '
+                                                      'and Complete ROI Tools\n\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: 'Simple Comparison of Projects\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text:
+                                                  'Simple and Complete ROI Tools are calculators for calculating '
+                                                      'cost and income of investment in a construction project '
+                                                      'beneficial for:\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: 'The app allows users to compare the profitability of allocating a fixed investment across different projects while adjusting for key variables. For instance, choosing a less expensive plot can free up funds for larger or more luxurious projects, while selecting a higher-value district may increase land costs, leaving less for construction. Higher selling prices in prime locations do not always guarantee greater profits. Simply comparing the projects enables users to make strategic decisions.\n\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '• Users Lacking Calculation Knowledge: The app simplifies the process for those unfamiliar with assessing costs and profits.\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: 'Analytical Metrics:\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '• Experienced Users: Some may be prone to calculation errors due to oversight or laziness. The app helps minimize these risks with a straightforward interface.\n\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: 'Apart from income, cost, and profit, the app provides key metrics for better analytics, such as the percentage of total costs attributed to land purchasing and permission fees, which are usually paid at the start of a project. This information is more readily available in the complete calculation results, allowing you to make more strategic decisions by understanding the relative significance of each cost component.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: 'Simple Comparison of Projects\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                              TextSpan(
-                                                text: '\n\nUnderstanding Key Factors Beyond Profitability\n',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: 'The app allows users to compare the profitability of allocating a fixed investment across different projects while adjusting for key variables. For instance, choosing a less expensive plot can free up funds for larger or more luxurious projects, while selecting a higher-value district may increase land costs, leaving less for construction. Higher selling prices in prime locations do not always guarantee greater profits. Simply comparing the projects enables users to make strategic decisions.\n\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
-                                              TextSpan(
-                                                text: 'In The section of real estate market Insights, the app highlights significant factors in real estate beyond '
-                                                    'just project profitability, providing valuable insights that enable informed decision-making.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: 'Analytical Metrics:\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
+                                                TextSpan(
+                                                  text: 'Apart from income, cost, and profit, the app provides key metrics for better analytics, such as the percentage of total costs attributed to land purchasing and permission fees, which are usually paid at the start of a project. This information is more readily available in the complete calculation results, allowing you to make more strategic decisions by understanding the relative significance of each cost component.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: '\n\nUnderstanding Key Factors Beyond Profitability\n',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: 'In The section of real estate market Insights, the app highlights significant factors in real estate beyond '
+                                                      'just project profitability, providing valuable insights that enable informed decision-making.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
+                                                ),
 
 
+                                                TextSpan(
+                                                  text: '\n\nROI Tool Guide',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    color: Colors.pink,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: "\nThe ROI calculators of the app provides you with "
+                                                      "two ways to assess the potential profitability of a construction Investment"
+                                                      ": a simple calculation and a complete calculation.\n\nIn the Simple "
+                                                      "Calculation, you can easily input the key information about the "
+                                                      "construction of a building, including costs and "
+                                                      "sell price per square meter (m²) or square foot (ft²). Based on this data,"
+                                                      " the app will quickly generate the results of the investment analysis, "
+                                                      "including the projected return on investment and other key financial "
+                                                      "metrics.\n\nThis simple mode is great for getting a quick, high-level "
+                                                      "understanding of the potential viability of a real estate construction project"
+                                                      "that uses a uniform pricing model. "
+                                                      "\n\nFor a more comprehensive analysis, you "
+                                                      "can use the Complete Calculation feature. In this mode, you can define "
+                                                      "specific costs and sell prices per m²/ft² for each individual property "
+                                                      "or even different segments of a single property. This allows you to build a "
+                                                      "detailed, multi-faceted investment model and get a more accurate and "
+                                                      "insightful set of results.\n\nThe Complete Calculation by having a "
+                                                      "price differentiation model gives you the "
+                                                      "ability to account for the nuances and complexities of real estate "
+                                                      "development, providing you with a deeper understanding of the potential "
+                                                      "risks and rewards. This can be especially simplify feasibility study of large and "
+                                                      "complex projects.\n\nYou can access the full instructions and guidance "
+                                                      "on how to use tools and interpret the information on each page by tapping the "
+                                                      "question mark icon located on that page. This will "
+                                                      "provide you with step-by-step walkthroughes and examples to ensure you get "
+                                                      "the most out of the app's powerful investment analysis capabilities.",
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: '\n\nAudiences',
+                                                  style: TextStyle(
+                                                    fontSize: titleFontSize,
+                                                    color: Colors.pink,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
 
-                                               TextSpan(
-                                                text: '\n\nROI Tool Guide', style: TextStyle(
-                                                fontSize: textFontSize,color: Colors.pink,fontWeight: FontWeight.bold,
-                                              ),
-                                              ),
-                                               TextSpan(
-                                                text: "\nThe ROI calculators of the app provides you with "
-                                                    "two ways to assess the potential profitability of a construction Investment"
-                                                    ": a simple calculation and a complete calculation.\n\nIn the Simple "
-                                                    "Calculation, you can easily input the key information about the "
-                                                    "construction of a building, including costs and "
-                                                    "sell price per square meter (m²) or square foot (ft²). Based on this data,"
-                                                    " the app will quickly generate the results of the investment analysis, "
-                                                    "including the projected return on investment and other key financial "
-                                                    "metrics.\n\nThis simple mode is great for getting a quick, high-level "
-                                                    "understanding of the potential viability of a real estate construction project"
-                                                    "that uses a uniform pricing model. "
+                                                TextSpan(
+                                                  text: '\nInvestors',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: '\nReal estate investors, '
+                                                      'both institutional and individual, who provide capital for '
+                                                      'property acquisitions, developments and projects.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
+                                                ),
 
-                                                    "\n\nFor a more comprehensive analysis, you "
-                                                    "can use the Complete Calculation feature. In this mode, you can define "
-                                                    "specific costs and sell prices per m²/ft² for each individual property "
-                                                    "or even different segments of a single property. This allows you to build a "
-                                                    "detailed, multi-faceted investment model and get a more accurate and "
-                                                    "insightful set of results.\n\nThe Complete Calculation by having a "
-                                                    "price differentiation model gives you the "
-                                                    "ability to account for the nuances and complexities of real estate "
-                                                    "development, providing you with a deeper understanding of the potential "
-                                                    "risks and rewards. This can be especially simplify feasibility study of large and "
-                                                    "complex projects.\n\nYou can access the full instructions and guidance "
-                                                    "on how to use tools and interpret the information on each page by tapping the "
-                                                    "question mark icon located on that page. This will "
-                                                    "provide you with step-by-step walkthroughes and examples to ensure you get "
-                                                    "the most out of the app's powerful investment analysis capabilities.",
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\n\nDevelopers',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\n\nAudiences', style: TextStyle(
-                                                fontSize: titleFontSize,color: Colors.pink,fontWeight: FontWeight.bold,
-                                              ),
-                                              ),
+                                                TextSpan(
+                                                  text: '\nReal estate developers who acquire land, obtain financing, oversee construction and bring new properties to market.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
+                                                ),
 
-                                               TextSpan(
-                                                text: '\nInvestors',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nBuyers and Sellers',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nReal estate investors, '
-                                                    'both institutional and individual, who provide capital for '
-                                                    'property acquisitions, developments and projects.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nIndividuals and businesses who purchase or sell residential and commercial properties.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nDevelopers',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nReal Estate Investment Analyzers',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nReal estate developers who acquire land, obtain financing, oversee construction and bring new properties to market.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nProfessionals who provide consultation and analysis to investors in the real estate market, helping them make informed decisions about their investments.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nBuyers and Sellers',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nEconomists',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nIndividuals and businesses who purchase or sell residential and commercial properties.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nEconomists who are focused on analyzing and forecasting trends'
+                                                      ' in the real estate market.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nReal Estate Investment Analyzers',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nLenders',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nProfessionals who provide consultation and analysis to investors in the real estate market, helping them make informed decisions about their investments.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nBanks, mortgage companies and other lenders who provide financing for real estate purchases and developments.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nEconomists',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nAttorneys',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nEconomists who are focused on analyzing and forecasting trends'
-                                                    ' in the real estate market.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nLawyers who provide legal counsel on real estate transactions and contracts.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nLenders',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nTitle Companies',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nBanks, mortgage companies and other lenders who provide financing for real estate purchases and developments.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nFirms that research property titles, issue title insurance and facilitate closings.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nAttorneys',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nArchitects and Engineers',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nLawyers who provide legal counsel on real estate transactions and contracts.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nDesign professionals who create plans for new construction and renovations.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nTitle Companies',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nConstruction Companies',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nFirms that research property titles, issue title insurance and facilitate closings.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nContractors who build new properties and renovate existing ones.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nArchitects and Engineers',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nLocal Governments and Policymakers',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nDesign professionals who create plans for new construction and renovations.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nMunicipal authorities who zone land, approve developments and provide public infrastructure.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nConstruction Companies',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nCommunity Groups',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nContractors who build new properties and renovate existing ones.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nNeighborhood associations and advocacy organizations that influence local real estate issues.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
 
-                                               TextSpan(
-                                                text: '\n\nLocal Governments and Policymakers',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                                TextSpan(
+                                                  text: '\n\nReal Estate Brokerages',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nMunicipal authorities who zone land, approve developments and provide public infrastructure.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
+                                                TextSpan(
+                                                  text: '\nBrokerage firms and real estate agents who facilitate transactions between buyers and sellers.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize,
+                                                  ),
                                                 ),
-                                              ),
-
-                                               TextSpan(
-                                                text: '\n\nCommunity Groups',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nNeighborhood associations and advocacy organizations that influence local real estate issues.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                ),
-                                              ),
-
-                                               TextSpan(
-                                                text: '\n\nReal Estate Brokerages',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                               TextSpan(
-                                                text: '\nBrokerage firms and real estate agents who facilitate transactions between buyers and sellers.',
-                                                style: TextStyle(
-                                                  fontSize: textFontSize,
-                                                ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text('OK',   style: TextStyle(
-                                            fontSize: isIpad ? 40 : 28,
-                                            fontWeight: FontWeight.bold,
-                                          ),),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              icon: Icon(Icons.help_center_rounded,size:  iconSizeLarge,
-                                  color: Colors.white),
-                            ),
-                            SizedBox(height: spacingHeight),
-                          /*  IconButton(
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text('OK', style: TextStyle(
+                                              fontSize: isIpadDevice ? 40 : 28,
+                                              fontWeight: FontWeight.bold,
+                                            ),),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                                icon: Icon(Icons.help_center_rounded,
+                                    size: iconSizeLarge,
+                                    color: Colors.white),
+                              ),
+                              SizedBox(height: spacingHeight),
+                              /*  IconButton(
                               icon: Icon(Icons.share, size:  iconSizeLarge, color: Colors.deepOrange),
                               onPressed: shareApp, // Use the shareApp function directly
                               tooltip: 'Share App',
                             ),*/
-                            SizedBox(height:  spacingHeight ),
-                            IconButton(
-                              icon: Icon(Icons.email
-                                  , size:  iconSizeLarge, color: Colors.white), // Close icon
-                              onPressed: () {
-                                launchEmail();
-                              },
-                            ),
+                              SizedBox(height: spacingHeight),
+                              IconButton(
+                                icon: Icon(Icons.email
+                                    , size: iconSizeLarge, color: Colors.white),
+                                // Close icon
+                                onPressed: () {
+                                  launchEmail();
+                                },
+                              ),
 
-                            SizedBox(height:  spacingHeight),
-                          ],
+                              SizedBox(height: spacingHeight),
+                            ],
+                          ),
                         ),
-                      ),
-                     SizedBox(width:  spacingHeight,),
-                    ],
-                  ),
-                ],
+                        SizedBox(width: spacingHeight,),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-    ));
-
+        ));
+  },);
   }
 }
 

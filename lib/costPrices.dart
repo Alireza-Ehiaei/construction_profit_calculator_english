@@ -4412,6 +4412,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                       ),
               
                                         SizedBox(width: spacingHeight * 0.5),
+
                                             Expanded(
                                               flex: 2,
                                               child: ElevatedButton(
@@ -4619,7 +4620,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                             const SizedBox(height: 7 ),
               
                             Visibility(
-                              visible: priceTableVisible ,
+                              visible: priceTableVisible,
                               child: Container(
                                 color: Colors.white60,
                           //      height: screenHeight * 0.4,
@@ -4668,11 +4669,11 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                             fontSize:  textFontSize ,)),
                                         )),
                                         DataColumn(
-                                          label: (priceTableData.isNotEmpty &&
+                                          label: const Text(''),/*(priceTableData.isNotEmpty &&
                                               priceTableData.last.floorNumber == startingFloor &&
                                               numberOfSimilarFloorsSaved > 0)
                                               ?  const Text('')
-                                              :  const Text(''),
+                                              :  const Text(''),*/
                                         ),],
                                       rows: [
                                         ...priceTableData.map((row) => DataRow(
@@ -4928,7 +4929,6 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
               
                               Visibility(
                                 visible: (priceTableVisible),
-              
                                 child: IconButton(
                                   icon:  Icon(Icons.arrow_forward_ios,
                                       color: Colors.deepPurple, size: iconSizeLarge),
@@ -5083,7 +5083,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                   text: '\n\n\nBrief Introduction:\nIn this app, each construction project includes one '
                                                       'or more cost-price plans (CPPs). Each CPP encompasses one floor or several '
                                                       'contiguous floors, and every floor contains one or more '
-                                                      'cost-price segments (CPSs).\n',
+                                                      'cost-price segments (CPSs). Floors in each CPP are same in terms of number of CPSs and the area of the associated segments.\n',
                                                   style: TextStyle(
                                                       fontSize: textFontSize * 1.1,
                                                       color: Colors.deepPurple, fontWeight: FontWeight.bold
