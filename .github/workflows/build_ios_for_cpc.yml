@@ -1,20 +1,24 @@
 name: Build iOS IPA
 on:
   workflow_dispatch:
+
 jobs:
   build-ipa:
-    runs-on: macos-15
+    runs-on: macos-14
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.3'
           channel: 'stable'
           architecture: arm64
+
       - name: Install dependencies
         run: flutter pub get
+
       - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -23,6 +27,7 @@ jobs:
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
+
       - name: Import Apple certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
@@ -32,6 +37,7 @@ jobs:
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
       - name: Install provisioning profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
@@ -39,11 +45,13 @@ jobs:
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+
       - name: Install CocoaPods dependencies
         run: |
           cd ios
           pod install --repo-update
           cd ..
+
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -52,21 +60,25 @@ jobs:
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
             --release \
-            --target-platform ios=17.0 \
+            --target-platform ios=12.0 \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
             --verbose > build_ipa_log.txt 2>&1
+          cat build_ipa_log.txt
+
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: ipa-build
           path: build/ios/ipa/*.ipa
+
       - name: Upload Build Log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-ipa-log
           path: build_ipa_log.txt
+
       - name: Clean up keychain
         if: always()
         run: security delete-keychain build.keychain
