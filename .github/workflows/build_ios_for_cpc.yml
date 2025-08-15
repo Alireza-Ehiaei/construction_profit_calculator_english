@@ -3,11 +3,17 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+<<<<<<< HEAD
 
 env:
   FLUTTER_VERSION: '3.29.3'
   IOS_DEPLOYMENT_TARGET: '13.0'
 
+=======
+env:
+  FLUTTER_VERSION: '3.29.3'
+  IOS_DEPLOYMENT_TARGET: '14.0'
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
 jobs:
   build-ipa:
     runs-on: macos-14
@@ -21,45 +27,70 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           architecture: arm64
+<<<<<<< HEAD
 
       - name: Set iOS deployment target
         run: |
           # 1. Update Podfile (handles both new and existing)
+=======
+      - name: Set iOS deployment target
+        run: |
+          # Update Podfile
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
           if [ -f ios/Podfile ]; then
             sed -i '' "s/platform :ios.*/platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'/g" ios/Podfile ||
             echo "platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'" >> ios/Podfile
           else
             echo "platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'" > ios/Podfile
           fi
+<<<<<<< HEAD
 
           # 2. Update Info.plist
           plutil -replace MinimumOSVersion -string "${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner/Info.plist
 
           # 3. Update Xcode project (foolproof method)
+=======
+          # Update Info.plist
+          plutil -replace MinimumOSVersion -string "${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner/Info.plist
+          # Update Xcode project
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
           TARGET_KEY=$(xcodebuild -project ios/Runner.xcodeproj -list | awk '/Targets:/,/^$/' | grep Runner | head -1 | tr -d ' ')
           if [ -n "$TARGET_KEY" ]; then
             /usr/libexec/PlistBuddy -c "Set :objects:$TARGET_KEY:buildSettings:IPHONEOS_DEPLOYMENT_TARGET ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj 2>/dev/null ||
             /usr/libexec/PlistBuddy -c "Add :objects:$TARGET_KEY:buildSettings:IPHONEOS_DEPLOYMENT_TARGET string ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj
           fi
+<<<<<<< HEAD
 
           # 4. Verification
+=======
+          # Verification
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
           echo "=== Deployment Targets ==="
           grep "platform :ios" ios/Podfile
           plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
           xcodebuild -project ios/Runner.xcodeproj -showBuildSettings | grep IPHONEOS_DEPLOYMENT_TARGET
+<<<<<<< HEAD
 
+=======
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
       - name: Clean workspace
         run: |
           flutter clean
           rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+<<<<<<< HEAD
 
+=======
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
       - name: Install dependencies
         run: |
           flutter pub get
           cd ios
           pod install --repo-update
           cd ..
+<<<<<<< HEAD
 
+=======
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
       - name: Setup code signing
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -67,24 +98,37 @@ jobs:
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
+<<<<<<< HEAD
           # Keychain setup
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
 
           # Import certificate
+=======
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
           echo "$CERTIFICATE_CONTENT" | base64 --decode > cert.p12
           security import cert.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           rm -f cert.p12
+<<<<<<< HEAD
 
           # Install provisioning profile
+=======
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
           echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
           UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
           rm -f profile.mobileprovision
+<<<<<<< HEAD
 
+=======
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -96,17 +140,35 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
+<<<<<<< HEAD
             --verbose
 
+=======
+            --verbose > build_ipa_log.txt 2>&1
+          cat build_ipa_log.txt
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: build/ios/ipa/*.ipa
           retention-days: 7
+<<<<<<< HEAD
 
+=======
+      - name: Upload Build Log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-ipa-log
+          path: build_ipa_log.txt
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
       - name: Cleanup
         if: always()
         run: |
           security delete-keychain build.keychain || true
+<<<<<<< HEAD
           rm -rf ~/Library/Developer/Xcode/DerivedData
+=======
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+>>>>>>> 999cac7 (Update iOS deployment target to 14.0 and Firebase dependencies)
