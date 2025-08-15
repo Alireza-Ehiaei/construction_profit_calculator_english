@@ -11,18 +11,20 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Install iOS 17.4 Simulator
+      - name: Set up iOS 17.4 environment
         run: |
           sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
           sudo xcodebuild -downloadPlatform iOS
 
-      - name: Cache Flutter pub packages
+      - name: Cache Flutter dependencies
         uses: actions/cache@v3
         with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          path: |
+            ~/.pub-cache
+            ios/Pods
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pub-
+            ${{ runner.os }}-flutter-
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -32,37 +34,40 @@ jobs:
           architecture: arm64
 
       - name: Install dependencies
-        run: flutter pub get
-
-      - name: Clean Xcode DerivedData
-        run: rm -rf ~/Library/Developer/Xcode/DerivedData
-
-      - name: Install CocoaPods
         run: |
-          sudo gem install cocoapods
+          flutter pub get
           cd ios
-          pod cache clean --all
           pod install --repo-update
           cd ..
 
-      - name: Create temporary keychain
+      - name: Clean Xcode artifacts
+        run: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ios/build
+
+      - name: Setup signing keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          # Cleanup any existing keychain first
+          security delete-keychain build.keychain || true
+          
+          # Create and configure new keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
+          security list-keychains -s build.keychain
 
-      - name: Import Apple certificate
+      - name: Import signing certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          rm -f certificate.p12
 
       - name: Install provisioning profile
         env:
@@ -70,7 +75,9 @@ jobs:
         run: |
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+          rm -f profile.mobileprovision
 
       - name: Build IPA
         run: |
@@ -78,18 +85,22 @@ jobs:
           export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
+          
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --target-platform=ios
+            --target-platform=ios \
+            --verbose
 
-      - name: Upload IPA as an artifact
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ipa-build
+          name: app-release
           path: build/ios/ipa/*.ipa
+          retention-days: 7
 
-      - name: Clean up keychain
+      - name: Cleanup keychain
         if: always()
-        run: security delete-keychain build.keychain
+        run: |
+          security delete-keychain build.keychain || echo "Keychain already deleted"
