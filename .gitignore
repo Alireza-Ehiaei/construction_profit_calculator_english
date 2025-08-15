@@ -161,3 +161,4 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 >>>>>>> 87eb951 (Initial commit)
+build_ipa_log.txt 
