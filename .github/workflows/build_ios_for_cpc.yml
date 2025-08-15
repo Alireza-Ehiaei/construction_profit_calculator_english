@@ -10,7 +10,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'
+          flutter-version: '3.24.0' # Downgrade Flutter to match Firebase compatibility
           channel: 'stable'
           architecture: arm64
       - name: Install dependencies
@@ -21,7 +21,7 @@ jobs:
         run: |
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security unlock-keychain -p "$KEYCHAN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
       - name: Import Apple certificate
         env:
