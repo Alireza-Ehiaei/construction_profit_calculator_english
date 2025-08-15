@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 jobs:
   build-ipa:
-    runs-on: macos-15
+    runs-on: macos-latest  # Use macos-latest for newest Xcode and iOS SDK
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,7 +22,7 @@ jobs:
           pod install --repo-update
           cd ..
 
-      - name: Configure iOS deployment target
+      - name: Configure iOS deployment target (set to 17.0 to match supported SDK)
         run: |
           plutil -replace MinimumOSVersion -string "17.0" ios/Runner/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(date +%Y%m%d.%H%M)" ios/Runner/Info.plist
