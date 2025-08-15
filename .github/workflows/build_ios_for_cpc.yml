@@ -11,6 +11,11 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Install iOS 17.4 Simulator
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          sudo xcodebuild -downloadPlatform iOS
+
       - name: Cache Flutter pub packages
         uses: actions/cache@v3
         with:
@@ -19,14 +24,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
-      - name: Delete existing Flutter and set up fresh Flutter
-        run: |
-          rm -rf $HOME/flutter
-          git clone https://github.com/flutter/flutter.git --branch stable --depth 1 $HOME/flutter
-          export PATH="$HOME/flutter/bin:$PATH"
-          flutter --version
-
-      - name: Set up Flutter environment variable
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.3'
@@ -83,7 +81,8 @@ jobs:
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons
+            --no-tree-shake-icons \
+            --target-platform=ios
 
       - name: Upload IPA as an artifact
         uses: actions/upload-artifact@v4
