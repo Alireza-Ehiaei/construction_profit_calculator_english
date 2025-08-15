@@ -1,9 +1,10 @@
 name: Build iOS IPA
 on:
   workflow_dispatch:
+
 jobs:
   build-ipa:
-    runs-on: macos-latest  # Use macos-latest for newest Xcode and iOS SDK
+    runs-on: macos-15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,38 +17,40 @@ jobs:
           architecture: arm64
 
       - name: Install dependencies
-        run: |
-          flutter pub get
-          cd ios
-          pod install --repo-update
-          cd ..
+        run: flutter pub get
 
-      - name: Configure iOS deployment target (set to 17.0 to match supported SDK)
-        run: |
-          plutil -replace MinimumOSVersion -string "17.0" ios/Runner/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(date +%Y%m%d.%H%M)" ios/Runner/Info.plist
-
-      - name: Setup signing
+      - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
-          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
           
+      - name: Import Apple certificate
+        env:
+          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          rm -f certificate.p12
           
+      - name: Install provisioning profile
+        env:
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+        run: |
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
-          rm -f profile.mobileprovision
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+      
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
 
       - name: Build IPA
         run: |
@@ -55,22 +58,17 @@ jobs:
           export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
-          
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons \
-            --dart-define=FLUTTER_BUILD_MODE=release
+            --no-tree-shake-icons
 
-      - name: Upload IPA artifact
+      - name: Upload IPA as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
+          name: ipa-build
           path: build/ios/ipa/*.ipa
-          retention-days: 7
 
-      - name: Cleanup
+      - name: Clean up keychain
         if: always()
-        run: |
-          security delete-keychain build.keychain || true
-          rm -rf ~/Library/Developer/Xcode/DerivedData
+        run: security delete-keychain build.keychain
