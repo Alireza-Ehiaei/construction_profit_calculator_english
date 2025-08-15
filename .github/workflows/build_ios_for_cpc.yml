@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  FLUTTER_VERSION: '3.29.3'  # Required for Firebase 12.0.0+
+  FLUTTER_VERSION: '3.29.3'
   IOS_DEPLOYMENT_TARGET: '13.0'
 
 jobs:
@@ -24,28 +24,29 @@ jobs:
 
       - name: Set iOS deployment target
         run: |
-          # Backup original Podfile
-          cp ios/Podfile ios/Podfile.bak
-          
-          # Create new Podfile with correct platform
-          {
-            echo "platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'";
-            echo "use_frameworks!";
-            echo "";
-            grep -v -e "platform :ios" -e "use_frameworks" ios/Podfile.bak;
-          } > ios/Podfile
+          # 1. Update Podfile (handles both new and existing)
+          if [ -f ios/Podfile ]; then
+            sed -i '' "s/platform :ios.*/platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'/g" ios/Podfile ||
+            echo "platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'" >> ios/Podfile
+          else
+            echo "platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'" > ios/Podfile
+          fi
 
-          # Update Info.plist
+          # 2. Update Info.plist
           plutil -replace MinimumOSVersion -string "${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner/Info.plist
 
-          # Update Xcode project settings
-          TARGET_ID=$(xcodebuild -project ios/Runner.xcodeproj -list | awk '/Targets:/,/Schemes:/' | grep Runner | xargs | cut -d' ' -f1)
-          if [ -n "$TARGET_ID" ]; then
-            /usr/libexec/PlistBuddy -c "Set :objects:$TARGET_ID:buildSettings:IPHONEOS_DEPLOYMENT_TARGET ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj
-          else
-            echo "Using default target ID"
-            /usr/libexec/PlistBuddy -c "Add :objects:8F6F2D1E24C6A1F000B309A7:buildSettings:IPHONEOS_DEPLOYMENT_TARGET string ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj || true
+          # 3. Update Xcode project (foolproof method)
+          TARGET_KEY=$(xcodebuild -project ios/Runner.xcodeproj -list | awk '/Targets:/,/^$/' | grep Runner | head -1 | tr -d ' ')
+          if [ -n "$TARGET_KEY" ]; then
+            /usr/libexec/PlistBuddy -c "Set :objects:$TARGET_KEY:buildSettings:IPHONEOS_DEPLOYMENT_TARGET ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj 2>/dev/null ||
+            /usr/libexec/PlistBuddy -c "Add :objects:$TARGET_KEY:buildSettings:IPHONEOS_DEPLOYMENT_TARGET string ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj
           fi
+
+          # 4. Verification
+          echo "=== Deployment Targets ==="
+          grep "platform :ios" ios/Podfile
+          plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
+          xcodebuild -project ios/Runner.xcodeproj -showBuildSettings | grep IPHONEOS_DEPLOYMENT_TARGET
 
       - name: Clean workspace
         run: |
@@ -56,37 +57,32 @@ jobs:
         run: |
           flutter pub get
           cd ios
-          pod repo update
           pod install --repo-update
           cd ..
 
-      - name: Create temporary keychain
+      - name: Setup code signing
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          CERTIFICATE_CONTENT: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
+          # Keychain setup
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
 
-      - name: Import signing certificate
-        env:
-          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
-        run: |
-          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
-          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
+          # Import certificate
+          echo "$CERTIFICATE_CONTENT" | base64 --decode > cert.p12
+          security import cert.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          rm -f certificate.p12
+          rm -f cert.p12
 
-      - name: Install provisioning profile
-        env:
-          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
-        run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
+          # Install provisioning profile
+          echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
           rm -f profile.mobileprovision
 
       - name: Build IPA
@@ -100,17 +96,16 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --dart-define=FLUTTER_BUILD_MODE=release \
             --verbose
 
-      - name: Upload IPA artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: build/ios/ipa/*.ipa
           retention-days: 7
 
-      - name: Clean up
+      - name: Cleanup
         if: always()
         run: |
           security delete-keychain build.keychain || true
