@@ -23,7 +23,7 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
     namespace "com.tec4dev.construction_profit_calculator_english"
-    compileSdkVersion 34
+    compileSdkVersion 35
     ndkVersion "28.0.12916984"
 
     compileOptions {
@@ -38,7 +38,7 @@ android {
     defaultConfig {
         applicationId "com.tec4dev.construction_profit_calculator_english"
         minSdkVersion 21
-        targetSdkVersion 33
+        targetSdkVersion 35
         versionCode 18 // or any next increment
         versionName "2.5"
         multiDexEnabled true

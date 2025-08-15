@@ -1399,9 +1399,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                     subscriptionsProvider
                                                                         .hasCompletePlusSimpleCalculationProductId) {*/
                                                                   // Navigate directly
-                                                                  projectData
-                                                                      .setProjectName(
-                                                                      "_oozz");
+                                                                  projectData.setProjectName("_oozz");
                                                                   NavigationService()
                                                                       .navigateToScreen(
                                                                     const LandInputs(

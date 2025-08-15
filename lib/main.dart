@@ -3,6 +3,7 @@ import 'package:construction_profit_calculator_english/simple_calc_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:construction_profit_calculator_english/social.dart';
+import 'package:flutter/services.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,6 +17,9 @@ import 'navigation_service.dart';
 
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
   final projectData = ProjectData();
   final subscriptionsProvider = SubscriptionsProvider(projectData);
 

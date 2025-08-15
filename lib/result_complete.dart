@@ -1662,27 +1662,29 @@ class _ResultPage1State extends State<ResultPage1> {
                                                 context: context,
                                                 builder: (BuildContext context) {
                                                   return AlertDialog(
-                                                    title:  const Text(''),
-                                                    content:  Text('The project isn\'t saved. For saving, press '
-                                                        'the save icon and set a name for the project.',
+                                                    title: const Text(''),
+                                                    content: Text(
+                                                      'The project isn\'t saved. For saving, press the save icon and set a name for the project.',
                                                       style: TextStyle(
                                                         color: Colors.black54,
                                                         fontSize: textFontSize,
                                                         fontWeight: FontWeight.bold,
-                                                      ),),
+                                                      ),
+                                                    ),
                                                     actions: [
                                                       TextButton(
                                                         style: TextButton.styleFrom(
-                                                          backgroundColor: Colors.red, // Background color for No button
+                                                          backgroundColor: Colors.red, // Background color for Cancel button
                                                           padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
                                                         ),
                                                         onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the dialog first
+                                                          // Then optionally navigate if needed
                                                           NavigationService().navigateToScreen(
                                                             const LandInputs(givenProjectName: '_oozz'),
                                                           );
-                                                          Navigator.of(context).pop();
                                                         },
-                                                        child:  Text(
+                                                        child: Text(
                                                           'Cancel',
                                                           style: TextStyle(
                                                             fontWeight: FontWeight.bold,
@@ -1693,9 +1695,9 @@ class _ResultPage1State extends State<ResultPage1> {
                                                       ),
                                                       TextButton(
                                                         onPressed: () {
-                                                          Navigator.of(context).pop();
+                                                          Navigator.of(context).pop(); // Just close dialog on OK
                                                         },
-                                                        child:  Text(
+                                                        child: Text(
                                                           'OK',
                                                           style: TextStyle(
                                                             color: Colors.red,
@@ -1704,9 +1706,9 @@ class _ResultPage1State extends State<ResultPage1> {
                                                           ),
                                                         ),
                                                       ),
-                    
                                                     ],
                                                   );
+
                                                 },
                                               );
                                             }
