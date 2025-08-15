@@ -1,4 +1,4 @@
-name: Build iOS IPA1
+name: Build iOS IPA
 on:
   workflow_dispatch:
 jobs:
@@ -42,7 +42,7 @@ jobs:
       - name: Install CocoaPods dependencies
         run: |
           cd ios
-          rm -f Podfile.lock
+          rm -rf Pods Podfile.lock
           pod install --repo-update
           cd ..
       - name: Build IPA
