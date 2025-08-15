@@ -8,6 +8,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Show Xcode version
+        run: xcodebuild -version
+
       - name: Cache Flutter pub packages
         uses: actions/cache@v3
         with:
@@ -32,6 +35,17 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Clean Xcode DerivedData
+        run: rm -rf ~/Library/Developer/Xcode/DerivedData
+
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods
+          cd ios
+          pod cache clean --all
+          pod install --repo-update
+          cd ..
 
       - name: Create temporary keychain
         env:
@@ -59,13 +73,6 @@ jobs:
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
-
-      - name: Install CocoaPods dependencies
-        run: |
-          sudo gem install cocoapods
-          cd ios
-          pod install --repo-update
-          cd ..
 
       - name: Build IPA
         run: |
