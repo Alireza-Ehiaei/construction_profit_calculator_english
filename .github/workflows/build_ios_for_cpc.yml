@@ -20,22 +20,18 @@ jobs:
           architecture: arm64
       - name: Set iOS deployment target
         run: |
-          # Update Podfile
           if [ -f ios/Podfile ]; then
             sed -i '' "s/platform :ios.*/platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'/g" ios/Podfile ||
             echo "platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'" >> ios/Podfile
           else
             echo "platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'" > ios/Podfile
           fi
-          # Update Info.plist
           plutil -replace MinimumOSVersion -string "${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner/Info.plist
-          # Update Xcode project
           TARGET_KEY=$(xcodebuild -project ios/Runner.xcodeproj -list | awk '/Targets:/,/^$/' | grep Runner | head -1 | tr -d ' ')
           if [ -n "$TARGET_KEY" ]; then
             /usr/libexec/PlistBuddy -c "Set :objects:$TARGET_KEY:buildSettings:IPHONEOS_DEPLOYMENT_TARGET ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj 2>/dev/null ||
             /usr/libexec/PlistBuddy -c "Add :objects:$TARGET_KEY:buildSettings:IPHONEOS_DEPLOYMENT_TARGET string ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj
           fi
-          # Verification
           echo "=== Deployment Targets ==="
           grep "platform :ios" ios/Podfile
           plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
@@ -81,7 +77,7 @@ jobs:
             --no-tree-shake-icons \
             --verbose > build_ipa_log.txt 2>&1
           cat build_ipa_log.txt
-      - name: Upload artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: app-release
