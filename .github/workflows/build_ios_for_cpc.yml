@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
 
+env:
+  FLUTTER_VERSION: '3.29.3'  # Required for Firebase 12.0.0+
+  IOS_DEPLOYMENT_TARGET: '13.0'
+
 jobs:
   build-ipa:
     runs-on: macos-14
-    env:
-      FLUTTER_VERSION: '3.29.3'  # Required for Firebase 12.0.0+
-      IOS_DEPLOYMENT_TARGET: '13.0'
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,14 +24,33 @@ jobs:
 
       - name: Set iOS deployment target
         run: |
-          # Update Podfile
-          sed -i '' "1s/^/platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'\n\n/" ios/Podfile
+          # Backup original Podfile
+          cp ios/Podfile ios/Podfile.bak
           
+          # Create new Podfile with correct platform
+          {
+            echo "platform :ios, '${{ env.IOS_DEPLOYMENT_TARGET }}'";
+            echo "use_frameworks!";
+            echo "";
+            grep -v -e "platform :ios" -e "use_frameworks" ios/Podfile.bak;
+          } > ios/Podfile
+
           # Update Info.plist
           plutil -replace MinimumOSVersion -string "${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner/Info.plist
-          
-          # Update Xcode project (optional)
-          /usr/libexec/PlistBuddy -c "Set :objects:8F6F2D1E24C6A1F000B309A7:buildSettings:IPHONEOS_DEPLOYMENT_TARGET ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj
+
+          # Update Xcode project settings
+          TARGET_ID=$(xcodebuild -project ios/Runner.xcodeproj -list | awk '/Targets:/,/Schemes:/' | grep Runner | xargs | cut -d' ' -f1)
+          if [ -n "$TARGET_ID" ]; then
+            /usr/libexec/PlistBuddy -c "Set :objects:$TARGET_ID:buildSettings:IPHONEOS_DEPLOYMENT_TARGET ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj
+          else
+            echo "Using default target ID"
+            /usr/libexec/PlistBuddy -c "Add :objects:8F6F2D1E24C6A1F000B309A7:buildSettings:IPHONEOS_DEPLOYMENT_TARGET string ${{ env.IOS_DEPLOYMENT_TARGET }}" ios/Runner.xcodeproj/project.pbxproj || true
+          fi
+
+      - name: Clean workspace
+        run: |
+          flutter clean
+          rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
 
       - name: Install dependencies
         run: |
@@ -50,7 +69,7 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
 
-      - name: Import Apple certificate
+      - name: Import signing certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
@@ -58,7 +77,7 @@ jobs:
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          rm certificate.p12
+          rm -f certificate.p12
 
       - name: Install provisioning profile
         env:
@@ -68,7 +87,7 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
-          rm profile.mobileprovision
+          rm -f profile.mobileprovision
 
       - name: Build IPA
         run: |
@@ -91,6 +110,8 @@ jobs:
           path: build/ios/ipa/*.ipa
           retention-days: 7
 
-      - name: Clean up keychain
+      - name: Clean up
         if: always()
-        run: security delete-keychain build.keychain || true
+        run: |
+          security delete-keychain build.keychain || true
+          rm -rf ~/Library/Developer/Xcode/DerivedData
