@@ -1,7 +1,6 @@
 name: Build iOS IPA
 on:
   workflow_dispatch:
-
 jobs:
   build-ipa:
     runs-on: macos-15
@@ -9,7 +8,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Cache Flutter pub packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Delete existing Flutter and set up fresh Flutter
+        run: |
+          rm -rf $HOME/flutter
+          git clone https://github.com/flutter/flutter.git --branch stable --depth 1 $HOME/flutter
+          export PATH="$HOME/flutter/bin:$PATH"
+          flutter --version
+
+      - name: Set up Flutter environment variable
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.3'
@@ -27,7 +41,7 @@ jobs:
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
-          
+
       - name: Import Apple certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
@@ -37,7 +51,7 @@ jobs:
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          
+
       - name: Install provisioning profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
@@ -45,9 +59,10 @@ jobs:
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
-      
+
       - name: Install CocoaPods dependencies
         run: |
+          sudo gem install cocoapods
           cd ios
           pod install --repo-update
           cd ..
