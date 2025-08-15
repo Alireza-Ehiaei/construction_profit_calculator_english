@@ -3,95 +3,87 @@ on:
   workflow_dispatch:
 jobs:
   build-ipa:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show Xcode version and developer directory
+      - name: Set up Xcode 15.4 environment
         run: |
-          xcodebuild -version
-          xcode-select -p
-          ls -l /Applications/
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          sudo xcodebuild -downloadPlatform iOS -version 17.4
 
-      - name: Reset xcode-select to default
-        run: sudo xcode-select --reset
-
-      - name: Cache Flutter pub packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Setup Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.3'
           channel: 'stable'
           architecture: arm64
 
-      - name: Clean Flutter and get dependencies
+      - name: Install dependencies
         run: |
-          flutter clean
           flutter pub get
-
-      - name: Clean Xcode DerivedData
-        run: rm -rf ~/Library/Developer/Xcode/DerivedData
-
-      - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods
           cd ios
-          pod cache clean --all
           pod install --repo-update
           cd ..
 
-      - name: Create temporary keychain
+      - name: Configure iOS deployment target
+        run: |
+          plutil -replace MinimumOSVersion -string "17.0" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(date +%Y%m%d.%H%M)" ios/Runner/Info.plist
+
+      - name: Setup signing
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
+          # Keychain setup
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-
-      - name: Import Apple certificate
-        env:
-          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
+          
+          # Certificate import
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-
-      - name: Install provisioning profile
-        env:
-          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
-        run: |
+          rm -f certificate.p12
+          
+          # Provisioning profile
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+          rm -f profile.mobileprovision
 
-      - name: Build IPA
+      - name: Build IPA (explicit iOS 17 target)
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
           export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
+          
+          xcodebuild -version
+          xcrun xcodebuild -list
+          
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons
+            --no-tree-shake-icons \
+            --dart-define=FLUTTER_BUILD_MODE=release \
+            --ios-version=17.0 \
+            --target-platform=ios
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ipa-build
+          name: app-release
           path: build/ios/ipa/*.ipa
+          retention-days: 7
 
-      - name: Clean up keychain
+      - name: Cleanup
         if: always()
-        run: security delete-keychain build.keychain
+        run: |
+          security delete-keychain build.keychain || true
+          rm -rf ~/Library/Developer/Xcode/DerivedData
