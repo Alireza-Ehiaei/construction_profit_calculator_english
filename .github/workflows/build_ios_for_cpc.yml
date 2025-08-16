@@ -5,11 +5,7 @@ on:
     branches: [main]
 env:
   FLUTTER_VERSION: '3.29.3'
-<<<<<<< HEAD
-  IOS_DEPLOYMENT_TARGET: '15.0'
-=======
   IOS_DEPLOYMENT_TARGET: '13.0'
->>>>>>> 25cd33d (Downgrade in_app_purchase to 3.1.0 and set iOS deployment target to 13.0)
 jobs:
   build-ipa:
     runs-on: macos-14
