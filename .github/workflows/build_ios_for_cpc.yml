@@ -5,7 +5,7 @@ on:
     branches: [main]
 env:
   FLUTTER_VERSION: '3.29.3'
-  IOS_DEPLOYMENT_TARGET: '13.0'
+  IOS_DEPLOYMENT_TARGET: '12.0'
 jobs:
   build-ipa:
     runs-on: macos-14
@@ -39,13 +39,17 @@ jobs:
       - name: Clean workspace
         run: |
           flutter clean
-          rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+          flutter pub cache clean --force
+          flutter pub get
       - name: Install dependencies
         run: |
           flutter pub get
           cd ios
           pod install --repo-update
           cd ..
+          echo "=== Dependency Versions ==="
+          cat pubspec.lock | grep -A 10 "in_app_purchase:"
+          cat pubspec.lock | grep -A 10 "in_app_purchase_storekit:"
       - name: Setup code signing
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -66,6 +70,8 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
           rm -f profile.mobileprovision
+          echo "=== Code Signing Setup ==="
+          security find-identity -v -p codesigning
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"

@@ -30,33 +30,25 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^3.6.0
-  firebase_analytics: ^11.3.0
+  firebase_core: ^3.4.0  # Downgraded for stability
+  firebase_analytics: ^11.2.0  # Downgraded for compatibility
   flutter_launcher_icons: ^0.14.4
-  share_plus: ^11.1.0
+  share_plus: ^10.0.0  # Downgraded to avoid conflicts
   provider: ^6.1.1
   path_provider: ^2.1.5
   path: ^1.9.0
   sqflite: ^2.3.2
-  # sqflite: ^2.0.0
   intl: ^0.20.2
   draggable_scrollbar: ^0.1.0
   url_launcher: ^6.3.0
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  in_app_purchase: 3.2.0
-  # google_mobile_ads: ^5.2.0
-  webview_flutter: ^4.10.0
-  #webview_flutter: ^4.9.0
+  in_app_purchase: 3.0.8
+  webview_flutter: ^4.8.0  # Downgraded to avoid conflicts
   webview_flutter_android: ^4.3.1
   flutter_native_splash: ^2.4.0
- # webview_flutter_android: ^3.15.0
 
- # in_app_purchase_android: ^0.3.6+11
-
-
+dependency_overrides:
+  in_app_purchase_storekit: 0.3.6+11
 
 dev_dependencies:
   flutter_test:
