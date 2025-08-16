@@ -40,16 +40,20 @@ jobs:
         run: |
           flutter clean
           flutter pub cache clean --force
+          rm -rf ios/Pods ios/Podfile.lock ~/Library/Caches/CocoaPods
           flutter pub get
       - name: Install dependencies
         run: |
           flutter pub get
           cd ios
+          pod deintegrate
+          pod cache clean --all
           pod install --repo-update
           cd ..
           echo "=== Dependency Versions ==="
           cat pubspec.lock | grep -A 10 "in_app_purchase:"
           cat pubspec.lock | grep -A 10 "in_app_purchase_storekit:"
+          cat ios/Podfile.lock | grep -A 10 "Firebase"
       - name: Setup code signing
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -99,4 +103,4 @@ jobs:
         if: always()
         run: |
           security delete-keychain build.keychain || true
-          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Developer/Xcode/DerivedData ~/Library/Caches/CocoaPods

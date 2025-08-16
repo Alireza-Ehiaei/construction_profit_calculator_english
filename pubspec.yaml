@@ -30,8 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^3.4.0  # Downgraded for stability
-  firebase_analytics: ^11.2.0  # Downgraded for compatibility
+  firebase_core: 3.4.0  # Pinned to match Firebase SDK 10.8.0
+  firebase_analytics: 11.2.0  # Pinned to match Firebase SDK 10.8.0
   flutter_launcher_icons: ^0.14.4
   share_plus: ^10.0.0  # Downgraded to avoid conflicts
   provider: ^6.1.1
@@ -47,8 +47,6 @@ dependencies:
   webview_flutter_android: ^4.3.1
   flutter_native_splash: ^2.4.0
 
-dependency_overrides:
-  in_app_purchase_storekit: 0.3.6+11
 
 dev_dependencies:
   flutter_test:
