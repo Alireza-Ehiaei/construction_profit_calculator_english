@@ -30,8 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: 3.4.0  # Pinned to match Firebase SDK 10.8.0
-  firebase_analytics: 11.2.0  # Pinned to match Firebase SDK 10.8.0
+  firebase_core: 3.3.0  # Downgraded to ensure Firebase SDK 10.8.0
+  firebase_analytics: 11.0.1  # Downgraded to match Firebase SDK 10.8.0
   flutter_launcher_icons: ^0.14.4
   share_plus: ^10.0.0  # Downgraded to avoid conflicts
   provider: ^6.1.1
