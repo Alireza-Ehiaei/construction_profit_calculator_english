@@ -1,17 +1,14 @@
 import 'dart:math';
 import 'package:construction_profit_calculator_english/simple_calc_page.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:flutter/material.dart';
 import 'package:construction_profit_calculator_english/social.dart';
 import 'package:flutter/services.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'all_projects.dart';
 import 'package:provider/provider.dart';
 import 'billing_provider.dart';
-import 'database.dart';
-import 'land.dart';
 import 'navigation_service.dart';
 // import 'routes.dart';
 
