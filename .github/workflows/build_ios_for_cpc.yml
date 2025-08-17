@@ -14,14 +14,15 @@ jobs:
           channel: 'stable'
           architecture: arm64
       - name: Install dependencies
+        run: flutter pub get --verbose > pub_get_log.txt 2>&1
+      - name: Install CocoaPods dependencies
         run: |
-          flutter pub get --verbose > pub_get_log.txt 2>&1
           cd ios
           pod deintegrate
           pod cache clean --all
-          pod install --repo-update --verbose > pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
+          touch pod_install_log.txt
+          pod install --repo-update --verbose >> pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
           cd ..
-          cat pub_get_log.txt
           cat pod_install_log.txt
       - name: Install iOS runtime
         run: |
@@ -82,7 +83,7 @@ jobs:
             pub_get_log.txt
             pod_install_log.txt
             build_ipa_log.txt
-      - name: Clean up keychain
+      - name: Clean up keychain with logs
         if: always()
         run: |
           echo "Listing all keychains:"
