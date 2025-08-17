@@ -225,13 +225,13 @@ packages:
     source: hosted
     version: "1.4.0"
   in_app_purchase_storekit:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: in_app_purchase_storekit
-      sha256: aedbeea5beae10af3e5c380b65049842715b2bb014983e2a48b9006473f33cd9
+      sha256: "29526f5ce85bd908b4cacdadb2e8ef299bccbb516b90d2881805343f868502ab"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.4"
+    version: "0.3.7"
   intl:
     dependency: "direct main"
     description:
