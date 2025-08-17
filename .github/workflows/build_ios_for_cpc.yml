@@ -18,20 +18,25 @@ jobs:
       - name: Setup Ruby and CocoaPods
         run: |
           echo "Installing Ruby and CocoaPods..."
-          sudo gem install activesupport -v 6.1.7.6
-          sudo gem install cocoapods -v 1.12.1
+          sudo gem install activesupport -v 7.0.8
+          sudo gem install cocoapods -v 1.15.2
           pod setup
           export LANG=en_US.UTF-8
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
       - name: Install CocoaPods dependencies
         run: |
           cd ios
-          pod deintegrate || true
-          pod cache clean --all || true
-          touch pod_install_log.txt
-          pod install --repo-update --verbose >> pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
+          pod --version
+          pod deintegrate
+          pod cache clean --all
+          pod install --repo-update --verbose | tee pod_install_log.txt
           cd ..
-          cat pod_install_log.txt
+          if [ -f ios/pod_install_log.txt ]; then
+            cat ios/pod_install_log.txt
+          else
+            echo "No pod_install_log.txt found. Pod install likely failed early."
+          fi
+
       - name: Install iOS runtime
         run: |
           xcodebuild -downloadPlatform iOS || true
