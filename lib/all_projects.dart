@@ -1397,7 +1397,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 if (subscriptionsProvider
                                                                     .hasCompleteActiveSubscription ||
                                                                     subscriptionsProvider
-                                                                        .hasCompletePlusSimpleCalculationProductId) {*/
+                                                                        .hasCompletePlusSimpleCalculationProductId) {
                                                                   // Navigate directly
                                                                   projectData.setProjectName("_oozz");
                                                                   NavigationService()
