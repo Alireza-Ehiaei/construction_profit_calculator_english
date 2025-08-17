@@ -85,8 +85,20 @@ jobs:
           flutter build ipa \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
+            --no-codesign \
             --verbose > build_ipa_log.txt 2>&1
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportOptionsPlist ios/ExportOptions.plist \
+            -exportPath build/ios/ipa \
+            -allowProvisioningUpdates >> build_ipa_log.txt 2>&1
           cat build_ipa_log.txt
+      - name: Upload Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-ipa-log
+          path: build_ipa_log.txt
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
