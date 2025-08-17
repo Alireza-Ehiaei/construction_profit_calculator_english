@@ -43,6 +43,14 @@ jobs:
             exit 1
           fi
           plutil -lint ios/ExportOptions.plist || { echo "Error: Invalid ExportOptions.plist"; exit 1; }
+      - name: Verify bundle version
+        run: |
+          BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ios/Runner/Info.plist)
+          if [ "$BUILD_NUMBER" -le 3 ]; then
+            echo "Error: CFBundleVersion ($BUILD_NUMBER) must be higher than 3"
+            exit 1
+          fi
+          echo "Bundle version is $BUILD_NUMBER"
       - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -137,7 +145,7 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
         run: |
-          fastlane ios upload_to_app_store_connect --verbose > fastlane_log.txt 2>&1 || { cat fastlane_log.txt; exit 1; }
+          fastlane ios upload_to_app_store_connect --verbose > fastlane_log.txt 2>&1 || { cat fastlane_log.txt; grep -i "error:" fastlane_log.txt; exit 1; }
           cat fastlane_log.txt
       - name: Upload build log and IPA
         if: always()
