@@ -42,8 +42,9 @@ dependencies:
   cupertino_icons: ^1.0.2
   webview_flutter_android: ^4.3.1
   flutter_native_splash: ^2.4.0
-  in_app_purchase: ^3.2.3
+  in_app_purchase: ^3.0.8
   webview_flutter: ^4.13.0
+
 dependency_overrides:
   in_app_purchase_storekit: 0.3.7
 
