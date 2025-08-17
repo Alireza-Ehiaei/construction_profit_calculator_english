@@ -1,8 +1,8 @@
-name: Build iOS IPA
+name: Build and Upload iOS IPA to App Store Connect
 on:
   workflow_dispatch:
 jobs:
-  build-ipa:
+  build-and-upload:
     runs-on: macos-15
     steps:
       - name: Checkout repository
@@ -71,6 +71,12 @@ jobs:
           security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorProvisionProfile.mobileprovision > profile.plist
           /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.team-identifier" profile.plist | grep AHVM2Z8TDL || { echo "Provisioning profile team ID mismatch"; exit 1; }
           /usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" profile.plist | grep com.tech4dev.constructionprofitcalculator || { echo "Provisioning profile bundle ID mismatch"; exit 1; }
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+      - name: Clean Xcode project
+        run: |
+          cd ios
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release || { echo "Xcode clean failed"; exit 1; }
+          cd ..
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -88,21 +94,63 @@ jobs:
             -exportOptionsPlist ios/ExportOptions.plist \
             -exportPath build/ios/ipa \
             -allowProvisioningUpdates >> build_ipa_log.txt 2>&1 || { cat build_ipa_log.txt; grep -i "error:" build_ipa_log.txt; exit 1; }
+          ls -l build/ios/ipa/ || echo "IPA directory not found"
+          mkdir -p app-ipa
+          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
           cat build_ipa_log.txt
-      - name: Upload IPA as an artifact
+      - name: Set up Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      - name: Install Fastlane
+        run: gem install fastlane
+      - name: Set up Fastlane configuration
+        run: |
+          mkdir -p ./fastlane
+          cat > ./fastlane/Fastfile << 'EOL'
+          default_platform(:ios)
+          platform :ios do
+            lane :upload_to_app_store_connect do
+              app_store_connect_api_key(
+                key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+                issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+                key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
+                is_key_content_base64: true
+              )
+              deliver(
+                ipa: "./app-ipa/construction_profit_calculator_english.ipa",
+                skip_screenshots: true,
+                skip_metadata: true,
+                skip_app_version_update: true,
+                force: true,
+                precheck_include_in_app_purchases: false,
+                run_precheck_before_submit: false,
+                verbose: true
+              )
+            end
+          end
+          EOL
+      - name: Run Fastlane to upload IPA
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+        run: |
+          fastlane ios upload_to_app_store_connect --verbose > fastlane_log.txt 2>&1 || { cat fastlane_log.txt; exit 1; }
+          cat fastlane_log.txt
+      - name: Upload build log and IPA
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ipa-build
-          path: build/ios/ipa/*.ipa
-      - name: Upload Debug Logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-logs
+          name: build-log-and-ipa
           path: |
             pub_get_log.txt
             pod_install_log.txt
             build_ipa_log.txt
+            fastlane_log.txt
+            fastlane/report.xml
+            app-ipa/*.ipa
       - name: Clean up keychain with logs
         if: always()
         run: |
