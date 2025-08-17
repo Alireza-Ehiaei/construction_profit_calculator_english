@@ -44,38 +44,49 @@ jobs:
           flutter pub get
       - name: Install dependencies
         run: |
-          flutter pub get
+          flutter pub get --verbose > pub_get_log.txt 2>&1
           cd ios
           pod deintegrate
           pod cache clean --all
-          pod install --repo-update
+          pod install --repo-update --verbose > pod_install_log.txt 2>&1
           cd ..
           echo "=== Dependency Versions ==="
           cat pubspec.lock | grep -A 10 "in_app_purchase:"
           cat pubspec.lock | grep -A 10 "in_app_purchase_storekit:"
-          cat ios/Podfile.lock | grep -A 10 "Firebase"
-      - name: Setup code signing
-        env:
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-          CERTIFICATE_CONTENT: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
-          PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
-        run: |
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security set-keychain-settings -lut 21600 build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-          echo "$CERTIFICATE_CONTENT" | base64 --decode > cert.p12
-          security import cert.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          rm -f cert.p12
-          echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
-          UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
-          rm -f profile.mobileprovision
-          echo "=== Code Signing Setup ==="
-          security find-identity -v -p codesigning
+          grep -q "in_app_purchase_storekit:.*0.3.7" pubspec.lock || { echo "ERROR: in_app_purchase_storekit version is not 0.3.7"; exit 1; }
+          cat ios/Podfile.lock || echo "No Podfile.lock"
+          cat pub_get_log.txt
+          cat pod_install_log.txt
+      - name: Upload Dependency Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-logs
+          path: |
+            pub_get_log.txt
+            pod_install_log.txt
+            - name: Setup code signing
+              env:
+                KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+                CERTIFICATE_CONTENT: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+                CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+                PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+              run: |
+                security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+                security set-keychain-settings -lut 21600 build.keychain
+                security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+                security default-keychain -s build.keychain
+                echo "$CERTIFICATE_CONTENT" | base64 --decode > cert.p12
+                security import cert.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+                security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+                rm -f cert.p12
+                echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+                UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
+                mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+                cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+                rm -f profile.mobileprovision
+                echo "=== Code Signing Setup ==="
+                security find-identity -v -p codesigning
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
