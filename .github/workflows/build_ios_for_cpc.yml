@@ -27,19 +27,22 @@ jobs:
         run: |
           cd ios
           pod --version
-          pod deintegrate
-          pod cache clean --all
-          pod install --repo-update --verbose | tee pod_install_log.txt
+          pod deintegrate || true
+          pod cache clean --all || true
+          touch pod_install_log.txt
+          pod install --repo-update --verbose >> pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
           cd ..
-          if [ -f ios/pod_install_log.txt ]; then
-            cat ios/pod_install_log.txt
-          else
-            echo "No pod_install_log.txt found. Pod install likely failed early."
-          fi
-
+          cat ios/pod_install_log.txt
       - name: Install iOS runtime
         run: |
           xcodebuild -downloadPlatform iOS || true
+      - name: Verify ExportOptions.plist
+        run: |
+          if [ ! -f ios/ExportOptions.plist ]; then
+            echo "Error: ios/ExportOptions.plist not found"
+            exit 1
+          fi
+          plutil -lint ios/ExportOptions.plist || { echo "Error: Invalid ExportOptions.plist"; exit 1; }
       - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -75,12 +78,12 @@ jobs:
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
             --no-codesign \
-            --verbose > build_ipa_log.txt 2>&1
+            --verbose > build_ipa_log.txt 2>&1 || { cat build_ipa_log.txt; exit 1; }
           xcodebuild -exportArchive \
             -archivePath build/ios/archive/Runner.xcarchive \
             -exportOptionsPlist ios/ExportOptions.plist \
             -exportPath build/ios/ipa \
-            -allowProvisioningUpdates >> build_ipa_log.txt 2>&1
+            -allowProvisioningUpdates >> build_ipa_log.txt 2>&1 || { cat build_ipa_log.txt; exit 1; }
           cat build_ipa_log.txt
       - name: Upload IPA as an artifact
         uses: actions/upload-artifact@v4
