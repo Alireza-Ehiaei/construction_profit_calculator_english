@@ -1133,10 +1133,10 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                     listen: false);
 
                                                                 // Check if user already has active subscription
-                                                                if (1==1){ /*(subscriptionsProvider
+                                                                if (subscriptionsProvider
                                                                     .hasSimpleActiveSubscription ||
                                                                     subscriptionsProvider
-                                                                        .hasCompletePlusSimpleCalculationProductId) {*/
+                                                                        .hasCompletePlusSimpleCalculationProductId) {
                                                                   // Navigate directly
                                                                   projectData
                                                                       .setProjectName(
@@ -1394,7 +1394,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                     listen: false);
 
                                                                 // Check if user already has active subscription
-                                                                if (1==1){ /*(subscriptionsProvider
+                                                                if (subscriptionsProvider
                                                                     .hasCompleteActiveSubscription ||
                                                                     subscriptionsProvider
                                                                         .hasCompletePlusSimpleCalculationProductId) {*/
