@@ -45,16 +45,25 @@ dependencies:
   in_app_purchase: ^3.0.8
   webview_flutter: ^4.13.0
 
-dependency_overrides:
-  in_app_purchase_storekit: 0.3.7
+dependencies:
+  in_app_purchase: ^3.0.8
+  webview_flutter: ^4.13.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
+
+flutter_launcher_icons:
+  ios: true
+  image_path: "assets/icon/icon.png" # Ensure this is a 1024x1024 PNG
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: assets/splash.PNG
+  image: "assets/splash.png" # Ensure this is a 2732x2732 PNG
+  ios: true
+  fill: true
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
