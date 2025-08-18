@@ -48,16 +48,16 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4  # Updated to resolve conflict
   flutter_native_splash: ^2.4.1
 
 flutter_launcher_icons:
   ios: true
-  image_path: "assets/icon/icon.png" # Ensure this is a 1024x1024 PNG
+  image_path: "assets/icon/icon.png"  # 1024x1024 PNG
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: "assets/splash.png" # Ensure this is a 2732x2732 PNG
+  image: "assets/splash.png"  # 2732x2732 PNG
   ios: true
   fill: true
 
