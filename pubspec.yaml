@@ -45,10 +45,6 @@ dependencies:
   in_app_purchase: ^3.0.8
   webview_flutter: ^4.13.0
 
-dependencies:
-  in_app_purchase: ^3.0.8
-  webview_flutter: ^4.13.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
