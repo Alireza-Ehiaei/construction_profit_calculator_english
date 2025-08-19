@@ -67,11 +67,17 @@ jobs:
           cd ios
           for target in share_plus in_app_purchase_storekit sqflite_darwin Pods-Runner webview_flutter_wkwebview path_provider_foundation url_launcher_ios; do
             echo "Configuring signing for $target"
-            /usr/libexec/PlistBuddy -c "Set :buildSettings:CODE_SIGN_STYLE Automatic" -c "Delete :buildSettings:PROVISIONING_PROFILE_SPECIFIER" Pods/Target\ Support\ Files/$target/$target.xcconfig || true
-            /usr/libexec/PlistBuddy -c "Print :buildSettings:CODE_SIGN_STYLE" Pods/Target\ Support\ Files/$target/$target.xcconfig
-            /usr/libexec/PlistBuddy -c "Print :buildSettings:PROVISIONING_PROFILE_SPECIFIER" Pods/Target\ Support\ Files/$target/$target.xcconfig || echo "No provisioning profile set"
+            file="Pods/Target Support Files/$target/$target.xcconfig"
+            if [[ -f "$file" ]]; then
+              /usr/libexec/PlistBuddy -c "Set :buildSettings:CODE_SIGN_STYLE Automatic" -c "Delete :buildSettings:PROVISIONING_PROFILE_SPECIFIER" "$file" || true
+              /usr/libexec/PlistBuddy -c "Print :buildSettings:CODE_SIGN_STYLE" "$file"
+              /usr/libexec/PlistBuddy -c "Print :buildSettings:PROVISIONING_PROFILE_SPECIFIER" "$file" || echo "No provisioning profile set"
+            else
+              echo "Config file for $target not found, skipping"
+            fi
           done
           cd ..
+
 
       - name: Build IPA
         run: |
