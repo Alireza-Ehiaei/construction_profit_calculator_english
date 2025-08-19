@@ -18,7 +18,7 @@ jobs:
       - name: Generate splash screen
         run: flutter pub run flutter_native_splash:create > splash_log.txt 2>&1 || { cat splash_log.txt; exit 1; }
       - name: Install iOS 18.0 simulator runtime
-        run: xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0 || true
+        run: xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0 > xcode_runtime_log.txt 2>&1 || { cat xcode_runtime_log.txt; exit 1; }
       - name: Install CocoaPods dependencies
         run: |
           cd ios
@@ -29,6 +29,32 @@ jobs:
           cd ios
           xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
           cd ..
+      - name: Create temporary keychain
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+      - name: Import Apple certificate
+        env:
+          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
+      - name: Install provisioning profile
+        env:
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+        run: |
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -39,8 +65,7 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --no-codesign \
-            --verbose > build_log.txt 2>&1 || { cat build_log.txt; grep -i "error:" build_log.txt; exit 1; }
+            --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
@@ -82,7 +107,7 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
-        run: fastlane ios upload_to_app_store_connect > fastlane_log.txt 2>&1 || { cat fastlane_log.txt; grep -i "error:" fastlane_log.txt; exit 1; }
+        run: fastlane ios upload_to_app_store_connect > fastlane_log.txt 2>&1 || { cat fastlane_log.txt | grep -i "error:"; exit 1; }
       - name: Upload build log and IPA
         if: always()
         uses: actions/upload-artifact@v4
@@ -91,6 +116,7 @@ jobs:
           path: |
             pub_get_log.txt
             splash_log.txt
+            xcode_runtime_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
             build_log.txt
