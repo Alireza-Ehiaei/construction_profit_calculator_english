@@ -28,7 +28,8 @@ jobs:
       - name: Set deployment target
         run: |
           cd ios
-          /usr/libexec/PlistBuddy -c "Set :buildSettings:IPHONEOS_DEPLOYMENT_TARGET 15.0" Runner.xcodeproj/project.pbxproj || { echo "Failed to set deployment target"; exit 1; }
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = .*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' Runner.xcodeproj/project.pbxproj || { echo "Failed to set deployment target"; exit 1; }
+          grep "IPHONEOS_DEPLOYMENT_TARGET" Runner.xcodeproj/project.pbxproj
           cd ..
       - name: Create temporary keychain
         env:
@@ -72,6 +73,8 @@ jobs:
             fi
           done
           cd ..
+      - name: Debug available SDKs
+        run: xcodebuild -showsdks
       - name: Build IPA
         run: |
           security find-identity -v -p codesigning build.keychain
@@ -80,10 +83,6 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" decoded_plist.plist || echo "Failed to read TeamIdentifier"
           /usr/libexec/PlistBuddy -c "Print :AppIDName" decoded_plist.plist || echo "Failed to read AppIDName"
           /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
-          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
-          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
-          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
-          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
@@ -93,9 +92,6 @@ jobs:
           ls -l build/ios/ipa/ || echo "IPA directory not found"
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-        env:
-          DEVELOPMENT_TEAM: AHVM2Z8TDL
-          PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
