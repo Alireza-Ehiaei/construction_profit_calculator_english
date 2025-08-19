@@ -15,6 +15,8 @@ jobs:
           architecture: arm64
       - name: Install dependencies
         run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
+      - name: Install iOS 18.0 simulator runtime
+        run: xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0 > xcode_runtime_log.txt 2>&1 || { cat xcode_runtime_log.txt; exit 1; }
       - name: Install CocoaPods dependencies
         run: |
           cd ios
@@ -95,6 +97,7 @@ jobs:
           default_platform(:ios)
           platform :ios do
             lane :upload_to_app_store_connect do
+              ENV["SPACESHIP_LOGGER"] = "nil"
               app_store_connect_api_key(
                 key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
                 issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
