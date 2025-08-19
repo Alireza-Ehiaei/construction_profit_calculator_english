@@ -3,102 +3,46 @@ on:
   workflow_dispatch:
 jobs:
   build-and-upload:
-    runs-on: macos-15
+    runs-on: macos-15  # Xcode 16 with iOS 18 SDK by default
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.3'
           channel: 'stable'
           architecture: arm64
+
       - name: Install dependencies
-        run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
+        run: flutter pub get
+
       - name: Install CocoaPods dependencies
         run: |
           cd ios
-          pod install --repo-update > pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
+          pod install --repo-update
           cd ..
-      - name: Clean Xcode project
-        run: |
-          cd ios
-          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
-          cd ..
-      - name: Set deployment target
-        run: |
-          cd ios
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = .*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' Runner.xcodeproj/project.pbxproj || { echo "Failed to set deployment target"; exit 1; }
-          grep "IPHONEOS_DEPLOYMENT_TARGET" Runner.xcodeproj/project.pbxproj
-          cd ..
-      - name: Create temporary keychain
-        env:
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security set-keychain-settings -lut 21600 build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-      - name: Import Apple certificate
-        env:
-          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
-          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-      - name: Install provisioning profile
-        env:
-          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
-        run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-      - name: Configure Pods targets for automatic signing
-        run: |
-          cd ios
-          for target in share_plus in_app_purchase_storekit sqflite_darwin Pods-Runner webview_flutter_wkwebview path_provider_foundation url_launcher_ios; do
-            echo "Configuring signing for $target"
-            file="Pods/Target Support Files/$target/$target.xcconfig"
-            if [[ -f "$file" ]]; then
-              /usr/libexec/PlistBuddy -c "Set :buildSettings:CODE_SIGN_STYLE Automatic" "$file" || { echo "Failed to set CODE_SIGN_STYLE for $target"; exit 1; }
-              /usr/libexec/PlistBuddy -c "Delete :buildSettings:PROVISIONING_PROFILE_SPECIFIER" "$file" || true
-              /usr/libexec/PlistBuddy -c "Print :buildSettings:CODE_SIGN_STYLE" "$file" || echo "Failed to read CODE_SIGN_STYLE"
-              /usr/libexec/PlistBuddy -c "Print :buildSettings:PROVISIONING_PROFILE_SPECIFIER" "$file" || echo "No provisioning profile set for $target"
-            else
-              echo "Config file for $target not found, skipping"
-            fi
-          done
-          cd ..
-      - name: Debug available SDKs
-        run: xcodebuild -showsdks
+
       - name: Build IPA
         run: |
-          security find-identity -v -p codesigning build.keychain
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > decoded_plist.plist
-          /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" decoded_plist.plist || echo "Failed to read TeamIdentifier"
-          /usr/libexec/PlistBuddy -c "Print :AppIDName" decoded_plist.plist || echo "Failed to read AppIDName"
-          /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons \
-            --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
-          ls -l build/ios/archive/Runner.xcarchive || echo "Archive not found"
+            --verbose > build_log.txt 2>&1
           ls -l build/ios/ipa/ || echo "IPA directory not found"
           mkdir -p app-ipa
-          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
+          cp build/ios/ipa/*.ipa app-ipa/app.ipa
+
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
+
       - name: Install Fastlane
         run: gem install fastlane
+
       - name: Set up Fastlane configuration
         run: |
           mkdir -p ./fastlane
@@ -114,7 +58,7 @@ jobs:
                 is_key_content_base64: true
               )
               deliver(
-                ipa: "./app-ipa/construction_profit_calculator_english.ipa",
+                ipa: "./app-ipa/app.ipa",
                 skip_screenshots: true,
                 skip_metadata: true,
                 skip_app_version_update: true,
@@ -124,26 +68,21 @@ jobs:
             end
           end
           EOL
+
       - name: Run Fastlane to upload IPA
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
         run: fastlane ios upload_to_app_store_connect > fastlane_log.txt 2>&1 || { cat fastlane_log.txt | grep -i "error:"; exit 1; }
+
       - name: Upload build log and IPA
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log-and-ipa
           path: |
-            pub_get_log.txt
-            pod_install_log.txt
-            xcode_clean_log.txt
             build_log.txt
             fastlane_log.txt
             fastlane/report.xml
             app-ipa/*.ipa
-      - name: Clean up keychain
-        if: always()
-        run: |
-          security delete-keychain build.keychain || true
