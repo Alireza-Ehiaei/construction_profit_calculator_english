@@ -14,14 +14,13 @@ jobs:
           channel: 'stable'
           architecture: arm64
       - name: Install dependencies
-        run: flutter pub get --verbose > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
+        run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
       - name: Generate app icons and splash screen
         run: |
-          flutter pub run flutter_launcher_icons --verbose > launcher_icons_log.txt 2>&1 || { cat launcher_icons_log.txt; exit 1; }
-          flutter pub run flutter_native_splash:create --verbose > splash_log.txt 2>&1 || { cat splash_log.txt; exit 1; }
+          flutter pub run flutter_launcher_icons > launcher_icons_log.txt 2>&1 || { cat launcher_icons_log.txt; exit 1; }
+          flutter pub run flutter_native_splash:create > splash_log.txt 2>&1 || { cat splash_log.txt; exit 1; }
       - name: Setup Ruby and CocoaPods
         run: |
-          echo "Installing Ruby and CocoaPods..."
           sudo gem install activesupport -v 7.0.8
           sudo gem install cocoapods -v 1.15.2
           pod setup
@@ -34,9 +33,8 @@ jobs:
           pod deintegrate || true
           pod cache clean --all || true
           touch pod_install_log.txt
-          pod install --repo-update --verbose >> pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
+          pod install --repo-update >> pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
           cd ..
-          echo "CocoaPods installation complete"
       - name: Install iOS 15.0 simulator runtime
         run: |
           xcodebuild -downloadPlatform iOS -sdk iphonesimulator15.0 || true
@@ -47,7 +45,6 @@ jobs:
             exit 1
           fi
           plutil -lint ios/ExportOptions.plist || { echo "Error: Invalid ExportOptions.plist"; exit 1; }
-          echo "ExportOptions.plist verified"
       - name: Verify bundle version
         run: |
           BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ios/Runner/Info.plist)
@@ -55,7 +52,6 @@ jobs:
             echo "Error: CFBundleVersion ($BUILD_NUMBER) must be higher than 3"
             exit 1
           fi
-          echo "Bundle version: $BUILD_NUMBER"
       - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -74,7 +70,6 @@ jobs:
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign || { echo "Certificate import failed"; exit 1; }
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain || true
           security find-identity -v -p codesigning build.keychain | grep "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" || { echo "Certificate not found in keychain"; exit 1; }
-          echo "Certificate imported"
       - name: Install and verify provisioning profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
@@ -85,14 +80,11 @@ jobs:
           security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorProvisionProfile.mobileprovision > profile.plist
           /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.team-identifier" profile.plist | grep AHVM2Z8TDL || { echo "Provisioning profile team ID mismatch"; exit 1; }
           /usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" profile.plist | grep com.tech4dev.constructionprofitcalculator || { echo "Provisioning profile bundle ID mismatch"; exit 1; }
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-          echo "Provisioning profile installed"
       - name: Clean Xcode project
         run: |
           cd ios
           xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release || { echo "Xcode clean failed"; exit 1; }
           cd ..
-          echo "Xcode project cleaned"
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -110,10 +102,8 @@ jobs:
             -exportOptionsPlist ios/ExportOptions.plist \
             -exportPath build/ios/ipa \
             -allowProvisioningUpdates >> build_ipa_log.txt 2>&1 || { cat build_ipa_log.txt; grep -i "error:" build_ipa_log.txt; exit 1; }
-          ls -l build/ios/ipa/ || echo "IPA directory not found"
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-          echo "IPA built successfully"
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
@@ -154,7 +144,6 @@ jobs:
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
         run: |
           fastlane ios upload_to_app_store_connect --verbose > fastlane_log.txt 2>&1 || { cat fastlane_log.txt; grep -i "error:" fastlane_log.txt; exit 1; }
-          echo "IPA uploaded to App Store Connect"
       - name: Upload build log and IPA
         if: always()
         uses: actions/upload-artifact@v4
@@ -172,8 +161,5 @@ jobs:
       - name: Clean up keychain with logs
         if: always()
         run: |
-          echo "Listing all keychains:"
           security list-keychains
-          echo "Attempting to delete 'build.keychain'..."
           security delete-keychain build.keychain || { echo "Keychain 'build.keychain' does not exist or could not be deleted."; true; }
-          echo "Keychain cleanup complete."
