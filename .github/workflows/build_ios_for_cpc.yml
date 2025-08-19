@@ -25,6 +25,11 @@ jobs:
           cd ios
           xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
           cd ..
+      - name: Set deployment target
+        run: |
+          cd ios
+          /usr/libexec/PlistBuddy -c "Set :buildSettings:IPHONEOS_DEPLOYMENT_TARGET 15.0" Runner.xcodeproj/project.pbxproj || { echo "Failed to set deployment target"; exit 1; }
+          cd ..
       - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
