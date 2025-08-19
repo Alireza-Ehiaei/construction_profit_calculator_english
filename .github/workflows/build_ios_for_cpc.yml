@@ -60,6 +60,12 @@ jobs:
           cd ..
       - name: Build IPA
         run: |
+          security find-identity -v -p codesigning build.keychain
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > decoded_plist.plist
+          /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" decoded_plist.plist || echo "Failed to read TeamIdentifier"
+          /usr/libexec/PlistBuddy -c "Print :AppIDName" decoded_plist.plist || echo "Failed to read AppIDName"
+          /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
           export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
@@ -69,6 +75,7 @@ jobs:
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
             --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+          ls -l build/ios/ipa/ || echo "IPA directory not found"
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
