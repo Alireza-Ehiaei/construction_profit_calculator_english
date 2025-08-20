@@ -36,7 +36,7 @@ jobs:
       - name: Import Apple certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          CERTIFICATE_PASSWORD_V2: Juno    ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
@@ -65,6 +65,7 @@ jobs:
           export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
+          export IPHONEOS_DEPLOYMENT_TARGET="15.0"
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
