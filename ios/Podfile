@@ -1,6 +1,5 @@
 platform :ios, '15.0'
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
-
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -20,10 +19,11 @@ def flutter_root
 end
 
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  use_frameworks!
+  use_frameworks! :linkage => :static
   use_modular_headers!
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
@@ -32,7 +32,18 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
+      config.build_settings['SWIFT_VERSION'] = '5.5'
+      config.build_settings['CLANG_ENABLE_OBJC_ARC'] = 'YES'
+      config.build_settings['ARCHS'] = 'arm64'
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['CODE_SIGNING_ALLOWED'] = 'YES'
+      config.build_settings['CODE_SIGNING_REQUIRED'] = 'YES'
+
+      # Disable code signing for Pod bundle targets to avoid provisioning profile errors
+      if config.build_settings['WRAPPER_EXTENSION'] == 'bundle' || target.name == 'Pods-Runner'
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+        config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+      end
     end
   end
 end
