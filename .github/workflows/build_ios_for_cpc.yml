@@ -58,11 +58,12 @@ jobs:
       - name: Verify Xcode build settings
         run: |
           cd ios
-          xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release > build_settings.txt 2>&1
-          grep "CODE_SIGN_STYLE" build_settings.txt
-          grep "CODE_SIGN_IDENTITY" build_settings.txt
-          grep "PROVISIONING_PROFILE_SPECIFIER" build_settings.txt
-          grep "DEVELOPMENT_TEAM" build_settings.txt
+          ls -l Runner.xcworkspace
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -showBuildSettings > build_settings.txt 2>&1 || { cat build_settings.txt; exit 1; }
+          grep "CODE_SIGN_STYLE" build_settings.txt || echo "CODE_SIGN_STYLE not found"
+          grep "CODE_SIGN_IDENTITY" build_settings.txt || echo "CODE_SIGN_IDENTITY not found"
+          grep "PROVISIONING_PROFILE_SPECIFIER" build_settings.txt || echo "PROVISIONING_PROFILE_SPECIFIER not found"
+          grep "DEVELOPMENT_TEAM" build_settings.txt || echo "DEVELOPMENT_TEAM not found"
           cd ..
       - name: Build IPA
         run: |
