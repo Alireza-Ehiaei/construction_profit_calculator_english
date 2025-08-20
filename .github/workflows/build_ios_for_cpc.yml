@@ -15,8 +15,6 @@ jobs:
           architecture: arm64
       - name: Install dependencies
         run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
-      - name: Install iOS 18.0 simulator runtime
-        run: xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0 > xcode_runtime_log.txt 2>&1 || { cat xcode_runtime_log.txt; exit 1; }
       - name: Install CocoaPods dependencies
         run: |
           cd ios
@@ -53,10 +51,6 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > decoded_plist.plist
-          /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" decoded_plist.plist || echo "Failed to read TeamIdentifier"
-          /usr/libexec/PlistBuddy -c "Print :AppIDName" decoded_plist.plist || echo "Failed to read AppIDName"
-          /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -117,7 +111,6 @@ jobs:
           name: build-log-and-ipa
           path: |
             pub_get_log.txt
-            xcode_runtime_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
             build_log.txt
