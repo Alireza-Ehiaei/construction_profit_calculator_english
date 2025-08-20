@@ -65,7 +65,6 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --destination="generic/platform=iOS" \
             --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
