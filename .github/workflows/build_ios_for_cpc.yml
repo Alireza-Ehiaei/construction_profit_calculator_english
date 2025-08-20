@@ -8,12 +8,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Select Xcode 16.2 and install iOS 18.0
-        run: |
-          sudo xcode-select -switch /Applications/Xcode_16.2.app/Contents/Developer
-          sudo xcodebuild -runFirstLaunch
-          sudo xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0
-      
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -92,9 +86,9 @@ jobs:
           echo "=== Provisioning profiles ==="
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
       
-      - name: Build IPA
+      - name: Build IPA (Automatic signing)
         run: |
-          # Use automatic signing instead of manual to avoid conflicts
+          # Use automatic code signing - let Xcode handle it
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
