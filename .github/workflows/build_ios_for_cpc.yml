@@ -15,8 +15,6 @@ jobs:
           architecture: arm64
       - name: Install dependencies
         run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
-      - name: Generate splash screen
-        run: flutter pub run flutter_native_splash:create > splash_log.txt 2>&1 || { cat splash_log.txt; exit 1; }
       - name: Install iOS 18.0 simulator runtime
         run: xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0 > xcode_runtime_log.txt 2>&1 || { cat xcode_runtime_log.txt; exit 1; }
       - name: Install CocoaPods dependencies
@@ -115,7 +113,6 @@ jobs:
           name: build-log-and-ipa
           path: |
             pub_get_log.txt
-            splash_log.txt
             xcode_runtime_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
