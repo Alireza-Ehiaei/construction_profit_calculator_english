@@ -36,13 +36,15 @@ jobs:
       - name: Import Apple certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: Juno    ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
-          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
+          echo "$IOS_DISTRIBUTION_P12_V2" | tr -d '\n' | base64 --decode > certificate.p12 || { echo "Failed to decode certificate"; exit 1; }
+          ls -l certificate.p12
+          CERTIFICATE_PASSWORD_CLEAN=$(echo "$CERTIFICATE_PASSWORD_V2" | tr -d '[:space:]' | sed 's/^Juno//')
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_CLEAN" -T /usr/bin/codesign || { echo "Certificate import failed, check password or p12 file"; exit 1; }
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed or identity not found"; exit 1; }
       - name: Install provisioning profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
