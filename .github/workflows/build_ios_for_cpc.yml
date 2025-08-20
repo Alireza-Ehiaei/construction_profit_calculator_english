@@ -51,6 +51,19 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > decoded_plist.plist
+          /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" decoded_plist.plist || echo "Failed to read TeamIdentifier"
+          /usr/libexec/PlistBuddy -c "Print :AppIDName" decoded_plist.plist || echo "Failed to read AppIDName"
+          /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
+      - name: Verify Xcode build settings
+        run: |
+          cd ios
+          xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release > build_settings.txt 2>&1
+          grep "CODE_SIGN_STYLE" build_settings.txt
+          grep "CODE_SIGN_IDENTITY" build_settings.txt
+          grep "PROVISIONING_PROFILE_SPECIFIER" build_settings.txt
+          grep "DEVELOPMENT_TEAM" build_settings.txt
+          cd ..
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -113,6 +126,7 @@ jobs:
             pub_get_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
+            build_settings.txt
             build_log.txt
             fastlane_log.txt
             fastlane/report.xml
