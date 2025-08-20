@@ -15,6 +15,8 @@ jobs:
           architecture: arm64
       - name: Install dependencies
         run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
+      - name: Install iOS 18.0 simulator runtime
+        run: xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0 > xcode_runtime_log.txt 2>&1 || { cat xcode_runtime_log.txt; exit 1; }
       - name: Install CocoaPods dependencies
         run: |
           cd ios
@@ -24,12 +26,6 @@ jobs:
         run: |
           cd ios
           xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
-          cd ..
-      - name: Set deployment target
-        run: |
-          cd ios
-          sed -i '' '/IPHONEOS_DEPLOYMENT_TARGET/s/=.*/= 15.0;/' Runner.xcodeproj/project.pbxproj || { echo "Failed to set deployment target"; exit 1; }
-          grep "IPHONEOS_DEPLOYMENT_TARGET" Runner.xcodeproj/project.pbxproj
           cd ..
       - name: Create temporary keychain
         env:
@@ -57,38 +53,74 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-      - name: Configure Pods targets for automatic signing
-        run: |
-          cd ios
-          for target in share_plus in_app_purchase_storekit sqflite_darwin Pods-Runner webview_flutter_wkwebview path_provider_foundation url_launcher_ios; do
-            echo "Configuring signing for $target"
-            file="Pods/Target Support Files/$target/$target.xcconfig"
-            if [[ -f "$file" ]]; then
-              /usr/libexec/PlistBuddy -c "Set :buildSettings:CODE_SIGN_STYLE Automatic" "$file" || { echo "Failed to set CODE_SIGN_STYLE for $target"; exit 1; }
-              /usr/libexec/PlistBuddy -c "Delete :buildSettings:PROVISIONING_PROFILE_SPECIFIER" "$file" || true
-              /usr/libexec/PlistBuddy -c "Print :buildSettings:CODE_SIGN_STYLE" "$file" || echo "Failed to read CODE_SIGN_STYLE"
-              /usr/libexec/PlistBuddy -c "Print :buildSettings:PROVISIONING_PROFILE_SPECIFIER" "$file" || echo "No provisioning profile set for $target"
-            else
-              echo "Config file for $target not found, skipping"
-            fi
-          done
-          cd ..
-      - name: Debug available SDKs
-        run: xcodebuild -showsdks
       - name: Build IPA
         run: |
-          security find-identity -v -p codesigning build.keychain
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > decoded_plist.plist
-          /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" decoded_plist.plist || echo "Failed to read TeamIdentifier"
-          /usr/libexec/PlistBuddy -c "Print :AppIDName" decoded_plist.plist || echo "Failed to read AppIDName"
-          /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
+          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
+          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
+          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
+          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
             --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
-          ls -l build/ios/archive/Runner.xcarchive || echo "Archive not found"
-          ls -l build/ios/ipa/ || echo "IPA directory not found"
           mkdir -p app-ipa
-          cp build/ios/ipa/*.ipa app-ipa/construction_profit
+          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
+        env:
+          DEVELOPMENT_TEAM: AHVM2Z8TDL
+          PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
+      - name: Set up Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      - name: Install Fastlane
+        run: gem install fastlane
+      - name: Set up Fastlane configuration
+        run: |
+          mkdir -p ./fastlane
+          cat > ./fastlane/Fastfile << 'EOL'
+          default_platform(:ios)
+          platform :ios do
+            lane :upload_to_app_store_connect do
+              app_store_connect_api_key(
+                key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+                issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+                key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
+                is_key_content_base64: true
+              )
+              deliver(
+                ipa: "./app-ipa/construction_profit_calculator_english.ipa",
+                skip_screenshots: true,
+                skip_metadata: true,
+                skip_app_version_update: true,
+                force: true,
+                precheck_include_in_app_purchases: false
+              )
+            end
+          end
+          EOL
+      - name: Run Fastlane to upload IPA
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+        run: fastlane ios upload_to_app_store_connect > fastlane_log.txt 2>&1 || { cat fastlane_log.txt | grep -i "error:"; exit 1; }
+      - name: Upload build log and IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-and-ipa
+          path: |
+            pub_get_log.txt
+            xcode_runtime_log.txt
+            pod_install_log.txt
+            xcode_clean_log.txt
+            build_log.txt
+            fastlane_log.txt
+            fastlane/report.xml
+            app-ipa/*.ipa
+      - name: Clean up keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
