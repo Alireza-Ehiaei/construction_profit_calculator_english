@@ -57,20 +57,14 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
       - name: Build IPA
         run: |
-          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
-          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
-          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
-          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
+            --target-sdk-version=15.0 \
             --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-        env:
-          DEVELOPMENT_TEAM: AHVM2Z8TDL
-          PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
