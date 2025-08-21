@@ -1,4 +1,3 @@
-
 name: Build and Upload iOS IPA to App Store Connect
 
 on:
@@ -43,9 +42,11 @@ jobs:
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          echo "$IOS_DEVELOPMENT_P12" | base64 --decode > development_certificate.p12
+          if [ -z "$IOS_DEVELOPMENT_P12" ]; then echo "Error: IOS_DEVELOPMENT_P12 secret is empty"; exit 1; fi
+          echo "$IOS_DEVELOPMENT_P12" | base64 --decode > development_certificate.p12 || { echo "Failed to decode IOS_DEVELOPMENT_P12"; exit 1; }
           ls -l development_certificate.p12
           file development_certificate.p12
+          if [ ! -s development_certificate.p12 ]; then echo "Error: development_certificate.p12 is empty"; exit 1; fi
           security import development_certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign || { echo "Failed to import development certificate"; exit 1; }
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain || { echo "Failed to set key partition list"; exit 1; }
           security find-identity -v -p codesigning build.keychain > cert_list.txt
@@ -58,9 +59,11 @@ jobs:
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
+          if [ -z "$IOS_DISTRIBUTION_P12_V2" ]; then echo "Error: IOS_DISTRIBUTION_P12_V2 secret is empty"; exit 1; fi
+          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12 || { echo "Failed to decode IOS_DISTRIBUTION_P12_V2"; exit 1; }
           ls -l certificate.p12
           file certificate.p12
+          if [ ! -s certificate.p12 ]; then echo "Error: certificate.p12 is empty"; exit 1; fi
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign || { echo "Failed to import distribution certificate"; exit 1; }
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain || { echo "Failed to set key partition list"; exit 1; }
           security find-identity -v -p codesigning build.keychain > dist_cert_list.txt
@@ -71,7 +74,8 @@ jobs:
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
+          if [ -z "$IOS_PROVISIONING_PROFILE_V2" ]; then echo "Error: IOS_PROVISIONING_PROFILE_V2 secret is empty"; exit 1; fi
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision || { echo "Failed to decode IOS_PROVISIONING_PROFILE_V2"; exit 1; }
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
