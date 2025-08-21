@@ -1,127 +1,126 @@
-
- name: Build and Upload iOS IPA to App Store Connect
- on:
-   workflow_dispatch:
- jobs:
-   build-and-upload:
-     runs-on: macos-15
-     steps:
-       - name: Checkout repository
-         uses: actions/checkout@v4
-       - name: Set up Flutter
-         uses: subosito/flutter-action@v2
-         with:
-           flutter-version: '3.29.3'
-           channel: 'stable'
-           architecture: arm64
-       - name: Install dependencies
-         run: flutter pub get
-       - name: Create temporary keychain
-         env:
-           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-         run: |
-           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-           security set-keychain-settings -lut 21600 build.keychain
-           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-           security default-keychain -s build.keychain
-       - name: Import Apple certificate
-         env:
-           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
-           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-         run: |
-           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
-           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
-           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-       - name: Install provisioning profile
-         env:
-           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
-         run: |
-           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
-           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
-           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-       - name: Install CocoaPods dependencies
-         run: |
-           cd ios
-           pod install --repo-update
-           cd ..
-       - name: Clean Xcode project
-         run: |
-           cd ios
-           xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release
-           cd ..
-       - name: Build IPA
-         run: |
-           # Debug certificate and profile
-           security find-identity -v -p codesigning build.keychain
-           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-           security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > decoded_plist.plist
-           /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" decoded_plist.plist || echo "Failed to read TeamIdentifier"
-           /usr/libexec/PlistBuddy -c "Print :AppIDName" decoded_plist.plist || echo "Failed to read AppIDName"
-           /usr/libexec/PlistBuddy -c "Print :UUID" decoded_plist.plist || echo "Failed to read UUID"
-           # Set signing settings for Runner target only
-           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
-           export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
-           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
-           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
-           flutter build ipa \
-             --release \
-             --export-options-plist=ios/ExportOptions.plist \
-             --no-tree-shake-icons \
-             --verbose > build_log.txt 2>&1
-           ls -l build/ios/ipa/ || echo "IPA directory not found"
-           mkdir -p app-ipa
-           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-         env:
-           DEVELOPMENT_TEAM: AHVM2Z8TDL
-           PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
-       - name: Set up Ruby for Fastlane
-         uses: ruby/setup-ruby@v1
-         with:
-           ruby-version: '3.2'
-           bundler-cache: true
-       - name: Install Fastlane
-         run: gem install fastlane
-       - name: Set up Fastlane configuration
-         run: |
-           mkdir -p ./fastlane
-           cat > ./fastlane/Fastfile << 'EOL'
-           default_platform(:ios)
-           platform :ios do
-             lane :upload_to_app_store_connect do
-               ENV["SPACESHIP_LOGGER"] = "nil"
-               app_store_connect_api_key(
-                 key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-                 issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-                 key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
-                 is_key_content_base64: true
-               )
-               deliver(
-                 ipa: "./app-ipa/construction_profit_calculator_english.ipa",
-                 skip_screenshots: true,
-                 skip_metadata: true,
-                 skip_app_version_update: true,
-                 force: true,
-                 precheck_include_in_app_purchases: false
-               )
-             end
-           end
-           EOL
-       - name: Run Fastlane to upload IPA
-         env:
-           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
-         run: fastlane ios upload_to_app_store_connect
-         working-directory: ${{ github.workspace }}
-       - name: Upload build log and IPA
-         if: always()
-         uses: actions/upload-artifact@v4
-         with:
-           name: build-log-and-ipa
-           path: |
-             build_log.txt
-             fastlane/report.xml
-             app-ipa/*.ipa
+name: Build and Upload iOS IPA to App Store Connect
+on:
+  workflow_dispatch:
+jobs:
+  build-and-upload:
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: 'stable'
+          architecture: arm64
+      - name: Install dependencies
+        run: flutter pub get > pub\_get\_log.txt 2>&1 || { cat pub\_get\_log.txt; exit 1; }
+      - name: Install iOS 18.0 simulator runtime
+        run: xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0 > xcode\_runtime\_log.txt 2>&1 || { cat xcode\_runtime\_log.txt; exit 1; }
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update > pod\_install\_log.txt 2>&1 || { cat pod\_install\_log.txt; exit 1; }
+          cd ..
+      - name: Clean Xcode project
+        run: |
+          cd ios
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode\_clean\_log.txt 2>&1 || { cat xcode\_clean\_log.txt; exit 1; }
+          cd ..
+      - name: Create temporary keychain
+        env:
+          KEYCHAIN\_PASSWORD: ${{ secrets.KEYCHAIN\_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN\_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security unlock-keychain -p "$KEYCHAIN\_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+      - name: Import Apple certificate
+        env:
+          IOS\_DISTRIBUTION\_P12\_V2: ${{ secrets.IOS\_DISTRIBUTION\_P12\_V2 }}
+          CERTIFICATE\_PASSWORD\_V2: ${{ secrets.CERTIFICATE\_PASSWORD\_V2 }}
+          KEYCHAIN\_PASSWORD: ${{ secrets.KEYCHAIN\_PASSWORD }}
+        run: |
+          echo "$IOS\_DISTRIBUTION\_P12\_V2" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE\_PASSWORD\_V2" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN\_PASSWORD" build.keychain
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
+      - name: Install provisioning profile
+        env:
+          IOS\_PROVISIONING\_PROFILE\_V2: ${{ secrets.IOS\_PROVISIONING\_PROFILE\_V2 }}
+        run: |
+          echo "$IOS\_PROVISIONING\_PROFILE\_V2" | base64 --decode > profile.mobileprovision
+          mkdir -p \~/Library/MobileDevice/Provisioning\\ Profiles
+          cp profile.mobileprovision \~/Library/MobileDevice/Provisioning\\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+          ls -l \~/Library/MobileDevice/Provisioning\\ Profiles/
+      - name: Build IPA
+        run: |
+          export FLUTTER\_XCODE\_CODE\_SIGN\_STYLE="Manual"
+          export FLUTTER\_XCODE\_CODE\_SIGN\_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
+          export FLUTTER\_XCODE\_PROVISIONING\_PROFILE\_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
+          export FLUTTER\_XCODE\_DEVELOPMENT\_TEAM="AHVM2Z8TDL"
+          flutter build ipa \\
+            --release \\
+            --export-options-plist=ios/ExportOptions.plist \\
+            --no-tree-shake-icons \\
+            --verbose > build\_log.txt 2>&1 || { cat build\_log.txt | grep -i "error:"; exit 1; }
+          mkdir -p app-ipa
+          cp build/ios/ipa/\*.ipa app-ipa/construction\_profit\_calculator\_english.ipa
+        env:
+          DEVELOPMENT\_TEAM: AHVM2Z8TDL
+          PROFILE\_NAME: ConstructionProfitCalculatorProvisionProfile
+      - name: Set up Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      - name: Install Fastlane
+        run: gem install fastlane
+      - name: Set up Fastlane configuration
+        run: |
+          mkdir -p ./fastlane
+          cat > ./fastlane/Fastfile << 'EOL'
+          default\_platform(:ios)
+          platform :ios do
+            lane :upload\_to\_app\_store\_connect do
+              app\_store\_connect\_api\_key(
+                key\_id: ENV["APP\_STORE\_CONNECT\_KEY\_ID"],
+                issuer\_id: ENV["APP\_STORE\_CONNECT\_ISSUER\_ID"],
+                key\_content: ENV["APP\_STORE\_CONNECT\_KEY\_CONTENT"],
+                is\_key\_content\_base64: true
+              )
+              deliver(
+                ipa: "./app-ipa/construction\_profit\_calculator\_english.ipa",
+                skip\_screenshots: true,
+                skip\_metadata: true,
+                skip\_app\_version\_update: true,
+                force: true,
+                precheck\_include\_in\_app\_purchases: false
+              )
+            end
+          end
+          EOL
+      - name: Run Fastlane to upload IPA
+        env:
+          APP\_STORE\_CONNECT\_KEY\_ID: ${{ secrets.APP\_STORE\_CONNECT\_KEY\_ID }}
+          APP\_STORE\_CONNECT\_ISSUER\_ID: ${{ secrets.APP\_STORE\_CONNECT\_ISSUER\_ID }}
+          APP\_STORE\_CONNECT\_KEY\_CONTENT: ${{ secrets.APP\_STORE\_CONNECT\_KEY\_CONTENT }}
+        run: fastlane ios upload\_to\_app\_store\_connect > fastlane\_log.txt 2>&1 || { cat fastlane\_log.txt | grep -i "error:"; exit 1; }
+      - name: Upload build log and IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-and-ipa
+          path: |
+            pub\_get\_log.txt
+            xcode\_runtime\_log.txt
+            pod\_install\_log.txt
+            xcode\_clean\_log.txt
+            build\_log.txt
+            fastlane\_log.txt
+            fastlane/report.xml
+            app-ipa/\*.ipa
+      - name: Clean up keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
