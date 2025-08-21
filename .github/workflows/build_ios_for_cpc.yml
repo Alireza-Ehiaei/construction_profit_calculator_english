@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-and-upload:
-    runs-on: macos-15
+    runs-on: macos-15  # Consider testing on macos-14 if possible, as macos-15 has known intermittent signing issues with Xcode 16.
 
     steps:
       - name: Checkout repository
@@ -21,20 +21,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
 
-      - name: Install iOS 18.0 simulator runtime
-        run: xcodebuild -downloadPlatform iOS -sdk iphonesimulator18.0 > xcode_runtime_log.txt 2>&1 || { cat xcode_runtime_log.txt; exit 1; }
-
       - name: Install CocoaPods dependencies
         run: |
           cd ios
           pod install --repo-update > pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
           cd ..
 
-      - name: Clean Xcode project
-        run: |
-          cd ios
-          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
-          cd ..
+      # Removed: Clean Xcode project (optional and not always needed; pod install already handles much of this)
 
       - name: Create temporary keychain
         env:
@@ -45,7 +38,19 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
 
-      - name: Import Apple certificate
+      # New: Import development certificate (create one in Apple Developer Portal if missing, export as p12, add as secret)
+      - name: Import Apple development certificate
+        env:
+          IOS_DEVELOPMENT_P12: ${{ secrets.IOS_DEVELOPMENT_P12 }}  # Add this secret with your development cert p12 (base64-encoded)
+          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$IOS_DEVELOPMENT_P12" | base64 --decode > development_certificate.p12
+          security import development_certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Development certificate import failed"; exit 1; }
+
+      - name: Import Apple distribution certificate
         env:
           IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
@@ -71,7 +76,7 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }  # Removed grep to show full log for debugging
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
 
@@ -123,9 +128,7 @@ jobs:
           name: build-log-and-ipa
           path: |
             pub_get_log.txt
-            xcode_runtime_log.txt
             pod_install_log.txt
-            xcode_clean_log.txt
             build_log.txt
             fastlane_log.txt
             fastlane/report.xml
