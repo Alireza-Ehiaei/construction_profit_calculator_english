@@ -65,6 +65,7 @@ jobs:
 
       - name: Build IPA
         run: |
+          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
