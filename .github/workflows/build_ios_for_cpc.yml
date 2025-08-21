@@ -1,3 +1,4 @@
+
 name: Build and Upload iOS IPA to App Store Connect
 
 on:
@@ -5,7 +6,7 @@ on:
 
 jobs:
   build-and-upload:
-    runs-on: macos-15  # Consider testing on macos-14 if possible, as macos-15 has known intermittent signing issues with Xcode 16.
+    runs-on: macos-15
 
     steps:
       - name: Checkout repository
@@ -27,8 +28,6 @@ jobs:
           pod install --repo-update > pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
           cd ..
 
-      # Removed: Clean Xcode project (optional and not always needed; pod install already handles much of this)
-
       - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -38,17 +37,20 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
 
-      # New: Import development certificate (create one in Apple Developer Portal if missing, export as p12, add as secret)
       - name: Import Apple development certificate
         env:
-          IOS_DEVELOPMENT_P12: ${{ secrets.IOS_DEVELOPMENT_P12 }}  # Add this secret with your development cert p12 (base64-encoded)
+          IOS_DEVELOPMENT_P12: ${{ secrets.IOS_DEVELOPMENT_P12 }}
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           echo "$IOS_DEVELOPMENT_P12" | base64 --decode > development_certificate.p12
-          security import development_certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Development certificate import failed"; exit 1; }
+          ls -l development_certificate.p12
+          file development_certificate.p12
+          security import development_certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign || { echo "Failed to import development certificate"; exit 1; }
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain || { echo "Failed to set key partition list"; exit 1; }
+          security find-identity -v -p codesigning build.keychain > cert_list.txt
+          cat cert_list.txt
+          grep "AHVM2Z8TDL" cert_list.txt || { echo "Development certificate import failed or team ID not found"; exit 1; }
 
       - name: Import Apple distribution certificate
         env:
@@ -57,9 +59,13 @@ jobs:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
-          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
+          ls -l certificate.p12
+          file certificate.p12
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign || { echo "Failed to import distribution certificate"; exit 1; }
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain || { echo "Failed to set key partition list"; exit 1; }
+          security find-identity -v -p codesigning build.keychain > dist_cert_list.txt
+          cat dist_cert_list.txt
+          grep "AHVM2Z8TDL" dist_cert_list.txt || { echo "Distribution certificate import failed or team ID not found"; exit 1; }
 
       - name: Install provisioning profile
         env:
@@ -76,7 +82,7 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }  # Removed grep to show full log for debugging
+            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
 
@@ -129,6 +135,8 @@ jobs:
           path: |
             pub_get_log.txt
             pod_install_log.txt
+            cert_list.txt
+            dist_cert_list.txt
             build_log.txt
             fastlane_log.txt
             fastlane/report.xml
