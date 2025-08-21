@@ -80,6 +80,18 @@ jobs:
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
+      - name: Update RunnerTests code signing
+        run: |
+          sed -i '' '/331C8088294A63A400263BE5/,/name = Debug/ s/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C8088294A63A400263BE5/,/name = Debug/ s/SWIFT_VERSION = 5.0/SWIFT_VERSION = 5.5/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C8088294A63A400263BE5/,/name = Debug/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C8089294A63A400263BE5/,/name = Release/ s/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C8089294A63A400263BE5/,/name = Release/ s/SWIFT_VERSION = 5.0/SWIFT_VERSION = 5.5/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C8089294A63A400263BE5/,/name = Release/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C808A294A63A400263BE5/,/name = Profile/ s/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C808A294A63A400263BE5/,/name = Profile/ s/SWIFT_VERSION = 5.0/SWIFT_VERSION = 5.5/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C808A294A63A400263BE5/,/name = Profile/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";/' ios/Runner.xcodeproj/project.pbxproj
+
       - name: Build IPA
         run: |
           flutter build ipa \
