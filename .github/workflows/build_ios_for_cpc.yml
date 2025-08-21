@@ -84,13 +84,13 @@ jobs:
         run: |
           sed -i '' '/331C8088294A63A400263BE5/,/name = Debug/ s/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' ios/Runner.xcodeproj/project.pbxproj
           sed -i '' '/331C8088294A63A400263BE5/,/name = Debug/ s/SWIFT_VERSION = 5.0/SWIFT_VERSION = 5.5/' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' '/331C8088294A63A400263BE5/,/name = Debug/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C8088294A63A400263BE5/,/name = Debug/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";\nIPHONEOS_DEPLOYMENT_TARGET = "15.0";\nARCHS = "arm64";/' ios/Runner.xcodeproj/project.pbxproj
           sed -i '' '/331C8089294A63A400263BE5/,/name = Release/ s/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' ios/Runner.xcodeproj/project.pbxproj
           sed -i '' '/331C8089294A63A400263BE5/,/name = Release/ s/SWIFT_VERSION = 5.0/SWIFT_VERSION = 5.5/' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' '/331C8089294A63A400263BE5/,/name = Release/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C8089294A63A400263BE5/,/name = Release/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";\nIPHONEOS_DEPLOYMENT_TARGET = "15.0";\nARCHS = "arm64";/' ios/Runner.xcodeproj/project.pbxproj
           sed -i '' '/331C808A294A63A400263BE5/,/name = Profile/ s/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' ios/Runner.xcodeproj/project.pbxproj
           sed -i '' '/331C808A294A63A400263BE5/,/name = Profile/ s/SWIFT_VERSION = 5.0/SWIFT_VERSION = 5.5/' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' '/331C808A294A63A400263BE5/,/name = Profile/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";/' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' '/331C808A294A63A400263BE5/,/name = Profile/ s/$/CODE_SIGN_IDENTITY = "";\nPROVISIONING_PROFILE_SPECIFIER = "";\nCODE_SIGNING_REQUIRED = "NO";\nCODE_SIGNING_ALLOWED = "NO";\nIPHONEOS_DEPLOYMENT_TARGET = "15.0";\nARCHS = "arm64";/' ios/Runner.xcodeproj/project.pbxproj
 
       - name: Build IPA
         run: |
