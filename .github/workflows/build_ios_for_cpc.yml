@@ -25,7 +25,7 @@ jobs:
           echo "=== Debugging PRODUCT_BUNDLE_IDENTIFIER in project.pbxproj ==="
           grep -C 2 "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj > bundle_id_debug.txt
           cat bundle_id_debug.txt
-          BUNDLE_ID=$(grep "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj | grep -v "/*" | head -n 1 | sed 's/.*PRODUCT_BUNDLE_IDENTIFIER = \([^;]*\);.*/\1/' | tr -d ' ')
+          BUNDLE_ID=$(grep "PRODUCT_BUNDLE_IDENTIFIER = com.tech4dev.constructionprofitcalculator;" Runner.xcodeproj/project.pbxproj | head -n 1 | sed 's/.*PRODUCT_BUNDLE_IDENTIFIER = \([^;]*\);/\1/' | tr -d ' \t')
           echo "Bundle ID from project.pbxproj: $BUNDLE_ID"
           if [ "$BUNDLE_ID" != "com.tech4dev.constructionprofitcalculator" ]; then
             echo "Error: Bundle ID in project.pbxproj ($BUNDLE_ID) does not match expected com.tech4dev.constructionprofitcalculator"
@@ -49,7 +49,7 @@ jobs:
             <key>provisioningProfiles</key>
             <dict>
               <key>com.tech4dev.constructionprofitcalculator</key>
-              <string>ConstructionProfitCalculatorProvisionProfile</string>
+              <string>ConstructionProfitCalculator_Distribution_Profile</string>
             </dict>
             <key>teamID</key>
             <string>AHVM2Z8TDL</string>
@@ -105,12 +105,12 @@ jobs:
           echo "Validating provisioning profile"
           security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > profile_info.plist
           /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" profile_info.plist | grep "AHVM2Z8TDL" || { echo "Provisioning profile does not match team ID AHVM2Z8TDL"; exit 1; }
-          /usr/libexec/PlistBuddy -c "Print :AppIDName" profile_info.plist | grep "ConstructionProfitCalculatorProvisionProfile" || { echo "Provisioning profile name does not match ConstructionProfitCalculatorProvisionProfile"; exit 1; }
+          /usr/libexec/PlistBuddy -c "Print :AppIDName" profile_info.plist | grep "ConstructionProfitCalculator_Distribution_Profile" || { echo "Provisioning profile name does not match ConstructionProfitCalculator_Distribution_Profile"; exit 1; }
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
           export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
-          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
+          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculator_Distribution_Profile"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
             --release \
@@ -121,7 +121,7 @@ jobs:
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
           DEVELOPMENT_TEAM: AHVM2Z8TDL
-          PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
+          PROFILE_NAME: ConstructionProfitCalculator_Distribution_Profile
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
