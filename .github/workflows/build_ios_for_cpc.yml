@@ -53,7 +53,7 @@ jobs:
             <string>manual</string>
             <key>provisioningProfiles</key>
             <dict>
-              <key>com.constructionprofitcalculator.english</key>
+              <key>com.tech4dev.constructionprofitcalculator</key>
               <string>ConstructionProfitCalculatorProvisionProfile</string>
             </dict>
             <key>teamID</key>
@@ -100,7 +100,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain > dist_cert_list.txt
           grep "AHVM2Z8TDL" dist_cert_list.txt || { echo "Certificate import failed"; exit 1; }
-      - name: Install provisioning profile
+      - name: Install and validate provisioning profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
@@ -108,6 +108,9 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+          echo "Validating provisioning profile"
+          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > profile_info.plist
+          /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.application-identifier" profile_info.plist | grep "com.tech4dev.constructionprofitcalculator" || { echo "Provisioning profile does not match bundle identifier com.tech4dev.constructionprofitcalculator"; exit 1; }
       - name: Build IPA with Flutter
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -169,7 +172,7 @@ jobs:
             pod_install_log.txt
             xcode_clean_log.txt
             build_log.txt
-            destinations.txt
+            profile_info.plist
             fastlane_log.txt
             fastlane/report.xml
             app-ipa/*.ipa
