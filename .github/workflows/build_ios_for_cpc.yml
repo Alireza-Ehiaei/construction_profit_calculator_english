@@ -21,14 +21,14 @@ jobs:
           xcodebuild -showsdks >> xcode_info.txt
       - name: Validate bundle identifier
         run: |
-          cd ios/Runner
-          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Info.plist)
-          echo "Bundle ID from Info.plist: $BUNDLE_ID"
+          cd ios
+          BUNDLE_ID=$(grep -A 1 "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj | grep -v "PRODUCT_BUNDLE_IDENTIFIER" | head -n 1 | awk '{print $2}' | tr -d '";')
+          echo "Bundle ID from project.pbxproj: $BUNDLE_ID"
           if [ "$BUNDLE_ID" != "com.tech4dev.constructionprofitcalculator" ]; then
-            echo "Error: Bundle ID in Info.plist ($BUNDLE_ID) does not match expected com.tech4dev.constructionprofitcalculator"
+            echo "Error: Bundle ID in project.pbxproj ($BUNDLE_ID) does not match expected com.tech4dev.constructionprofitcalculator"
             exit 1
           fi
-          cd ../..
+          cd ..
       - name: Generate ExportOptions.plist
         run: |
           cd ios
