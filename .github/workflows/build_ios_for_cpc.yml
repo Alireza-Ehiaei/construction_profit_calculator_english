@@ -22,7 +22,10 @@ jobs:
       - name: Validate bundle identifier
         run: |
           cd ios
-          BUNDLE_ID=$(grep -A 1 "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj | grep -v "PRODUCT_BUNDLE_IDENTIFIER" | head -n 1 | awk '{print $2}' | tr -d '";')
+          echo "=== Debugging PRODUCT_BUNDLE_IDENTIFIER in project.pbxproj ==="
+          grep -C 2 "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj > bundle_id_debug.txt
+          cat bundle_id_debug.txt
+          BUNDLE_ID=$(grep "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj | grep -v "/*" | head -n 1 | sed 's/.*PRODUCT_BUNDLE_IDENTIFIER = \([^;]*\);.*/\1/' | tr -d ' ')
           echo "Bundle ID from project.pbxproj: $BUNDLE_ID"
           if [ "$BUNDLE_ID" != "com.tech4dev.constructionprofitcalculator" ]; then
             echo "Error: Bundle ID in project.pbxproj ($BUNDLE_ID) does not match expected com.tech4dev.constructionprofitcalculator"
@@ -167,6 +170,7 @@ jobs:
             pod_install_log.txt
             xcode_clean_log.txt
             build_log.txt
+            bundle_id_debug.txt
             profile_info.plist
             fastlane_log.txt
             fastlane/report.xml
