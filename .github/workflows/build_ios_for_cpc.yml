@@ -96,11 +96,14 @@ jobs:
       - name: Build IPA with xcodebuild
         run: |
           cd ios
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner -showdestinations > destinations.txt 2>&1
+          cat destinations.txt
           xcodebuild archive \
             -workspace Runner.xcworkspace \
             -scheme Runner \
             -configuration Release \
             -archivePath build/Runner.xcarchive \
+            -destination 'generic/platform=iOS' \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" \
             PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile" \
@@ -161,6 +164,7 @@ jobs:
             pod_install_log.txt
             xcode_clean_log.txt
             build_log.txt
+            destinations.txt
             fastlane_log.txt
             fastlane/report.xml
             app-ipa/*.ipa
