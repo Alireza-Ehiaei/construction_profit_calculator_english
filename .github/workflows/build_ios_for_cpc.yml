@@ -98,47 +98,11 @@ jobs:
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      - name: Completely remove iOS 18.0 references from Main.storyboard
+      - name: Switch to Xcode 15
         run: |
-          cd ios
-          if [ -f "Runner/Base.lproj/Main.storyboard" ]; then
-            echo "Completely removing iOS 18.0 references from Main.storyboard..."
-            
-            # Backup the original file
-            cp Runner/Base.lproj/Main.storyboard Runner/Base.lproj/Main.storyboard.backup
-            
-            # Remove ALL iOS version specific references
-            sed -i '' 's/iosVersion="[0-9.]*"//g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/version="[0-9.]*"//g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/minimumSystemVersion="[0-9.]*"//g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/targetRuntime="iOS.CocoaTouch" version="[0-9.]*"/targetRuntime="iOS.CocoaTouch"/g' Runner/Base.lproj/Main.storyboard
-            
-            # Remove any development assets version tags
-            sed -i '' 's/Development Assets" version="[0-9.]*"/Development Assets"/g' Runner/Base.lproj/Main.storyboard
-            
-            echo "Main.storyboard cleaned of iOS version references"
-            echo "Current storyboard content:"
-            grep -n "iOS\\|version\\|targetRuntime" Runner/Base.lproj/Main.storyboard || echo "No iOS version references found"
-          else
-            echo "Main.storyboard not found"
-          fi
-          cd ..
-
-      - name: Verify Main.storyboard is clean
-        run: |
-          cd ios
-          if [ -f "Runner/Base.lproj/Main.storyboard" ]; then
-            echo "=== Verifying Main.storyboard is clean ==="
-            if grep -q "18.0" Runner/Base.lproj/Main.storyboard; then
-              echo "ERROR: iOS 18.0 references still found in Main.storyboard:"
-              grep -n "18.0" Runner/Base.lproj/Main.storyboard
-              exit 1
-            else
-              echo "✓ Main.storyboard is clean of iOS 18.0 references"
-            fi
-          fi
-          cd ..
-    
+          sudo xcode-select -switch /Applications/Xcode_15.4.app/Contents/Developer
+          sudo xcodebuild -runFirstLaunch
+          
       - name: Build IPA with Flutter
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -152,7 +116,7 @@ jobs:
             --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-      
+            
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
