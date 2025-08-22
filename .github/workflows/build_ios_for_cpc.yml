@@ -19,6 +19,21 @@ jobs:
         run: |
           xcodebuild -version > xcode_info.txt
           xcodebuild -showsdks >> xcode_info.txt
+      - name: Fix iOS 18.0 targeting in project files
+        run: |
+          cd ios
+          echo "=== Checking for iOS 18.0 references ==="
+          if grep -q "SDKROOT = iphoneos18.0" Runner.xcodeproj/project.pbxproj; then
+            echo "Fixing SDKROOT from iphoneos18.0 to iphoneos"
+            sed -i '' 's/SDKROOT = iphoneos18.0;/SDKROOT = iphoneos;/g' Runner.xcodeproj/project.pbxproj
+          fi
+          if [ -f "Runner/Base.lproj/Main.storyboard" ]; then
+            echo "Main.storyboard exists - verify deployment target in Xcode File Inspector"
+          fi
+          grep -n "18.0" Runner.xcodeproj/project.pbxproj || echo "No iOS 18.0 references found"
+          echo "=== Current deployment settings ==="
+          grep -n "IPHONEOS_DEPLOYMENT_TARGET\|SDKROOT" Runner.xcodeproj/project.pbxproj
+          cd ..
       - name: Install CocoaPods dependencies
         run: |
           cd ios
@@ -66,6 +81,7 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
+            --sdk iphoneos17.5 \
             --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
