@@ -30,12 +30,26 @@ jobs:
             sed -i '' 's/SDKROOT = iphoneos18.0;/SDKROOT = iphoneos;/g' Runner.xcodeproj/project.pbxproj
           fi
           if [ -f "Runner/Base.lproj/Main.storyboard" ]; then
-            echo "Main.storyboard exists - verify deployment target is 15.0 in Xcode File Inspector"
-            grep -n "targetRuntime=\"iOS.CocoaTouch\"" Runner/Base.lproj/Main.storyboard || echo "No iOS runtime specified in Main.storyboard"
+            echo "Main.storyboard exists - checking for iOS 18.0 references"
+            grep -n "18.0" Runner/Base.lproj/Main.storyboard || echo "No iOS 18.0 references found in Main.storyboard"
           fi
           grep -n "18.0" Runner.xcodeproj/project.pbxproj || echo "No iOS 18.0 references found in project.pbxproj"
           echo "=== Current deployment settings ==="
           grep -n "IPHONEOS_DEPLOYMENT_TARGET\|SDKROOT" Runner.xcodeproj/project.pbxproj
+          cd ..
+      - name: Fix Main.storyboard iOS deployment target
+        run: |
+          cd ios
+          if [ -f "Runner/Base.lproj/Main.storyboard" ]; then
+            echo "Fixing Main.storyboard deployment target from 18.0 to 15.0"
+            cp Runner/Base.lproj/Main.storyboard Runner/Base.lproj/Main.storyboard.backup
+            sed -i '' 's/minimumSystemVersion="18.0"/minimumSystemVersion="15.0"/g' Runner/Base.lproj/Main.storyboard
+            sed -i '' 's/targetRuntime="iOS.CocoaTouch" version="18.0"/targetRuntime="iOS.CocoaTouch" version="15.0"/g' Runner/Base.lproj/Main.storyboard
+            sed -i '' 's/Development Assets"/Development Assets" version="15.0"/g' Runner/Base.lproj/Main.storyboard
+            echo "Main.storyboard iOS target fixed to 15.0"
+          else
+            echo "Main.storyboard not found, skipping fix"
+          fi
           cd ..
       - name: Install CocoaPods dependencies
         run: |
@@ -87,17 +101,15 @@ jobs:
             -scheme Runner \
             -configuration Release \
             -archivePath build/Runner.xcarchive \
-            -destination 'generic/platform=iOS' \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" \
             PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile" \
             DEVELOPMENT_TEAM="AHVM2Z8TDL" \
-            IPHONEOS_DEPLOYMENT_TARGET=15.0 > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           xcodebuild -exportArchive \
             -archivePath build/Runner.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/ipa \
-            -destination 'generic/platform=iOS' >> build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+            -exportPath build/ipa >> build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           cd ..
           mkdir -p app-ipa
           cp ios/build/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
