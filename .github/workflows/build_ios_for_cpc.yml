@@ -98,23 +98,48 @@ jobs:
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
       
-      - name: Build IPA with Flutter (simplified)
+      - name: Build IPA with Flutter
         run: |
-          # Use Flutter's build system now that iOS 18.0 issues are fixed
+          # Set signing environment variables
+          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
+          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
+          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
+          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
+          
+          echo "Starting IPA build with manual code signing..." > build_log.txt
+          echo "Certificate: iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" >> build_log.txt
+          echo "Profile: ConstructionProfitCalculatorProvisionProfile" >> build_log.txt
+          echo "Team: AHVM2Z8TDL" >> build_log.txt
+          echo "----------------------------------------" >> build_log.txt
+          
+          # Build with all output to log file, only show errors on failure
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
-          mkdir -p app-ipa
-          cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-      
+            --verbose >> build_log.txt 2>&1
+          
+          # Check exit status and only show errors if failed
+          if [ $? -ne 0 ]; then
+            echo "Build failed! Error summary:"
+            grep -i "error\\|fail\\|certificate\\|profile\\|sign" build_log.txt | head -20
+            echo "Full log available in build_log.txt"
+            exit 1
+          else
+            echo "Build successful! IPA created."
+            mkdir -p app-ipa
+            cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
+          fi
+        env:
+          DEVELOPMENT_TEAM: AHVM2Z8TDL
+          PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
+            
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
-      
+            
       - name: Install Fastlane
         run: gem install fastlane
       
