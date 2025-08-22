@@ -24,6 +24,11 @@ jobs:
           cd ios
           pod install --repo-update > pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
           cd ..
+      - name: Clean Xcode project
+        run: |
+          cd ios
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
+          cd ..
       - name: Create temporary keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -110,7 +115,7 @@ jobs:
             pub_get_log.txt
             xcode_info.txt
             pod_install_log.txt
-            dist_cert_list.txt
+            xcode_clean_log.txt
             build_log.txt
             fastlane_log.txt
             fastlane/report.xml
