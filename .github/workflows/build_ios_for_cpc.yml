@@ -19,16 +19,23 @@ jobs:
         run: |
           xcodebuild -version > xcode_info.txt
           xcodebuild -showsdks >> xcode_info.txt
-      - name: Fix iOS 18.0 targeting in project files
+      - name: Fix iOS SDK targeting in project files
         run: |
           cd ios
+          echo "=== Available SDKs ==="
+          cat ../xcode_info.txt
           echo "=== Checking for iOS 18.0 references ==="
           if grep -q "SDKROOT = iphoneos18.0" Runner.xcodeproj/project.pbxproj; then
-            echo "Fixing SDKROOT from iphoneos18.0 to iphoneos17.5"
-            sed -i '' 's/SDKROOT = iphoneos18.0;/SDKROOT = iphoneos17.5;/g' Runner.xcodeproj/project.pbxproj
-          elif ! grep -q "SDKROOT = iphoneos17.5" Runner.xcodeproj/project.pbxproj; then
-            echo "Setting SDKROOT to iphoneos17.5"
-            sed -i '' 's/SDKROOT = iphoneos;/SDKROOT = iphoneos17.5;/g' Runner.xcodeproj/project.pbxproj
+            echo "Fixing SDKROOT from iphoneos18.0 to iphoneos"
+            sed -i '' 's/SDKROOT = iphoneos18.0;/SDKROOT = iphoneos;/g' Runner.xcodeproj/project.pbxproj
+          fi
+          echo "=== Checking for available iOS SDK ==="
+          AVAILABLE_SDK=$(xcodebuild -showsdks | grep -o "iphoneos[0-9]*\.[0-9]*" | sort -r | head -n 1)
+          if [ -n "$AVAILABLE_SDK" ]; then
+            echo "Setting SDKROOT to $AVAILABLE_SDK"
+            sed -i '' "s/SDKROOT = iphoneos;/SDKROOT = $AVAILABLE_SDK;/g" Runner.xcodeproj/project.pbxproj
+          else
+            echo "No iOS device SDK found, keeping SDKROOT as iphoneos"
           fi
           if [ -f "Runner/Base.lproj/Main.storyboard" ]; then
             echo "Main.storyboard exists - verify deployment target is 15.0 in Xcode File Inspector"
@@ -46,7 +53,7 @@ jobs:
       - name: Clean Xcode project
         run: |
           cd ios
-          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos17.5 > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
           cd ..
       - name: Create temporary keychain
         env:
