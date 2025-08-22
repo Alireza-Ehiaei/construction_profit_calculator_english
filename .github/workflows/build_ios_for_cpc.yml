@@ -37,30 +37,6 @@ jobs:
           echo "=== Current deployment settings ==="
           grep -n "IPHONEOS_DEPLOYMENT_TARGET\|SDKROOT" Runner.xcodeproj/project.pbxproj
           cd ..
-      - name: Fix Main.storyboard iOS deployment target
-        run: |
-          cd ios
-          if [ -f "Runner/Base.lproj/Main.storyboard" ]; then
-            echo "Fixing Main.storyboard deployment target from 18.0 to 15.0"
-            cp Runner/Base.lproj/Main.storyboard Runner/Base.lproj/Main.storyboard.backup
-            sed -i '' 's/minimumSystemVersion="18.0"/minimumSystemVersion="15.0"/g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/targetRuntime="iOS.CocoaTouch" version="18.0"/targetRuntime="iOS.CocoaTouch" version="15.0"/g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/Development Assets"/Development Assets" version="15.0"/g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/systemVersion="18.0"/systemVersion="15.0"/g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/targetedDevice="iOS 18.0"/targetedDevice="iOS 15.0"/g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/version="18.0"/version="15.0"/g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/18.0"/15.0"/g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/deployment="iOS 18.0"/deployment="iOS 15.0"/g' Runner/Base.lproj/Main.storyboard
-            sed -i '' 's/targetDevice=".*18.0"/targetDevice="iOS 15.0"/g' Runner/Base.lproj/Main.storyboard
-            echo "Validating Main.storyboard fix"
-            grep -n "18.0" Runner/Base.lproj/Main.storyboard || echo "No iOS 18.0 references remain in Main.storyboard"
-            grep -n "15.0" Runner/Base.lproj/Main.storyboard || echo "No iOS 15.0 references found after fix"
-            cd ..
-            echo "Main.storyboard iOS target fixed to 15.0"
-          else
-            echo "Main.storyboard not found, skipping fix"
-            cd ..
-          fi
       - name: Generate ExportOptions.plist
         run: |
           cd ios
@@ -145,32 +121,6 @@ jobs:
             --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-      # Alternative: Uncomment to try xcodebuild if Flutter build fails
-      # - name: Build IPA with xcodebuild
-      #   run: |
-      #     cd ios
-      #     xcodebuild -workspace Runner.xcworkspace -scheme Runner -showdestinations > destinations.txt 2>&1
-      #     echo "Available destinations:"
-      #     cat destinations.txt
-      #     xcodebuild archive \
-      #       -workspace Runner.xcworkspace \
-      #       -scheme Runner \
-      #       -configuration Release \
-      #       -archivePath build/Runner.xcarchive \
-      #       -destination 'generic/platform=iOS' \
-      #       -sdk iphoneos \
-      #       CODE_SIGN_STYLE=Manual \
-      #       CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" \
-      #       PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile" \
-      #       DEVELOPMENT_TEAM="AHVM2Z8TDL" \
-      #       IPHONEOS_DEPLOYMENT_TARGET=15.0 > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
-      #     xcodebuild -exportArchive \
-      #       -archivePath build/Runner.xcarchive \
-      #       -exportOptionsPlist ExportOptions.plist \
-      #       -exportPath build/ipa >> build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
-      #     cd ..
-      #     mkdir -p app-ipa
-      #     cp ios/build/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
