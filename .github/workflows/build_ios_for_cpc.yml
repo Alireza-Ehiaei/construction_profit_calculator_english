@@ -50,10 +50,10 @@ jobs:
             </dict>
             <key>teamID</key>
             <string>AHVM2Z8TDL</string>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
+            <key>stripSwiftSymbols</key>
             <true/>
+            <key>thinning</key>
+            <string>none</string>
           </dict>
           </plist>
           EOL
