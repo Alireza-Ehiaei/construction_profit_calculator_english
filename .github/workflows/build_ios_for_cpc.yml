@@ -13,6 +13,13 @@ jobs:
         with:
           xcode-version: '16'
 
+      - name: Install xcodes
+        run: |
+          brew install xcodesorg/xcodes/xcodes
+          xcodes install 16.0 --path /Applications/Xcode.app --experimental-unxip > xcode_install_log.txt 2>&1 || { cat xcode_install_log.txt; exit 1; }
+          xcodes runtimes install "iOS 18.0" > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
+          xcodebuild -showsdks >> sdk_install_log.txt
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2.12.0
         with:
@@ -41,13 +48,6 @@ jobs:
 
       - name: Clean DerivedData
         run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
-
-      - name: Install iOS 18.0 SDK
-        run: |
-          echo "Installing iOS 18.0 SDK"
-          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
-          xcrun simctl runtime list >> sdk_install_log.txt
-          xcodebuild -showsdks >> sdk_install_log.txt
 
       - name: Check Xcode version and SDKs
         run: |
@@ -121,7 +121,7 @@ jobs:
       - name: Clean Xcode project
         run: |
           cd ios
-          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
           cd ..
 
       - name: Force Xcode to use available iOS SDK
@@ -170,8 +170,7 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --target-platform ios \
-            --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
@@ -229,8 +228,19 @@ jobs:
             flutter_version_log.txt
             pub_get_log.txt
             xcode_info.txt
+            xcode_install_log.txt
             sdk_install_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
             build_log.txt
-            bundle_id_debug
+            bundle_id_debug.txt
+            profile_info.plist
+            fastlane_log.txt
+            fastlane/report.xml
+            flutter_config_log.txt
+            app-ipa/*.ipa
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
