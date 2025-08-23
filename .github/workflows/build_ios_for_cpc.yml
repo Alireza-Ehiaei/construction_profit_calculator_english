@@ -163,6 +163,7 @@ jobs:
           DEVELOPMENT_TEAM: AHVM2Z8TDL
           PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
+          XCODE_DESTINATION: "generic/platform=iOS"
 
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
