@@ -42,17 +42,31 @@ jobs:
       - name: Clean DerivedData
         run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
-      - name: Install iOS 18 Simulator
+      - name: Install iOS 18.0 SDK
         run: |
-          echo "Installing iOS 18 simulator runtime"
-          xcodebuild -downloadPlatform iOS > simulator_install_log.txt 2>&1 || { cat simulator_install_log.txt; exit 1; }
-          xcrun simctl runtime list >> simulator_install_log.txt
+          echo "Installing iOS 18.0 SDK"
+          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
+          xcrun simctl runtime list >> sdk_install_log.txt
+          xcodebuild -showsdks >> sdk_install_log.txt
 
       - name: Check Xcode version and SDKs
         run: |
           xcodebuild -version > xcode_info.txt
           xcodebuild -showsdks >> xcode_info.txt
           xcrun simctl runtime list >> xcode_info.txt  # Log available simulator runtimes
+
+      - name: Update iOS deployment target
+        run: |
+          echo "Updating iOS deployment target to 18.0"
+          sed -i '' 's/platform :ios, '\''15.0'\''/platform :ios, '\''18.0'\''/' ios/Podfile
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 15.0/IPHONEOS_DEPLOYMENT_TARGET = 18.0/' ios/Runner.xcodeproj/project.pbxproj
+          plutil -replace MinimumOSVersion -string "18.0" ios/Runner/Info.plist
+          echo "Podfile content:"
+          cat ios/Podfile
+          echo "project.pbxproj IPHONEOS_DEPLOYMENT_TARGET:"
+          grep IPHONEOS_DEPLOYMENT_TARGET ios/Runner.xcodeproj/project.pbxproj
+          echo "Info.plist MinimumOSVersion:"
+          plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
 
       - name: Validate bundle identifier
         run: |
@@ -145,7 +159,7 @@ jobs:
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
           echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-      
+
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -156,17 +170,14 @@ jobs:
             --release \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
-            --verbose \
-            -- \
-            -destination 'generic/platform=iOS' \
-            > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+            --target-platform ios \
+            --verbose > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
           DEVELOPMENT_TEAM: AHVM2Z8TDL
           PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
-
 
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
@@ -218,18 +229,8 @@ jobs:
             flutter_version_log.txt
             pub_get_log.txt
             xcode_info.txt
-            simulator_install_log.txt
+            sdk_install_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
             build_log.txt
-            bundle_id_debug.txt
-            profile_info.plist
-            fastlane_log.txt
-            fastlane/report.xml
-            flutter_config_log.txt
-            app-ipa/*.ipa
-
-      - name: Clean up keychain
-        if: always()
-        run: |
-          security delete-keychain build.keychain || true
+            bundle_id_debug
