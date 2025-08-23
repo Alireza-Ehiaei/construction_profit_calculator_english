@@ -4,8 +4,6 @@ on:
 jobs:
   build-and-upload:
     runs-on: macos-15
-    env:
-      MD_APPLE_SDK_ROOT: /Applications/Xcode.app
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,16 +15,10 @@ jobs:
 
       - name: Install xcodes
         run: |
-          echo "Configuring Git for anonymous HTTPS cloning"
-          git config --global credential.helper 'cache --timeout=3600'
-          echo "Installing Homebrew xcodes tap"
-          brew tap xcodesorg/xcodes --force > brew_tap_log.txt 2>&1 || { cat brew_tap_log.txt; exit 1; }
-          brew install xcodesorg/xcodes/xcodes > brew_install_log.txt 2>&1 || { cat brew_install_log.txt; exit 1; }
+          brew install xcodesorg/xcodes/xcodes
           xcodes install 16.0 --path /Applications/Xcode.app --experimental-unxip > xcode_install_log.txt 2>&1 || { cat xcode_install_log.txt; exit 1; }
-          xcodes runtimes install "iOS 18.0" > sdk_install_log.txt 2>&1 || { echo "Falling back to xcodebuild -downloadPlatform ios"; sudo xcodebuild -downloadPlatform ios >> sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }; }
+          xcodes runtimes install "iOS 18.0" > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
           xcodebuild -showsdks >> sdk_install_log.txt
-        env:
-          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2.12.0
@@ -184,7 +176,8 @@ jobs:
         env:
           DEVELOPMENT_TEAM: AHVM2Z8TDL
           PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
-          
+          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
+
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
@@ -236,8 +229,6 @@ jobs:
             pub_get_log.txt
             xcode_info.txt
             xcode_install_log.txt
-            brew_tap_log.txt
-            brew_install_log.txt
             sdk_install_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
