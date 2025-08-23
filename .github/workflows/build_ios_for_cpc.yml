@@ -49,7 +49,7 @@ jobs:
             <key>provisioningProfiles</key>
             <dict>
               <key>com.tech4dev.constructionprofitcalculator</key>
-              <string>ConstructionProfitCalculator_Distribution_Profile</string>
+              <string>ConstructionProfitCalculatorProvisionProfile</string>
             </dict>
             <key>teamID</key>
             <string>AHVM2Z8TDL</string>
