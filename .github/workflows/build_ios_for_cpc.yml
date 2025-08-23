@@ -15,15 +15,13 @@ jobs:
         with:
           xcode-version: '16'
 
-      - name: Install xcodes manually
+      - name: Verify Xcode and SDK
         run: |
-          echo "Installing xcodes from GitHub releases"
-          curl -L https://github.com/XcodesOrg/xcodes/releases/download/1.6.2/xcodes.zip -o xcodes.zip
-          unzip xcodes.zip -d /usr/local/bin/
-          chmod +x /usr/local/bin/xcodes
-          xcodes version > xcode_install_log.txt 2>&1 || { cat xcode_install_log.txt; exit 1; }
-          xcodes install 16.0 --path /Applications/Xcode.app --experimental-unxip >> xcode_install_log.txt 2>&1 || { cat xcode_install_log.txt; exit 1; }
-          xcodes runtimes install "iOS 18.0" > sdk_install_log.txt 2>&1 || { echo "Falling back to xcodebuild -downloadPlatform ios"; sudo xcodebuild -downloadPlatform ios >> sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }; }
+          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version > xcode_info.txt
+          xcodebuild -showsdks >> xcode_info.txt
+          xcrun simctl runtime list >> xcode_info.txt
+          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
           xcodebuild -showsdks >> sdk_install_log.txt
         env:
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
@@ -56,12 +54,6 @@ jobs:
 
       - name: Clean DerivedData
         run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
-
-      - name: Check Xcode version and SDKs
-        run: |
-          xcodebuild -version > xcode_info.txt
-          xcodebuild -showsdks >> xcode_info.txt
-          xcrun simctl runtime list >> xcode_info.txt
 
       - name: Update iOS deployment target
         run: |
@@ -236,7 +228,6 @@ jobs:
             flutter_version_log.txt
             pub_get_log.txt
             xcode_info.txt
-            xcode_install_log.txt
             sdk_install_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
