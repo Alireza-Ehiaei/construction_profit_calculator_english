@@ -16,11 +16,11 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.3'  # Pin to a specific stable version to avoid resolution errors
+          flutter-version: '3.29.3'  # Set to match your local version
           channel: 'stable'
           architecture: arm64
         env:
-          MD_APPLE_SDK_ROOT: /Applications/Xcode.app  # Ensure correct Xcode path; adjusted from Xcode_16.4.app
+          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
       - name: Install dependencies
         run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
