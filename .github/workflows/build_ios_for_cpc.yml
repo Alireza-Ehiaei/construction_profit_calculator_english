@@ -16,7 +16,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'  # Set to match your local version
+          flutter-version: '3.25.0'  # Use known stable version with Dart 3.6.0 for webview_flutter ^4.13.0
           channel: 'stable'
           architecture: arm64
         env:
@@ -27,6 +27,11 @@ jobs:
 
       - name: Flutter clean
         run: flutter clean
+
+      - name: Generate Flutter iOS config
+        run: |
+          flutter build ios --config-only --no-codesign --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
+          ls -l ios/Flutter/  # Verify Generated.xcconfig exists
 
       - name: Clean DerivedData
         run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
@@ -201,6 +206,7 @@ jobs:
             profile_info.plist
             fastlane_log.txt
             fastlane/report.xml
+            flutter_config_log.txt
             app-ipa/*.ipa
 
       - name: Clean up keychain
