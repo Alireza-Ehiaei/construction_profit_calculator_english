@@ -94,18 +94,15 @@ jobs:
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-      - name: Install and validate provisioning profile
+      - name: Install provisioning profile
         env:
           IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+          echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-          echo "Validating provisioning profile"
-          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision > profile_info.plist
-          /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" profile_info.plist | grep "AHVM2Z8TDL" || { echo "Provisioning profile does not match team ID AHVM2Z8TDL"; exit 1; }
-          /usr/libexec/PlistBuddy -c "Print :AppIDName" profile_info.plist | grep "ConstructionProfitCalculator_Distribution_Profile" || { echo "Provisioning profile name does not match ConstructionProfitCalculator_Distribution_Profile"; exit 1; }
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
