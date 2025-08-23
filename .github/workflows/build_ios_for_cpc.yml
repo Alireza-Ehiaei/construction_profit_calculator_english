@@ -22,8 +22,10 @@ jobs:
           cache: true
         env:
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
+
+      - name: Verify Flutter version
         run: |
-          echo "Fetching Flutter version 3.29.3"
+          echo "Verifying Flutter version 3.29.3"
           flutter --version > flutter_version_log.txt 2>&1 || { cat flutter_version_log.txt; exit 1; }
 
       - name: Install dependencies
