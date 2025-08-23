@@ -14,13 +14,17 @@ jobs:
           xcode-version: '16'
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@v2.12.0
         with:
-          flutter-version: '3.25.0'  # Use known stable version with Dart 3.6.0 for webview_flutter ^4.13.0
+          flutter-version: '3.29.3'  # Match your local version with Dart 3.7.2
           channel: 'stable'
           architecture: arm64
+          cache: true
         env:
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
+        run: |
+          echo "Fetching Flutter version 3.29.3"
+          flutter --version > flutter_version_log.txt 2>&1 || { cat flutter_version_log.txt; exit 1; }
 
       - name: Install dependencies
         run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
@@ -197,6 +201,7 @@ jobs:
         with:
           name: build-log-and-ipa
           path: |
+            flutter_version_log.txt
             pub_get_log.txt
             xcode_info.txt
             pod_install_log.txt
