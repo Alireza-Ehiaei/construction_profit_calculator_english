@@ -773,7 +773,7 @@ class _ResultPage1State extends State<ResultPage1> {
                                                   return DataRow(
                                                     color: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
                                                       if (states.contains(WidgetState.selected)) {
-                                                        return Theme.of(context).colorScheme.primary.withValues(alpha: 0.08);
+                                                        return Theme.of(context).colorScheme.primary.withAlpha(20); // 0.08 * 255 ≈ 20
                                                       }
                                                       return rowColor;
                                                     }),
