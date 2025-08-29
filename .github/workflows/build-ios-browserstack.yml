@@ -16,6 +16,10 @@ jobs:
         with:
           xcode-version: '16.0'
 
+      - name: Debug Xcode SDKs
+        run: |
+          xcodebuild -showsdks
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -29,6 +33,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
 
+      - name: Generate Flutter iOS config
+        run: |
+          flutter build ios --config-only --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
+          ls -l ios/Flutter/
+
       - name: Install CocoaPods dependencies
         run: |
           cd ios
@@ -38,7 +47,7 @@ jobs:
       - name: Clean Xcode project
         run: |
           cd ios
-          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release -destination 'generic/platform=iOS' > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
           cd ..
 
       - name: Force Xcode to use available iOS SDK
@@ -55,49 +64,45 @@ jobs:
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
-      
+
       - name: Import Apple certificate
         env:
-          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          SIGNING_CERTIFICATE_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
+          echo "$SIGNING_CERTIFICATE_P12" | base64 --decode > certificate.p12
           if [ ! -s certificate.p12 ]; then
             echo "Error: certificate.p12 is empty or invalid"
             exit 1
           fi
-          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-      
+
       - name: Install provisioning profile
         env:
-          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+          PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
         run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
+          echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          if [ ! -s profile.mobileprovision ]; then
+            echo "Error: profile.mobileprovision is empty or invalid"
+            exit 1
+          fi
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorDevelopmentProfile.mobileprovision
           echo "Provisioning profile installed successfully"
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      - name: Verify Certificate in Keychain
+      - name: Build iOS IPA
         run: |
-          echo "Listing identities in build.keychain:"
-          security find-identity -v -p codesigning build.keychain
-          echo "Checking if specific certificate exists:"
-          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || echo "Certificate not found!"
-          
-      - name: Build IPA
-        env:
-          FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
-          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
-          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
-          FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
-        run: |
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
+          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="Apple Development"
+          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorDevelopmentProfile"
+          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           mkdir -p ipa-artifact
           cp build/ios/ipa/*.ipa ipa-artifact/app.ipa
-    
 
       - name: Upload IPA to BrowserStack
         id: browserstack-upload
@@ -163,6 +168,55 @@ jobs:
           echo "3. The in_app_purchase Flutter package is correctly implemented"
           echo "4. Test edge cases: interrupted purchases, restore purchases, subscriptions"
 
+      - name: Re-sign IPA for App Store Connect
+        env:
+          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Generate distribution ExportOptions.plist
+          cat > ios/ExportOptionsDistribution.plist << EOL
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>signingCertificate</key>
+            <string>iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.tech4dev.constructionprofitcalculator</key>
+              <string>ConstructionProfitCalculatorProvisionProfile</string>
+            </dict>
+            <key>teamID</key>
+            <string>AHVM2Z8TDL</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>thinning</key>
+            <string>none</string>
+          </dict>
+          </plist>
+          EOL
+
+          # Import distribution certificate
+          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > dist_certificate.p12
+          security import dist_certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          # Install distribution provisioning profile
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > dist_profile.mobileprovision
+          cp dist_profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+
+          # Re-sign IPA
+          mkdir -p resigned-ipa
+          /usr/bin/codesign -f -s "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" --entitlements ios/Runner/Runner.entitlements ipa-artifact/app.ipa
+          xcodebuild -exportArchive -archivePath build/ios/archive/Runner.xcarchive -exportOptionsPlist ios/ExportOptionsDistribution.plist -exportPath resigned-ipa
+          cp resigned-ipa/*.ipa ipa-artifact/app.ipa
+
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
@@ -218,6 +272,7 @@ jobs:
             pub_get_log.txt
             xcode_clean_log.txt
             pod_install_log.txt
+            flutter_config_log.txt
             build_log.txt
             fastlane_log.txt
             ipa-artifact/*.ipa
