@@ -1121,264 +1121,81 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                             flex: 1,
                                                             child: ElevatedButton(
                                                               onPressed: () async {
-                                                                final subscriptionsProvider = Provider
-                                                                    .of<
-                                                                    SubscriptionsProvider>(
-                                                                    context,
-                                                                    listen: false);
-                                                                final projectData = Provider
-                                                                    .of<
-                                                                    ProjectData>(
-                                                                    context,
-                                                                    listen: false);
+                                                                final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
+                                                                final projectData = Provider.of<ProjectData>(context, listen: false);
 
-                                                                // Check if user already has active subscription
-                                                                if (subscriptionsProvider
-                                                                    .hasSimpleActiveSubscription ||
-                                                                    subscriptionsProvider
-                                                                        .hasCompletePlusSimpleCalculationProductId) {
-                                                                  // Navigate directly
-                                                                  projectData
-                                                                      .setProjectName(
-                                                                      "_oozz");
-                                                                  NavigationService()
-                                                                      .navigateToScreen(
-                                                                    const SimpleCalculationPage1(
-                                                                        givenSimpleProjectName: 'wwmm'),
+                                                                // Check if user has active subscription for Simple Calculation or Full Access
+                                                          /*      if (subscriptionsProvider.hasSimpleActiveSubscription ||
+                                                                    subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                                                                  // Navigate directly to Simple Calculation page
+                                                                  projectData.setProjectName("_oozz");
+                                                                  NavigationService().navigateToScreen(
+                                                                    const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
                                                                     arguments: 'wwmm',
                                                                   );
                                                                   return;
-                                                                }
+                                                                }*/
 
-                                                                // Show manage subscription dialog
-                                                                showDialog(
-                                                                  context: context,
-                                                                  builder: (
-                                                                      context) =>
-                                                                      AlertDialog(
-                                                                        title: const Text(
-                                                                            'Manage Subscription'),
-                                                                        content: Text(
-                                                                          'Please restore purchases if you have already subscribed, or subscribe now.',
-                                                                          style: TextStyle(
-                                                                              fontSize: textFontSize,
-                                                                              color: Colors
-                                                                                  .purple),
-                                                                        ),
-                                                                        actions: [
-                                                                          TextButton(
-                                                                            onPressed: () async {
-                                                                              // Show a loading dialog first, using the current context
-                                                                              showDialog(
-                                                                                context: context,
-                                                                                barrierDismissible: false,
-                                                                                builder: (
-                                                                                    BuildContext loadingContext) {
-                                                                                  return const Center(
-                                                                                      child: CircularProgressIndicator());
-                                                                                },
-                                                                              );
-
-                                                                              try {
-                                                                                bool restorationSuccess = await subscriptionsProvider
-                                                                                    .restorePurchases();
-                                                                                // Don't use a fixed delay; the restoration is already complete.
-
-                                                                                // Close the loading dialog using the context we just created for it
-                                                                                Navigator
-                                                                                    .of(
-                                                                                    context,
-                                                                                    rootNavigator: true)
-                                                                                    .pop();
-
-                                                                                if (restorationSuccess &&
-                                                                                    (subscriptionsProvider
-                                                                                        .hasSimpleActiveSubscription ||
-                                                                                        subscriptionsProvider
-                                                                                            .hasCompletePlusSimpleCalculationProductId)) {
-                                                                                  // If restoration is successful, navigate to the next page
-                                                                                  projectData
-                                                                                      .setProjectName(
-                                                                                      "_oozz");
-                                                                                  NavigationService()
-                                                                                      .navigateToScreen(
-                                                                                    const SimpleCalculationPage1(
-                                                                                        givenSimpleProjectName: 'wwmm'),
-                                                                                    arguments: 'wwmm',
-                                                                                  );
-                                                                                } else {
-                                                                                  // If restoration fails, show the "Restoration Unsuccessful" dialog
-                                                                                  showDialog(
-                                                                                    context: context,
-                                                                                    builder: (
-                                                                                        _) =>
-                                                                                        AlertDialog(
-                                                                                          title: const Text(
-                                                                                              'Restoration Unsuccessful'),
-                                                                                          content: const Text(
-                                                                                            'No active subscriptions were found. Please subscribe or check your App Store/Google Play account purchases.',
-                                                                                          ),
-                                                                                          actions: [
-                                                                                            TextButton(
-                                                                                              onPressed: () {
-                                                                                                Navigator
-                                                                                                    .of(
-                                                                                                    context)
-                                                                                                    .pop();
-                                                                                                subscriptionsProvider
-                                                                                                    .showSimpleSubscriptionUI(
-                                                                                                    context);
-                                                                                              },
-                                                                                              child: const Text(
-                                                                                                  'Subscribe'),
-                                                                                            ),
-                                                                                            TextButton(
-                                                                                              onPressed: () {
-                                                                                                Navigator
-                                                                                                    .of(
-                                                                                                    context)
-                                                                                                    .pop();
-                                                                                              },
-                                                                                              child: const Text(
-                                                                                                  'Cancel'),
-                                                                                            ),
-                                                                                          ],
-                                                                                        ),
-                                                                                  );
-                                                                                }
-                                                                              } catch (e) {
-                                                                                // Ensure the loading dialog is closed even if an error occurs
-                                                                                Navigator
-                                                                                    .of(
-                                                                                    context,
-                                                                                    rootNavigator: true)
-                                                                                    .pop();
-
-                                                                                ScaffoldMessenger
-                                                                                    .of(
-                                                                                    context)
-                                                                                    .showSnackBar(
-                                                                                  SnackBar(
-                                                                                      content: Text(
-                                                                                          'Error restoring purchases: $e')),
-                                                                                );
-                                                                              }
-                                                                            },
-                                                                            child: Text(
-                                                                              'Restore Purchases',
-                                                                              style: TextStyle(
-                                                                                  fontSize: textFontSize,
-                                                                                  color: Colors
-                                                                                      .deepPurple),
-                                                                            ),
-                                                                          ),
-                                                                          TextButton(
-                                                                            onPressed: () {
-                                                                              Navigator
-                                                                                  .of(
-                                                                                  context)
-                                                                                  .pop();
-                                                                              subscriptionsProvider
-                                                                                  .showSimpleSubscriptionUI(
-                                                                                  context);
-                                                                            },
-                                                                            child: Text(
-                                                                              'Subscribe',
-                                                                              style: TextStyle(
-                                                                                  fontSize: textFontSize,
-                                                                                  color: Colors
-                                                                                      .deepPurple),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                );
+                                                                // Show subscription UI if no valid subscription
+                                                                await subscriptionsProvider.showSimpleSubscriptionUI(context);
                                                               },
-                                                              style: ElevatedButton
-                                                                  .styleFrom(
-                                                                  backgroundColor: Colors
-                                                                      .blue),
+                                                              style: ElevatedButton.styleFrom(
+                                                                backgroundColor: Colors.blue,
+                                                                foregroundColor: Colors.white,
+                                                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                              ),
                                                               child: Text(
                                                                 'Simple Calculation',
-                                                                style: TextStyle(
-                                                                    fontSize: textFontSize,
-                                                                    color: Colors
-                                                                        .white),
+                                                                style: TextStyle(fontSize: textFontSize),
                                                               ),
                                                             )
-
                                                         ),
 
                                                         SizedBox(
                                                             height: spacingHeight *
                                                                 2),
 
-                                                        /*Flexible(
-                                                flex: 1,
-                                                child: ElevatedButton(
-                                                  onPressed: () async {
-                                                //    final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                                                 //   bool isBillingAvailable = await checkGooglePlayBillingAvailability();
-
-                                                     if (1!=1){//if (!isBillingAvailable) {
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (BuildContext context) => AlertDialog(
-                                                          title:  const Text('No Subscription Available'),
-                                                          content: RichText(
-                                                            text: TextSpan(
-                                                              children: [
-                                                                 TextSpan(text: 'No subscription found. ',
-                                                                     style: TextStyle(fontSize: titleFontSize , color: Colors.black)),
-                                                                 TextSpan(text: 'Check your internet connection and your ',
-                                                                     style: TextStyle(fontSize: titleFontSize , color: Colors.black)),
-                                                                TextSpan(
-                                                                  text: 'Google Play account',
-                                                                  style:  TextStyle(fontSize: titleFontSize , color: Colors.blue, decoration: TextDecoration.underline),
-                                                                  recognizer: TapGestureRecognizer()
-                                                                    ..onTap = () async {
-                                                                      const url = 'https://play.google.com/store/account/subscriptions';
-                                                                      if (await canLaunchUrl(Uri.parse(url))) {
-                                                                        await launchUrl(Uri.parse(url));
-                                                                      }
-                                                                    },
-                                                                ),
-                                                                 TextSpan(text: ' connection to ensure you have a subscription.', style: TextStyle(fontSize: titleFontSize , color: Colors.black)),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                          actions: <Widget>[
-                                                            TextButton(
-                                                              child:  Text('OK',   style: TextStyle(
-                                                                fontSize: isIpad ? 40 : 28,
-                                                                fontWeight: FontWeight.bold,
-                                                              ),),
-                                                              onPressed: () => Navigator.of(context).pop(),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    }
-                                                    else if (1==1){//(subscriptionsProvider.hasCompleteActiveSubscription || subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
-                                                       projectData.setProjectName("_oozz"); // or the new project name
-                                                       NavigationService().navigateToScreen(
-
-                                                        const LandInputs(givenProjectName: '_oozz',),
-                                                        arguments: '_oozz',
-                                                      );
-                                                      Navigator.of(context).pop();
-                                                    } else {
-                                                      subscriptionsProvider.showCompleteSubscriptionUI(context);
-                                                    }
-                                                  },
-                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                                                  child:  Text('Complete Calculation'
-                                                      , style: TextStyle(fontSize: textFontSize, color: Colors.white)),
-                                                ),
-                                              ),*/
-
-
                                                         Flexible(
+                                                            flex: 1,
+                                                            child: ElevatedButton(
+                                                              onPressed: () async {
+                                                                final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
+                                                                final projectData = Provider.of<ProjectData>(context, listen: false);
+
+                                                                // Check if user has active subscription for Simple Calculation or Full Access
+                                                                /*       if (subscriptionsProvider
+                                                                    .hasCompleteActiveSubscription ||
+                                                                    subscriptionsProvider
+                                                                        .hasCompletePlusSimpleCalculationProductId) {
+                                                                  // Navigate directly
+                                                                  projectData.setProjectName("_oozz");
+                                                                  NavigationService()
+                                                                      .navigateToScreen(
+                                                                    const LandInputs(
+                                                                        givenProjectName: '_oozz'),
+                                                                    arguments: '_oozz',
+                                                                  );
+                                                                  return;
+                                                                }*/
+
+                                                                // Show subscription UI if no valid subscription
+                                                                await subscriptionsProvider.showCompleteSubscriptionUI(context);
+                                                              },
+                                                              style: ElevatedButton.styleFrom(
+                                                                backgroundColor: Colors.blue,
+                                                                foregroundColor: Colors.white,
+                                                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                              ),
+                                                              child: Text(
+                                                                'Complete Calculation',
+                                                                style: TextStyle(fontSize: textFontSize),
+                                                              ),
+                                                            )
+                                                        ),
+
+                                                      /*  Flexible(
                                                             flex: 1,
                                                             child: ElevatedButton(
                                                               onPressed: () async {
@@ -1579,7 +1396,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                         .white),
                                                               ),
                                                             )
-                                                        ),
+                                                        ),*/
 
                                                         SizedBox(
                                                             height: spacingHeight *
