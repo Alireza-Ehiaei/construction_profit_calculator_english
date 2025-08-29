@@ -44,10 +44,10 @@ jobs:
           pod install --repo-update > pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
           cd ..
 
-      - name: Ensure iOS 18.0 SDK
-        run: |
-          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
-          xcodebuild -showsdks
+  #    - name: Ensure iOS 18.0 SDK
+   #     run: |
+    #      sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
+     #     xcodebuild -showsdks
           
       - name: Clean Xcode project
         run: |
