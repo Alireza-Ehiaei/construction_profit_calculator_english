@@ -21,6 +21,12 @@ jobs:
           xcodebuild -version
           xcodebuild -showsdks
           xcrun simctl runtime list
+          xcodebuild -list -workspace ios/Runner.xcworkspace
+
+      - name: Ensure iOS 18.0 SDK
+        run: |
+          sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
+          xcodebuild -showsdks | grep iphoneos18.0 || { echo "iOS 18.0 SDK not found"; exit 1; }
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -39,6 +45,7 @@ jobs:
         run: |
           flutter build ios --config-only --no-codesign --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
           ls -l ios/Flutter/
+          xcodebuild -list -workspace ios/Runner.xcworkspace
 
       - name: Install CocoaPods dependencies
         run: |
@@ -49,7 +56,7 @@ jobs:
       - name: Clean Xcode project
         run: |
           cd ios
-          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; echo "Clean failed, proceeding anyway"; }
           cd ..
 
       - name: Force Xcode to use available iOS SDK
@@ -94,6 +101,11 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorDevelopmentProfile.mobileprovision
           echo "Provisioning profile installed successfully"
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Debug Code Signing Setup
+        run: |
+          security find-identity -v -p codesigning build.keychain
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build iOS IPA
