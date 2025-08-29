@@ -1,0 +1,130 @@
+name: Test Flutter iOS IAP Logic
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-iap:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
+
+      - name: Debug Xcode and SDK Setup
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+          xcrun simctl runtime list
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Verify Flutter setup
+        run: flutter doctor
+
+      - name: Install dependencies
+        run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
+
+      - name: Generate Flutter iOS config
+        run: |
+          flutter build ios --config-only --no-codesign --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
+          ls -l ios/Flutter/
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update > pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
+          cd ..
+
+      - name: Clean Xcode project
+        run: |
+          cd ios
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
+          cd ..
+
+      - name: Force Xcode to use available iOS SDK
+        run: |
+          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+          sudo xcodebuild -runFirstLaunch
+          defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
+
+      - name: Create temporary keychain
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+
+      - name: Import Apple certificate
+        env:
+          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DEVELOPMENT_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$SIGNING_CERTIFICATE_P12" | base64 --decode > certificate.p12
+          if [ ! -s certificate.p12 ]; then
+            echo "Error: certificate.p12 is empty or invalid"
+            exit 1
+          fi
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
+
+      - name: Install provisioning profile
+        env:
+          PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+        run: |
+          echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          if [ ! -s profile.mobileprovision ]; then
+            echo "Error: profile.mobileprovision is empty or invalid"
+            exit 1
+          fi
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorDevelopmentProfile.mobileprovision
+          echo "Provisioning profile installed successfully"
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Build iOS IPA
+        run: |
+          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
+          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="Apple Development"
+          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorDevelopmentProfile"
+          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
+          mkdir -p ipa-artifact
+          cp build/ios/ipa/*.ipa ipa-artifact/app.ipa
+
+      - name: Run IAP Unit Tests
+        run: |
+          flutter test test/iap_test.dart > test_log.txt 2>&1 || { cat test_log.txt; exit 1; }
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
+
+      - name: Upload build log and IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-and-ipa
+          path: |
+            pub_get_log.txt
+            xcode_clean_log.txt
+            pod_install_log.txt
+            flutter_config_log.txt
+            build_log.txt
+            test_log.txt
+            ipa-artifact/*.ipa
