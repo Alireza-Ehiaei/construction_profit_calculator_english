@@ -1,0 +1,98 @@
+name: Build IPA and Upload to BrowserStack
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-upload-to-browserstack:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: 'stable'
+          cache: true
+
+      - name: Verify Flutter setup
+        run: flutter doctor
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS IPA
+        run: |
+          flutter build ipa --release --no-codesign
+          mkdir -p ipa-artifact
+          cp build/ios/ipa/*.ipa ipa-artifact/app.ipa
+
+      - name: Upload IPA to BrowserStack
+        id: browserstack-upload
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          echo "Uploading IPA to BrowserStack..."
+          APP_URL=$(curl -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
+            -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
+            -F "file=@ipa-artifact/app.ipa" \
+            --silent | jq -r '.app_url')
+
+          if [ -z "$APP_URL" ] || [ "$APP_URL" == "null" ]; then
+            echo "Error: Failed to upload IPA to BrowserStack"
+            exit 1
+          fi
+
+          echo "App uploaded successfully. BrowserStack URL: $APP_URL"
+          
+          echo "Launching iOS device on BrowserStack..."
+          SESSION_RESPONSE=$(curl -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
+            -X POST "https://api-cloud.browserstack.com/app-live/launch" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "app": "'$APP_URL'",
+              "devices": ["iPhone 16 Plus", "iPhone 16", "iPhone 15 Pro", "iPhone 12 Pro","iPad Pro 11"],
+              "deviceLogs": true,
+              "local": false
+            }' \
+            --silent)
+
+          SESSION_URL="https://app-live.browserstack.com/sessions/$(echo $SESSION_RESPONSE | jq -r '.sessionId')"
+          
+          if [ -z "$SESSION_URL" ] || [ "$SESSION_URL" == "null" ]; then
+            echo "Error: Failed to create BrowserStack session"
+            echo "Response: $SESSION_RESPONSE"
+            exit 1
+          fi
+
+          echo "BrowserStack session created successfully!"
+          echo "SESSION_URL=$SESSION_URL" >> $GITHUB_OUTPUT
+
+      - name: Display BrowserStack Session URL and Testing Instructions
+        run: |
+          echo "🎉 BrowserStack Testing Session Ready!"
+          echo "👉 Click this link to start testing: ${{ steps.browserstack-upload.outputs.SESSION_URL }}"
+          echo ""
+          echo "📝 TESTING INSTRUCTIONS:"
+          echo "1. Click the link above to open the iOS device in your browser"
+          echo "2. On the device, go to Settings > App Store"
+          echo "3. LOG OUT of any existing account"
+          echo "4. LOG IN with your SANDBOX TESTER account:"
+          echo "   Email: sandboxuser1@cpce.com"
+          echo "   Password: [your_sandbox_tester_password]"
+          echo "5. Return to the home screen and open your app"
+          echo "6. Test the purchase flow - it will use the Sandbox environment!"
+          echo ""
+          echo "⚠️ Before testing IAPs, ensure:"
+          echo "1. Your App Store Connect has active In-App Purchase products"
+          echo "2. The app's Bundle ID matches the one in App Store Connect"
+          echo "3. The in_app_purchase Flutter package is correctly implemented"
