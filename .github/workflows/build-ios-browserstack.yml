@@ -11,10 +11,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Xcode
+      - name: Set up Xcode 16
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.0'
+          xcode-version: '16'
+
+      - name: Verify Xcode and SDK
+        run: |
+          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version > xcode_info.txt
+          xcodebuild -showsdks >> xcode_info.txt
+          xcrun simctl runtime list >> xcode_info.txt
+          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
+          xcodebuild -showsdks >> sdk_install_log.txt
+        env:
+          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
