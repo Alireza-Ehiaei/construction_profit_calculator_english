@@ -35,7 +35,7 @@ jobs:
 
       - name: Generate Flutter iOS config
         run: |
-          flutter build ios --config-only --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
+          flutter build ios --config-only --no-codesign --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
           ls -l ios/Flutter/
 
       - name: Install CocoaPods dependencies
@@ -94,6 +94,11 @@ jobs:
           echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
+      - name: Debug Code Signing Setup
+        run: |
+          security find-identity -v -p codesigning build.keychain
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+          
       - name: Build iOS IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
