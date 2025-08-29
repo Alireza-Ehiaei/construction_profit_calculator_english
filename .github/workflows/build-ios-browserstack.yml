@@ -1,4 +1,4 @@
-name: Build IPA and Upload to BrowserStack
+name: Build iOS IPA and Upload to BrowserStack
 
 on:
   workflow_dispatch:
@@ -11,26 +11,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Xcode 16
+      - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16'
-
-      - name: Verify Xcode and SDK
-        run: |
-          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-          xcodebuild -version > xcode_info.txt
-          xcodebuild -showsdks >> xcode_info.txt
-          xcrun simctl runtime list >> xcode_info.txt
-          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
-          xcodebuild -showsdks >> sdk_install_log.txt
-        env:
-          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
+          xcode-version: '16.0'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'
+          flutter-version: '3.24.0'  # Use a stable, recent version
           channel: 'stable'
           cache: true
 
@@ -40,9 +29,29 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Setup Code Signing
+        env:
+          SIGNING_CERTIFICATE_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
+          PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        run: |
+          # Create keychain
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          
+          # Import signing certificate
+          echo "$SIGNING_CERTIFICATE_P12" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          
+          # Install provisioning profile
+          echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
       - name: Build iOS IPA
         run: |
-          flutter build ipa --release --no-codesign
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
           mkdir -p ipa-artifact
           cp build/ios/ipa/*.ipa ipa-artifact/app.ipa
 
@@ -52,9 +61,9 @@ jobs:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
         run: |
-          echo "Uploading IPA to BrowserStack..."
+          echo "Uploading IPA to BrowserStack App Live..."
           APP_URL=$(curl -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
-            -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
+            -X POST "https://api-cloud.browserstack.com/app-live/upload" \
             -F "file=@ipa-artifact/app.ipa" \
             --silent | jq -r '.app_url')
 
@@ -71,14 +80,14 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{
               "app": "'$APP_URL'",
-              "devices": ["iPhone 16 Plus", "iPhone 16", "iPhone 15 Pro", "iPhone 12 Pro","iPad Pro 11"],
+              "devices": ["iPhone 16 Plus", "iPhone 16", "iPhone 15 Pro"],
               "deviceLogs": true,
               "local": false
             }' \
             --silent)
 
           SESSION_URL="https://app-live.browserstack.com/sessions/$(echo $SESSION_RESPONSE | jq -r '.sessionId')"
-          
+
           if [ -z "$SESSION_URL" ] || [ "$SESSION_URL" == "null" ]; then
             echo "Error: Failed to create BrowserStack session"
             echo "Response: $SESSION_RESPONSE"
@@ -93,17 +102,19 @@ jobs:
           echo "🎉 BrowserStack Testing Session Ready!"
           echo "👉 Click this link to start testing: ${{ steps.browserstack-upload.outputs.SESSION_URL }}"
           echo ""
-          echo "📝 TESTING INSTRUCTIONS:"
+          echo "📝 TESTING INSTRUCTIONS FOR IAP:"
           echo "1. Click the link above to open the iOS device in your browser"
           echo "2. On the device, go to Settings > App Store"
-          echo "3. LOG OUT of any existing account"
+          echo "3. LOG OUT of any existing account (tap your profile, then Sign Out)"
           echo "4. LOG IN with your SANDBOX TESTER account:"
           echo "   Email: sandboxuser1@cpce.com"
           echo "   Password: [your_sandbox_tester_password]"
+          echo "   (Verify email if prompted; use a real, unused email)"
           echo "5. Return to the home screen and open your app"
           echo "6. Test the purchase flow - it will use the Sandbox environment!"
           echo ""
           echo "⚠️ Before testing IAPs, ensure:"
-          echo "1. Your App Store Connect has active In-App Purchase products"
-          echo "2. The app's Bundle ID matches the one in App Store Connect"
+          echo "1. App Store Connect has active In-App Purchase products"
+          echo "2. App's Bundle ID matches App Store Connect (com.tech4dev.constructionprofitcalculator)"
           echo "3. The in_app_purchase Flutter package is correctly implemented"
+          echo "4. Test edge cases: interrupted purchases, restore purchases, subscriptions"
