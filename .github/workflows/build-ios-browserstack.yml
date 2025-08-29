@@ -72,8 +72,8 @@ jobs:
 
       - name: Import Apple certificate
         env:
-          SIGNING_CERTIFICATE_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}  # ← FIX: Add this
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}     # ← FIX: Add this
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           echo "$SIGNING_CERTIFICATE_P12" | base64 --decode > certificate.p12
@@ -84,7 +84,7 @@ jobs:
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-
+      
       - name: Install provisioning profile
         env:
           PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
