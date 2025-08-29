@@ -79,16 +79,25 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
           echo "Provisioning profile installed successfully"
-          
-      - name: Build iOS IPA
+
+      - name: Verify Certificate in Keychain
         run: |
-          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
-          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="Apple Development"
-          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorDevelopmentProfile"
-          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
+          echo "Listing identities in build.keychain:"
+          security find-identity -v -p codesigning build.keychain
+          echo "Checking if specific certificate exists:"
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || echo "Certificate not found!"
+          
+      - name: Build IPA
+        env:
+          FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
+          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
+          FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
+        run: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
           mkdir -p ipa-artifact
           cp build/ios/ipa/*.ipa ipa-artifact/app.ipa
+    
 
       - name: Upload IPA to BrowserStack
         id: browserstack-upload
