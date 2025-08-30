@@ -47,8 +47,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
-  mockito: ^5.4.4
-  build_runner: ^2.4.6
+#  mockito: ^5.4.4 Just for purchase flow testing locally without simulator (test folder neede)
+#  build_runner: ^2.4.6  Just for purchase flow testing locally without simulator
 
 dependency_overrides:
   in_app_purchase_storekit: 0.3.7
