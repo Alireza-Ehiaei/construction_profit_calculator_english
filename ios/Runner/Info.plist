@@ -28,8 +28,20 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
+	  <key>UISceneConfigurations</key>
+  <dict>
+    <key>UIWindowSceneSessionRoleApplication</key>
+    <array>
+      <dict>
+        <key>UIScene Class Name</key>
+        <string>UIWindowScene</string>
+        <key>UIScene Delegate Class Name</key>
+        <string>SceneDelegate</string>
+        <key>UIScene Storyboard File</key>
+        <string>LaunchScreen</string>
+      </dict>
+    </array>
+  </dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
