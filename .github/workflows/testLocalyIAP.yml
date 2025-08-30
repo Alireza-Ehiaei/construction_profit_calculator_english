@@ -39,7 +39,12 @@ jobs:
         run: flutter doctor
 
       - name: Install dependencies
-        run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
+        run: |
+          flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
+
+      - name: Generate mocks
+        run: |
+          flutter pub run build_runner build > mock_gen_log.txt 2>&1 || { cat mock_gen_log.txt; exit 1; }
 
       - name: Generate Flutter iOS config
         run: |
@@ -129,7 +134,7 @@ jobs:
 
       - name: Run IAP Unit Tests
         run: |
-          flutter test test/iap_test.dart > test_log.txt 2>&1 || { cat test_log.txt; exit 1; }
+          flutter test test/iap_test.dart --verbose > test_log.txt 2>&1 || { cat test_log.txt; exit 1; }
 
       - name: Clean up keychain
         if: always()
@@ -146,6 +151,7 @@ jobs:
             xcode_clean_log.txt
             pod_install_log.txt
             flutter_config_log.txt
+            mock_gen_log.txt
             build_log.txt
             test_log.txt
             ipa-artifact/*.ipa
