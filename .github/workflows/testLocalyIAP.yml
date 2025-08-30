@@ -91,7 +91,7 @@ jobs:
       
       - name: Install provisioning profile
         env:
-          PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+          PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}  # ← Use the correct secret name
         run: |
           echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
           if [ ! -s profile.mobileprovision ]; then
@@ -99,7 +99,7 @@ jobs:
             exit 1
           fi
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorDevelopmentProfile.mobileprovision
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
           echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
