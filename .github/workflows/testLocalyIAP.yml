@@ -89,10 +89,10 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
       
-            - name: Debug Code Signing Setup
-              run: |
-                security find-identity -v -p codesigning build.keychain
-                ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+      - name: Debug Code Signing Setup
+        run: |
+          security find-identity -v -p codesigning build.keychain
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build iOS IPA
         env:
