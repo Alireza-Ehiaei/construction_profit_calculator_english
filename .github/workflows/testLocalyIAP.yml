@@ -89,11 +89,14 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
       
-      - name: Debug Code Signing Setup
+      - name: Debug - Verify Certificate in Keychain
         run: |
+          echo "=== Certificate in Keychain ==="
           security find-identity -v -p codesigning build.keychain
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-
+          # Remove the failing ls command below
+          # echo "=== Provisioning Profiles Directory ==="
+          # ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "Directory not created yet"
+          
       - name: Build iOS IPA
         env:
           FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
