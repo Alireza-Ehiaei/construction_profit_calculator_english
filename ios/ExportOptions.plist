@@ -7,11 +7,11 @@
     <key>teamID</key>
     <string>AHVM2Z8TDL</string>
     <key>signingCertificate</key>
-    <string>iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)</string>
+    <string>Apple Development</string>
     <key>provisioningProfiles</key>
     <dict>
         <key>com.tech4dev.constructionprofitcalculator</key>
-        <string>ConstructionProfitCalculatorProvisionProfile</string>
+        <string>ConstructionProfitCalculatorDevelopmentProfile</string>
     </dict>
     <key>stripSwiftSymbols</key>
     <true/>
