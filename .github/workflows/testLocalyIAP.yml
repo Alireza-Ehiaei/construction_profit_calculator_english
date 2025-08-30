@@ -16,27 +16,16 @@ jobs:
         with:
           xcode-version: '16.0'
 
-      - name: Debug Xcode and SDK Setup
-        run: |
-          xcodebuild -version
-          xcodebuild -showsdks
-          xcrun simctl runtime list
-          xcodebuild -list -workspace ios/Runner.xcworkspace
-
-      - name: Ensure iOS 18.0 SDK
-        run: |
-          sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
-          xcodebuild -showsdks | grep iphoneos18.0 || { echo "iOS 18.0 SDK not found"; exit 1; }
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
           cache: true
-
-      - name: Verify Flutter setup
-        run: flutter doctor
+          cache-key: flutter-3.24.0
+          cache-path: |
+            ${{ runner.tool_cache }}/flutter
+            ~/.pub-cache
 
       - name: Install dependencies
         run: |
@@ -44,13 +33,12 @@ jobs:
 
       - name: Generate mocks
         run: |
-          flutter pub run build_runner build > mock_gen_log.txt 2>&1 || { cat mock_gen_log.txt; exit 1; }
+          flutter pub run build_runner build --delete-conflicting-outputs > mock_gen_log.txt 2>&1 || { cat mock_gen_log.txt; exit 1; }
 
       - name: Generate Flutter iOS config
         run: |
           flutter build ios --config-only --no-codesign --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
           ls -l ios/Flutter/
-          xcodebuild -list -workspace ios/Runner.xcworkspace
 
       - name: Install CocoaPods dependencies
         run: |
@@ -63,12 +51,6 @@ jobs:
           cd ios
           xcodebuild clean -workspace Runner.xcworkspace -scheme Runner > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; echo "Clean failed, proceeding anyway"; }
           cd ..
-
-      - name: Force Xcode to use available iOS SDK
-        run: |
-          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-          sudo xcodebuild -runFirstLaunch
-          defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
 
       - name: Create temporary keychain
         env:
@@ -123,14 +105,7 @@ jobs:
           security list-keychains -d user -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose 2>&1 | tee build_log.txt
-          if [ -f build/ios/ipa/*.ipa ]; then
-            mkdir -p ipa-artifact
-            cp build/ios/ipa/*.ipa ipa-artifact/app.ipa
-          else
-            echo "IPA not found. Check build_log.txt for details."
-            exit 1
-          fi
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
 
       - name: Run IAP Unit Tests
         run: |
@@ -148,10 +123,10 @@ jobs:
           name: build-log-and-ipa
           path: |
             pub_get_log.txt
-            xcode_clean_log.txt
-            pod_install_log.txt
-            flutter_config_log.txt
             mock_gen_log.txt
+            flutter_config_log.txt
+            pod_install_log.txt
+            xcode_clean_log.txt
             build_log.txt
             test_log.txt
-            ipa-artifact/*.ipa
+            build/ios/ipa/*.ipa
