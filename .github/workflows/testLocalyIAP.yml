@@ -16,12 +16,19 @@ jobs:
         with:
           xcode-version: '16.0'
 
+      - name: Ensure iOS 18.0 SDK
+        run: |
+          sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
+          xcodebuild -showsdks | grep iphoneos18.0 || { echo "iOS 18.0 SDK not found"; exit 1; }
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
           cache: true
+          cache-key: flutter-3.24.0
+          cache-path: /Users/runner/hostedtoolcache/flutter
 
       - name: Install dependencies
         run: |
@@ -90,11 +97,11 @@ jobs:
         run: |
           security find-identity -v -p codesigning build.keychain
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No provisioning profiles found"
-      
+
       - name: Build iOS IPA
         env:
           FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
-          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"  # ← Use FULL name
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
           FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
         run: |
@@ -102,7 +109,7 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
-      
+
       - name: Run IAP Unit Tests
         run: |
           flutter test test/iap_test.dart --verbose > test_log.txt 2>&1 || { cat test_log.txt; exit 1; }
@@ -123,6 +130,7 @@ jobs:
             flutter_config_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
+            sdk_install_log.txt
             build_log.txt
             test_log.txt
             build/ios/ipa/*.ipa
