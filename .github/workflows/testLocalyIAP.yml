@@ -73,11 +73,11 @@ jobs:
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
-      
+
       - name: Import Apple certificate
         env:
-          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}  # ← Correct secret name
-          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}     # ← Correct secret name
+          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DEVELOPMENT_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           echo "$SIGNING_CERTIFICATE_P12" | base64 --decode > certificate.p12
@@ -88,15 +88,26 @@ jobs:
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-      
-      - name: Debug - Verify Certificate in Keychain
+
+      - name: Install provisioning profile
+        env:
+          PROVISIONING_PROFILE: ${{ secrets.IOS_DEVELOPMENT_PROFILE }}
         run: |
-          echo "=== Certificate in Keychain ==="
+          echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          if [ ! -s profile.mobileprovision ]; then
+            echo "Error: profile.mobileprovision is empty or invalid"
+            exit 1
+          fi
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorDevelopmentProfile.mobileprovision
+          echo "Provisioning profile installed successfully"
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || { echo "Failed to list provisioning profiles"; exit 1; }
+
+      - name: Debug Code Signing Setup
+        run: |
           security find-identity -v -p codesigning build.keychain
-          # Remove the failing ls command below
-          # echo "=== Provisioning Profiles Directory ==="
-          # ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "Directory not created yet"
-          
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No provisioning profiles found"
+
       - name: Build iOS IPA
         env:
           FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
