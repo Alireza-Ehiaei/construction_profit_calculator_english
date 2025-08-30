@@ -375,13 +375,13 @@ class SubscriptionsProvider with ChangeNotifier {
   }
 
 
-  Future<void> showSimpleSubscriptionUI(BuildContext context) async {
+/*  Future<void> showSimpleSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
     const String simpleCalculationProductId = 'com.tech4dev.construction.simple.3m';
     const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
 
     // Mock subscription data for Android Studio testing
-    final bool isDebugMode = !kReleaseMode;
+    const bool isDebugMode = !kReleaseMode;
     List<ProductDetails> mockProducts = isDebugMode
         ? [
       ProductDetails(
@@ -718,9 +718,9 @@ class SubscriptionsProvider with ChangeNotifier {
         ],
       ),
     );
-  }
+  }*/
 
-/*Future<void> showSimpleSubscriptionUI(BuildContext context) async {
+Future<void> showSimpleSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
     const String simpleCalculationProductId = 'com.tech4dev.construction.simple.3m';
     const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
@@ -999,10 +999,10 @@ class SubscriptionsProvider with ChangeNotifier {
         ],
       ),
     );
-  }*/
+  }
 
 
-  Future<void> showCompleteSubscriptionUI(BuildContext context) async {
+/*  Future<void> showCompleteSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
     const String completeCalculationProductId = 'com.tech4dev.construction.complete.3m';
     const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
@@ -1346,9 +1346,9 @@ class SubscriptionsProvider with ChangeNotifier {
         ],
       ),
     );
-  }
+  }*/
 
-/*  Future<void> showCompleteSubscriptionUI(BuildContext context) async {
+  Future<void> showCompleteSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
     const String completeCalculationProductId = 'com.tech4dev.construction.complete.3m';
     const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
@@ -1627,7 +1627,7 @@ class SubscriptionsProvider with ChangeNotifier {
         ],
       ),
     );
-  }*/
+  }
 
   // Dialog helpers
   void _showErrorDialog(BuildContext context, String message) {
