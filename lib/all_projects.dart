@@ -1125,7 +1125,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 final projectData = Provider.of<ProjectData>(context, listen: false);
 
                                                                 // Check if user has active subscription for Simple Calculation or Full Access
-                                                          /*      if (subscriptionsProvider.hasSimpleActiveSubscription ||
+                                                                if (subscriptionsProvider.hasSimpleActiveSubscription ||
                                                                     subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
                                                                   // Navigate directly to Simple Calculation page
                                                                   projectData.setProjectName("_oozz");
@@ -1134,7 +1134,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                     arguments: 'wwmm',
                                                                   );
                                                                   return;
-                                                                }*/
+                                                                }
 
                                                                 // Show subscription UI if no valid subscription
                                                                 await subscriptionsProvider.showSimpleSubscriptionUI(context);
@@ -1164,7 +1164,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 final projectData = Provider.of<ProjectData>(context, listen: false);
 
                                                                 // Check if user has active subscription for Simple Calculation or Full Access
-                                                                /*       if (subscriptionsProvider
+                                                                       if (subscriptionsProvider
                                                                     .hasCompleteActiveSubscription ||
                                                                     subscriptionsProvider
                                                                         .hasCompletePlusSimpleCalculationProductId) {
@@ -1177,7 +1177,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                     arguments: '_oozz',
                                                                   );
                                                                   return;
-                                                                }*/
+                                                                }
 
                                                                 // Show subscription UI if no valid subscription
                                                                 await subscriptionsProvider.showCompleteSubscriptionUI(context);
