@@ -203,7 +203,6 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-
   Future<void> launchEmail() async {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
@@ -214,10 +213,32 @@ class _HomePageState extends State<HomePage>
       }),
     );
 
-    if (await canLaunchUrl(emailLaunchUri)) {
-      await launchUrl(emailLaunchUri);
-    } else {
-      throw 'Could not launch email client';
+    try {
+      // Check if the device can handle the mailto URL
+      if (await canLaunchUrl(emailLaunchUri)) {
+        await launchUrl(emailLaunchUri);
+      } else {
+        // Fallback: Copy the email address to clipboard and inform the user
+        await Clipboard.setData(const ClipboardData(text: 'tarashekaft@gmail.com'));
+        // Show a dialog or snackbar
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'No email app found. Email address "tarashekaft@gmail.com" has been copied to your clipboard.'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Handle any other errors
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not launch email: $e'),
+          ),
+        );
+      }
     }
   }
 
