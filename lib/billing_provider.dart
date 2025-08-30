@@ -374,7 +374,8 @@ class SubscriptionsProvider with ChangeNotifier {
     }
   }
 
-/*  Future<void> showSimpleSubscriptionUI(BuildContext context) async {
+
+  Future<void> showSimpleSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
     const String simpleCalculationProductId = 'com.tech4dev.construction.simple.3m';
     const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
@@ -405,6 +406,7 @@ class SubscriptionsProvider with ChangeNotifier {
     ProductDetailsResponse response;
     if (isDebugMode) {
       response = ProductDetailsResponse(productDetails: mockProducts, notFoundIDs: []);
+      print('Debug: Mock ProductDetailsResponse: ${response.productDetails.map((p) => p.id).toList()}');
     } else {
       try {
         response = await InAppPurchase.instance.queryProductDetails({
@@ -425,9 +427,12 @@ class SubscriptionsProvider with ChangeNotifier {
       }
     }
 
-    // Check active subscriptions (mocked for debug)
+    // Check active subscriptions (use mock state for debugging)
     bool hasFullAccess = isDebugMode ? false : subscriptionsProvider.hasCompletePlusSimpleCalculationProductId;
     bool hasSimpleActive = isDebugMode ? false : subscriptionsProvider.hasSimpleActiveSubscription;
+    if (isDebugMode) {
+      print('Debug: hasFullAccess=$hasFullAccess, hasSimpleActive=$hasSimpleActive');
+    }
 
     List<Widget> subscriptionTiles = [
       const SizedBox(height: 20),
@@ -448,19 +453,27 @@ class SubscriptionsProvider with ChangeNotifier {
           onPressed: hasFullAccess
               ? null
               : () async {
-            try {
-              final product = response.productDetails.firstWhere(
-                    (product) => product.id == simpleCalculationProductId,
-                orElse: () => throw Exception('$simpleCalculationProductId not found'),
+            if (isDebugMode) {
+              print('Debug: Simulating purchase of $simpleCalculationProductId');
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Debug: Simulated purchase of $simpleCalculationProductId')),
               );
-              await subscriptionsProvider.buySubscription(product);
               Navigator.of(context).pop();
-            } catch (e) {
-              _showErrorDialog(context, e.toString());
+            } else {
+              try {
+                final product = response.productDetails.firstWhere(
+                      (product) => product.id == simpleCalculationProductId,
+                  orElse: () => throw Exception('$simpleCalculationProductId not found'),
+                );
+                await subscriptionsProvider.buySubscription(product);
+                Navigator.of(context).pop();
+              } catch (e) {
+                _showErrorDialog(context, e.toString());
+              }
             }
           },
           child: const Text(
-            'Simple Calculation\n\$5.99/3 months',
+            'Simple Calculation\n\$5.99 / 3 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -482,36 +495,44 @@ class SubscriptionsProvider with ChangeNotifier {
             elevation: 0,
           ),
           onPressed: () async {
-            try {
-              final product = response.productDetails.firstWhere(
-                    (product) => product.id == completePlusSimpleCalculationProductId,
-                orElse: () => throw Exception('$completePlusSimpleCalculationProductId not found'),
+            if (isDebugMode) {
+              print('Debug: Simulating purchase of $completePlusSimpleCalculationProductId');
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Debug: Simulated purchase of $completePlusSimpleCalculationProductId')),
               );
-              await subscriptionsProvider.buySubscription(product);
               Navigator.of(context).pop();
-            } catch (e) {
-              _showErrorDialog(context, e.toString());
+            } else {
+              try {
+                final product = response.productDetails.firstWhere(
+                      (product) => product.id == completePlusSimpleCalculationProductId,
+                  orElse: () => throw Exception('$completePlusSimpleCalculationProductId not found'),
+                );
+                await subscriptionsProvider.buySubscription(product);
+                Navigator.of(context).pop();
+              } catch (e) {
+                _showErrorDialog(context, e.toString());
+              }
             }
           },
           child: const Text(
-            'Full Access\n\$12.99/6 months',
+            'Full Access\n\$12.99 / 6 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ),
       ),
-    *//*  const SizedBox(height: 12),
+      const SizedBox(height: 12),
       const Text(
-        'Save 60% by subscribing to Full Access!',
+        'Save 50% by subscribing to Full Access!',
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: Colors.green,
         ),
         textAlign: TextAlign.center,
-      ),*//*
+      ),
       const SizedBox(height: 20),
-      // Learn More Cancel Subscription button
+      // Learn More/Cancel Subscription button
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -526,35 +547,40 @@ class SubscriptionsProvider with ChangeNotifier {
             elevation: 0,
           ),
           onPressed: () async {
+            print('Debug: Showing subscription info dialog');
             await showDialog(
               context: context,
               builder: (BuildContext context) => AlertDialog(
                 title: const Text('Subscription Info'),
-                content: SingleChildScrollView(
-                  child: Text(
-                    'Choose your calculation method:\n\n'
-                        '• Simple: Uniform rate for the entire project\n'
-                        '• Complete: Custom rates for each project part\n\n'
-                        'Tap (?) icon at the bottom of the first page of each product for details, especially during your trial. '
-                        'Full Access includes both methods at a significant discount.\n\n'
-                  'Status: ${hasSimpleActive || hasFullAccess ?
-                  'Active ${hasFullAccess ? "Full Access" : "Simple"} subscription. '
-                  '${hasFullAccess ? "" : "Upgrade to get both."}'
-                      : "No active subscription."}',
-                    style: const TextStyle(fontSize: 20, height: 1.5),
-                  ),
+                content: Text(
+                  'Choose your calculation method:\n\n'
+                      '• Simple: Uniform rate (sqft/sqm) for the entire project\n'
+                      '• Complete: Custom rates (sqft/sqm) for each project part\n\n'
+                      'Tap ? icon at the bottom of the first page of each product for details, especially during your trial. '
+                      '\n\nStatus: ${hasSimpleActive || hasFullAccess ?
+                  'Active ${hasFullAccess ? "Full Access" : "Simple"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(fontSize: 20, height: 1.5, fontWeight: FontWeight.bold),
                 ),
                 actions: [
                   if (hasSimpleActive || hasFullAccess)
                     TextButton(
                       onPressed: () async {
-                        try {
-                          await const MethodChannel('com.tech4dev.construction/subscriptions')
-                              .invokeMethod('showManageSubscriptions');
+                        if (isDebugMode) {
+                          print('Debug: Simulating cancel subscription');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Debug: Simulated cancel subscription')),
+                          );
                           Navigator.of(context).pop();
-                        } catch (e) {
-                          Navigator.of(context).pop();
-                          _showErrorDialog(context, 'Error opening subscription management. Go to iOS Settings > Your Apple ID > Subscriptions.');
+                        } else {
+                          try {
+                            await const MethodChannel('com.tech4dev.construction/subscriptions')
+                                .invokeMethod('showManageSubscriptions');
+                            Navigator.of(context).pop();
+                          } catch (e) {
+                            Navigator.of(context).pop();
+                            _showErrorDialog(context, 'Error opening subscription management. Go to iOS Settings > Your Apple ID > Subscriptions.');
+                          }
                         }
                       },
                       child: const Text('Cancel Subscription', style: TextStyle(fontSize: 16)),
@@ -589,26 +615,33 @@ class SubscriptionsProvider with ChangeNotifier {
             elevation: 0,
           ),
           onPressed: () async {
+            print('Debug: Simulating restore purchases');
             showDialog(
               context: context,
               barrierDismissible: false,
               builder: (_) => const Center(child: CircularProgressIndicator()),
             );
-            try {
-              bool restorationSuccess = isDebugMode
-                  ? true
-                  : await subscriptionsProvider.initializeSubscriptions();
+            if (isDebugMode) {
+              await Future.delayed(const Duration(seconds: 1)); // Simulate async work
               Navigator.of(context, rootNavigator: true).pop();
-              if (!restorationSuccess &&
-                  !subscriptionsProvider.hasSimpleActiveSubscription &&
-                  !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('No active subscriptions found. Please purchase a subscription.')),
-                );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Debug: Simulated restore purchases')),
+              );
+            } else {
+              try {
+                bool restorationSuccess = await subscriptionsProvider.initializeSubscriptions();
+                Navigator.of(context, rootNavigator: true).pop();
+                if (!restorationSuccess &&
+                    !subscriptionsProvider.hasSimpleActiveSubscription &&
+                    !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No active subscriptions found. Please purchase a subscription.')),
+                  );
+                }
+              } catch (e) {
+                Navigator.of(context, rootNavigator: true).pop();
+                _showErrorDialog(context, e.toString());
               }
-            } catch (e) {
-              Navigator.of(context, rootNavigator: true).pop();
-              _showErrorDialog(context, e.toString());
             }
           },
           child: const Text(
@@ -685,10 +718,9 @@ class SubscriptionsProvider with ChangeNotifier {
         ],
       ),
     );
-  }*/
+  }
 
-
-Future<void> showSimpleSubscriptionUI(BuildContext context) async {
+/*Future<void> showSimpleSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
     const String simpleCalculationProductId = 'com.tech4dev.construction.simple.3m';
     const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
@@ -748,7 +780,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             }
           },
           child: const Text(
-            'Simple Calculation\n\$5.99/3 months',
+            'Simple Calculation\n\$5.99 / 3 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -782,15 +814,25 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             }
           },
           child: const Text(
-            'Full Access\n\$12.99/6 months',
+            'Full Access\n\$12.99 / 6 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ),
       ),
 
+       const SizedBox(height: 12),
+      const Text(
+        'Save 50% by subscribing to Full Access!',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.green,
+        ),
+        textAlign: TextAlign.center,
+      ),
       const SizedBox(height: 20),
-      // Learn More/Cancel Subscription button
+      // Learn More\nCancel Subscription button
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -813,11 +855,10 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
                   'Choose your calculation method:\n\n'
                       '• Simple: Uniform rate (sqft/sqm) for the entire project\n'
                       '• Complete: Custom rates (sqft/sqm) for each project part\n\n'
-                      'Tap (?) icon at the bottom of the first page of each product for details, especially during your trial. '
-                      'Full Access includes both methods at a significant discount.\n\n'
-                      'Status: ${hasSimpleActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Simple"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, height: 1.5),
+                      'Tap ? icon at the bottom of the first page of each product for details, especially during your trial. '
+                      '\n\nStatus: ${hasSimpleActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Simple"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(fontSize: 20, height: 1.5, fontWeight: FontWeight.bold),
                 ),
                 actions: [
                   if (hasSimpleActive || hasFullAccess)
@@ -843,7 +884,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             );
           },
           child: const Text(
-            'Learn More \n Cancel Subscription',
+            'Learn More \nCancel Subscription',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ),
@@ -958,10 +999,356 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
         ],
       ),
     );
-  }
+  }*/
 
 
   Future<void> showCompleteSubscriptionUI(BuildContext context) async {
+    final subscriptionsProvider = context.read<SubscriptionsProvider>();
+    const String completeCalculationProductId = 'com.tech4dev.construction.complete.3m';
+    const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
+
+    // Mock subscription data for Android Studio testing
+    final bool isDebugMode = !kReleaseMode;
+    List<ProductDetails> mockProducts = isDebugMode
+        ? [
+      ProductDetails(
+        id: completeCalculationProductId,
+        title: 'Complete Calculation',
+        description: 'Access Complete Calculation for custom construction cost estimates for 3 months.',
+        price: '\$6.99',
+        rawPrice: 6.99,
+        currencyCode: 'USD',
+      ),
+      ProductDetails(
+        id: completePlusSimpleCalculationProductId,
+        title: 'Full Access',
+        description: 'Access both Simple Calculation and Complete Calculation for 6 months, saving 60%.',
+        price: '\$12.99',
+        rawPrice: 12.99,
+        currencyCode: 'USD',
+      ),
+    ]
+        : [];
+
+    ProductDetailsResponse response;
+    if (isDebugMode) {
+      response = ProductDetailsResponse(productDetails: mockProducts, notFoundIDs: []);
+      print('Debug: Mock ProductDetailsResponse: ${response.productDetails.map((p) => p.id).toList()}');
+    } else {
+      try {
+        response = await InAppPurchase.instance.queryProductDetails({
+          completeCalculationProductId,
+          completePlusSimpleCalculationProductId,
+        });
+        if (response.error != null) {
+          _showErrorDialog(context, response.error!.message);
+          return;
+        }
+        if (response.productDetails.isEmpty) {
+          _showNoSubscriptionDialog(context);
+          return;
+        }
+      } catch (e) {
+        _showErrorDialog(context, e.toString());
+        return;
+      }
+    }
+
+    // Check active subscriptions (use mock state for debugging)
+    bool hasFullAccess = isDebugMode ? false : subscriptionsProvider.hasCompletePlusSimpleCalculationProductId;
+    bool hasCompleteActive = isDebugMode ? false : subscriptionsProvider.hasCompleteActiveSubscription;
+    if (isDebugMode) {
+      print('Debug: hasFullAccess=$hasFullAccess, hasCompleteActive=$hasCompleteActive');
+    }
+
+    List<Widget> subscriptionTiles = [
+      const SizedBox(height: 20),
+      // Complete Calculation subscription
+      SizedBox(
+        width: 300,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green.shade700,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: hasFullAccess ? Colors.grey : Colors.green.shade700),
+            ),
+            elevation: 0,
+          ),
+          onPressed: hasFullAccess
+              ? null
+              : () async {
+            if (isDebugMode) {
+              print('Debug: Simulating purchase of $completeCalculationProductId');
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Debug: Simulated purchase of $completeCalculationProductId')),
+              );
+              Navigator.of(context).pop();
+            } else {
+              try {
+                final product = response.productDetails.firstWhere(
+                      (product) => product.id == completeCalculationProductId,
+                  orElse: () => throw Exception('$completeCalculationProductId not found'),
+                );
+                await subscriptionsProvider.buySubscription(product);
+                Navigator.of(context).pop();
+              } catch (e) {
+                _showErrorDialog(context, e.toString());
+              }
+            }
+          },
+          child: const Text(
+            'Complete Calculation\n\$6.99 / 3 months',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      // Full Access subscription
+      SizedBox(
+        width: 300,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green.shade700,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: Colors.green.shade700),
+            ),
+            elevation: 0,
+          ),
+          onPressed: () async {
+            if (isDebugMode) {
+              print('Debug: Simulating purchase of $completePlusSimpleCalculationProductId');
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Debug: Simulated purchase of $completePlusSimpleCalculationProductId')),
+              );
+              Navigator.of(context).pop();
+            } else {
+              try {
+                final product = response.productDetails.firstWhere(
+                      (product) => product.id == completePlusSimpleCalculationProductId,
+                  orElse: () => throw Exception('$completePlusSimpleCalculationProductId not found'),
+                );
+                await subscriptionsProvider.buySubscription(product);
+                Navigator.of(context).pop();
+              } catch (e) {
+                _showErrorDialog(context, e.toString());
+              }
+            }
+          },
+          child: const Text(
+            'Full Access\n\$12.99 / 6 months',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      const Text(
+        'Save 50% by subscribing to Full Access!',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.green,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      const SizedBox(height: 20),
+      // Learn More/Cancel Subscription button
+      SizedBox(
+        width: 300,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: null,
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: Colors.black),
+            ),
+            elevation: 0,
+          ),
+          onPressed: () async {
+            print('Debug: Showing subscription info dialog');
+            await showDialog(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('Subscription Info'),
+                content: Text(
+                  'Choose your calculation method:\n\n'
+                      '• Simple: Uniform rate (sqft/sqm) for the entire project\n'
+                      '• Complete: Custom rates (sqft/sqm) for each project part\n\n'
+                      'Tap ? icon at the bottom of the first page of each product for details, especially during your trial. '
+                      'Full Access includes both methods at a significant discount.\n\n'
+                      '\n\nStatus: ${hasCompleteActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Complete"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(fontSize: 20, height: 1.5, fontWeight: FontWeight.bold),
+                ),
+                actions: [
+                  if (hasCompleteActive || hasFullAccess)
+                    TextButton(
+                      onPressed: () async {
+                        if (isDebugMode) {
+                          print('Debug: Simulating cancel subscription');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Debug: Simulated cancel subscription')),
+                          );
+                          Navigator.of(context).pop();
+                        } else {
+                          try {
+                            await const MethodChannel('com.tech4dev.construction/subscriptions')
+                                .invokeMethod('showManageSubscriptions');
+                            Navigator.of(context).pop();
+                          } catch (e) {
+                            Navigator.of(context).pop();
+                            _showErrorDialog(context, 'Error opening subscription management. Go to iOS Settings > Your Apple ID > Subscriptions.');
+                          }
+                        }
+                      },
+                      child: const Text('Cancel Subscription', style: TextStyle(fontSize: 16)),
+                    ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK', style: TextStyle(fontSize: 16)),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: const Text(
+            'Learn More\nCancel Subscription',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      // Restore Purchases button
+      SizedBox(
+        width: 300,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: null,
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: Colors.black),
+            ),
+            elevation: 0,
+          ),
+          onPressed: () async {
+            print('Debug: Simulating restore purchases');
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => const Center(child: CircularProgressIndicator()),
+            );
+            if (isDebugMode) {
+              await Future.delayed(const Duration(seconds: 1)); // Simulate async work
+              Navigator.of(context, rootNavigator: true).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Debug: Simulated restore purchases')),
+              );
+            } else {
+              try {
+                bool restorationSuccess = await subscriptionsProvider.initializeSubscriptions();
+                Navigator.of(context, rootNavigator: true).pop();
+                if (!restorationSuccess &&
+                    !subscriptionsProvider.hasCompleteActiveSubscription &&
+                    !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No active subscriptions found. Please purchase a subscription.')),
+                  );
+                }
+              } catch (e) {
+                Navigator.of(context, rootNavigator: true).pop();
+                _showErrorDialog(context, e.toString());
+              }
+            }
+          },
+          child: const Text(
+            'Restore Purchases',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+      const SizedBox(height: 20),
+      // Privacy Policy and Terms of Use links
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => _launchUrl(context, 'https://www.termsfeed.com/live/228b3ef3-78b7-4838-a02a-77fb59345193'),
+            child: const Text(
+              'Privacy Policy',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.blue,
+                fontWeight: FontWeight.w500,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => _launchUrl(context, 'https://www.apple.com/legal/internet-services/itunes/us/terms.html'),
+            child: const Text(
+              'Terms of Use',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.blue,
+                fontWeight: FontWeight.w500,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 20),
+    ];
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text(
+          'Choose a Subscription',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        contentPadding: const EdgeInsets.all(16.0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: Colors.white,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: subscriptionTiles,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK', style: TextStyle(fontSize: 16)),
+          ),
+        ],
+      ),
+    );
+  }
+
+/*  Future<void> showCompleteSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
     const String completeCalculationProductId = 'com.tech4dev.construction.complete.3m';
     const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
@@ -1021,7 +1408,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             }
           },
           child: const Text(
-            'Complete Calculation\n\$14.97/3 months',
+            'Complete Calculation\n\$6.99 / 3 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -1055,7 +1442,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             }
           },
           child: const Text(
-            'Full Access\n\$12.99/6 months',
+            'Full Access\n\$12.99 / 6 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -1063,7 +1450,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
       ),
       const SizedBox(height: 12),
       const Text(
-        'Save 60% by subscribing to Full Access!',
+        'Save 50% by subscribing to Full Access!',
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -1095,11 +1482,10 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
                   'Choose your calculation method:\n\n'
                       '• Simple: Uniform rate (sqft/sqm) for the entire project\n'
                       '• Complete: Custom rates (sqft/sqm) for each project part\n\n'
-                      'Tap (?) icon at the bottom of the first page of each product for details, especially during your trial. '
-                      'Full Access includes both methods at a significant discount.\n\n'
-                      'Status: ${hasCompleteActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Complete"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, height: 1.5),
+                      'Tap ? icon at the bottom of the first page of each product for details, especially during your trial. '
+                      '\n\nStatus: ${hasCompleteActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Complete"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(fontSize: 20, height: 1.5, fontWeight: FontWeight.bold),
                 ),
                 actions: [
                   if (hasCompleteActive || hasFullAccess)
@@ -1241,7 +1627,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
         ],
       ),
     );
-  }
+  }*/
 
   // Dialog helpers
   void _showErrorDialog(BuildContext context, String message) {
