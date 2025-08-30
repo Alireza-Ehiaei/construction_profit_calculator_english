@@ -90,11 +90,11 @@ jobs:
         run: |
           security find-identity -v -p codesigning build.keychain
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No provisioning profiles found"
-
+      
       - name: Build iOS IPA
         env:
           FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
-          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution"
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"  # ← Use FULL name
           FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
           FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
         run: |
@@ -102,7 +102,7 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
-
+      
       - name: Run IAP Unit Tests
         run: |
           flutter test test/iap_test.dart --verbose > test_log.txt 2>&1 || { cat test_log.txt; exit 1; }
