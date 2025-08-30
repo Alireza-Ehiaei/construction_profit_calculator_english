@@ -76,7 +76,7 @@ jobs:
 
       - name: Import Apple certificate
         env:
-          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DEVELOPMENT_P12 }}
+          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
@@ -91,7 +91,7 @@ jobs:
 
       - name: Install provisioning profile
         env:
-          PROVISIONING_PROFILE: ${{ secrets.IOS_DEVELOPMENT_PROFILE }}
+          PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
           echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
           if [ ! -s profile.mobileprovision ]; then
@@ -99,7 +99,7 @@ jobs:
             exit 1
           fi
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorDevelopmentProfile.mobileprovision
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorProvisionProfile.mobileprovision
           echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || { echo "Failed to list provisioning profiles"; exit 1; }
 
@@ -111,8 +111,8 @@ jobs:
       - name: Build iOS IPA
         env:
           FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
-          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "Apple Development"
-          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorDevelopmentProfile"
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution"
+          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
           FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
         run: |
           security list-keychains -d user -s build.keychain
