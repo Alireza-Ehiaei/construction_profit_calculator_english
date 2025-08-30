@@ -73,11 +73,11 @@ jobs:
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
-      
+
       - name: Import Apple certificate
         env:
-          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}  # ← FIX: Add this
-          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}     # ← FIX: Add this
+          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DEVELOPMENT_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           echo "$SIGNING_CERTIFICATE_P12" | base64 --decode > certificate.p12
@@ -88,10 +88,10 @@ jobs:
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
-      
+
       - name: Install provisioning profile
         env:
-          PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}  # ← Use the correct secret name
+          PROVISIONING_PROFILE: ${{ secrets.IOS_DEVELOPMENT_PROFILE }}
         run: |
           echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
           if [ ! -s profile.mobileprovision ]; then
@@ -99,7 +99,7 @@ jobs:
             exit 1
           fi
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorDevelopmentProfile.mobileprovision
           echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
@@ -109,14 +109,23 @@ jobs:
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build iOS IPA
+        env:
+          FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "Apple Development"
+          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorDevelopmentProfile"
+          FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
         run: |
-          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
-          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="Apple Development"
-          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorDevelopmentProfile"
-          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
-          mkdir -p ipa-artifact
-          cp build/ios/ipa/*.ipa ipa-artifact/app.ipa
+          security list-keychains -d user -s build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose 2>&1 | tee build_log.txt
+          if [ -f build/ios/ipa/*.ipa ]; then
+            mkdir -p ipa-artifact
+            cp build/ios/ipa/*.ipa ipa-artifact/app.ipa
+          else
+            echo "IPA not found. Check build_log.txt for details."
+            exit 1
+          fi
 
       - name: Run IAP Unit Tests
         run: |
