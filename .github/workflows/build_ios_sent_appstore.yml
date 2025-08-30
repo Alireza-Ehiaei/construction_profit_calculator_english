@@ -15,14 +15,19 @@ jobs:
         with:
           xcode-version: '16'
 
-      - name: Verify Xcode and SDK
+      - name: Verify Xcode and iOS 18.6 SDK
         run: |
           sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
           xcodebuild -version > xcode_info.txt
-          xcodebuild -showsdks >> xcode_info.txt
+          xcodebuild -showsdks > xcode_info.txt
           xcrun simctl runtime list >> xcode_info.txt
-          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
-          xcodebuild -showsdks >> sdk_install_log.txt
+          for i in {1..3}; do
+            echo "Attempt $i to download iOS 18.6 SDK"
+            sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 && break
+            cat sdk_install_log.txt
+            sleep 5
+          done
+          xcodebuild -showsdks | grep iphoneos18.6 || { echo "iOS 18.6 SDK not found"; xcrun simctl list; cat sdk_install_log.txt; exit 1; }
         env:
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
@@ -57,10 +62,10 @@ jobs:
 
       - name: Update iOS deployment target
         run: |
-          echo "Updating iOS deployment target to 18.0"
-          sed -i '' 's/platform :ios, '\''15.0'\''/platform :ios, '\''18.0'\''/' ios/Podfile
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 15.0/IPHONEOS_DEPLOYMENT_TARGET = 18.0/' ios/Runner.xcodeproj/project.pbxproj
-          plutil -replace MinimumOSVersion -string "18.0" ios/Runner/Info.plist
+          echo "Setting iOS deployment target to 15.0, building with iOS 18.6 SDK"
+          sed -i '' 's/platform :ios, '\''15.0'\''/platform :ios, '\''15.0'\''/' ios/Podfile
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9]*\.[0-9]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/' ios/Runner.xcodeproj/project.pbxproj
+          plutil -replace MinimumOSVersion -string "15.0" ios/Runner/Info.plist
           echo "Podfile content:"
           cat ios/Podfile
           echo "project.pbxproj IPHONEOS_DEPLOYMENT_TARGET:"
