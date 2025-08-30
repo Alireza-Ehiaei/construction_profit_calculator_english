@@ -24,8 +24,8 @@ jobs:
           cache: true
           cache-key: flutter-3.24.0
           cache-path: |
-            ${{ runner.tool_cache }}/flutter
-            ~/.pub-cache
+            /Users/runner/hostedtoolcache/flutter
+            /Users/runner/.pub-cache
 
       - name: Install dependencies
         run: |
