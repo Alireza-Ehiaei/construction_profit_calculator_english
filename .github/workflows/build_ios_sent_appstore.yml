@@ -108,7 +108,7 @@ jobs:
 
       - name: Update iOS deployment target
         run: |
-          echo "Updating iOS deployment target to 15.0"
+          echo "Ensuring iOS deployment target is 15.0"
           sed -i '' 's/platform :ios, '\''18.0'\''/platform :ios, '\''15.0'\''/' ios/Podfile
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 18.0/IPHONEOS_DEPLOYMENT_TARGET = 15.0/' ios/Runner.xcodeproj/project.pbxproj
           plutil -replace MinimumOSVersion -string "15.0" ios/Runner/Info.plist
