@@ -11,7 +11,6 @@ import 'navigation_service.dart';
 import 'permit_fees.dart';
 
 
-
 class OtherCosts extends StatefulWidget {
   final String givenProjectName;
   final List<List<dynamic>> givenFloorRangesData;
@@ -77,7 +76,7 @@ class _OtherCostsState extends State<OtherCosts> {
   async {
 
     final projectBasicData = await
-    CompleteCalculationDatabaseHelper.getProjectBasicData(projectName1);
+    DifferentiatedCalculationDatabaseHelper.getProjectBasicData(projectName1);
 
     if (projectBasicData.isNotEmpty)
     {
@@ -764,7 +763,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                     }
                                     else
                                     {
-                                      await CompleteCalculationDatabaseHelper.updateProjectBasicDataRemaining(
+                                      await DifferentiatedCalculationDatabaseHelper.updateProjectBasicDataRemaining(
                                         projectName1,
                                         double.parse(roofAndYardConstructionCostsController.text),
                                         double.parse(transactionCostsController.text),
@@ -774,17 +773,17 @@ class _OtherCostsState extends State<OtherCosts> {
                 
                 
                                       final List<ProjectBasicData> projectBasicDataList = await
-                                      CompleteCalculationDatabaseHelper
+                                      DifferentiatedCalculationDatabaseHelper
                                           .getProjectBasicData(projectName1);
                 
                                       // Call the getCostPricingData method to retrieve project data
                                       List<ProjectTableData> projectData = await
-                                      CompleteCalculationDatabaseHelper
+                                      DifferentiatedCalculationDatabaseHelper
                                           .getCostPricingData(projectName1);
                 
                                       List<
                                           PermitFeeSegmentPricingData> permitFeeData =
-                                      await CompleteCalculationDatabaseHelper
+                                      await DifferentiatedCalculationDatabaseHelper
                                           .getPermitFeeSegmentPricingData(
                                           projectName1);
                 
@@ -1149,7 +1148,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                         totalIncomeOfFloors += incomeOfFloor;
                                         totalProfitOfFloors += profitOfFloor;
                 
-                                        await CompleteCalculationDatabaseHelper
+                                        await DifferentiatedCalculationDatabaseHelper
                                             .insertOrUpdateProjectResultFloorData(
                                             projectName1, consFloor[i][0],
                                             consFloor[i][1],
@@ -1195,7 +1194,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                             profitOfConstruction += consFloor[j][4];
                                           }
                                         }
-                                        await CompleteCalculationDatabaseHelper
+                                        await DifferentiatedCalculationDatabaseHelper
                                             .insertOrUpdateProjectResultCppData(
                                             projectName1, consConstruction[i][0],
                                             formatNumberWithThousandSeparator(
@@ -1220,11 +1219,11 @@ class _OtherCostsState extends State<OtherCosts> {
 
                 
                                       ResultProjectColumnsClassData resultProjectData_ = ResultProjectColumnsClassData(
-                                        resultProjectTableId: await CompleteCalculationDatabaseHelper
+                                        resultProjectTableId: await DifferentiatedCalculationDatabaseHelper
                                             .getNextResultProjectTableId(),
                                         resultProjectTableProjectName: widget
                                             .givenProjectName,
-                                        resultProjectTableCalculationType: 'complete',
+                                        resultProjectTablePricing: 'differentiated',
                 
                                         resultProjectTableLandArea: landAreaText,
                                         resultProjectTableTotalNumberOfFloorsText: totalNumberOfFloorsText,
@@ -1269,7 +1268,7 @@ class _OtherCostsState extends State<OtherCosts> {
                 
                                       );
                 
-                                      await CompleteCalculationDatabaseHelper
+                                      await DifferentiatedCalculationDatabaseHelper
                                           .insertOrUpdateResultProjectData(
                                           resultProjectData_);
 
@@ -1292,7 +1291,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                         {
                                     await AllProjectsPageDatabase.updateProjectOtherFields(
                                         projectName: widget.givenProjectName,       // Identifies the row to update
-                                        calculationType: 'complete',           // Your calculation type to identify the row
+                                        Pricing: 'differentiated',           // Your calculation type to identify the row
                                         fieldsToUpdate: {
                                           AllProjectsPageDatabase
                                               .columnAllProjectsPageProjectName: widget

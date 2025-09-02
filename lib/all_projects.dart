@@ -8,7 +8,7 @@ import 'billing_provider.dart';
 import 'land.dart';
 import 'main.dart';
 import 'database.dart';
-import 'simple_calc_page.dart';
+import 'uniformPricing_page.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,7 +29,7 @@ class AllProjectsPageDatabase {
   static const String columnAllProjectsPageSociallyFriendly = 'allProjectsPageSociallyFriendly';
   static const String columnAllProjectsPageCity = 'allProjectsPageCity';
   static const String columnAllProjectsPageStreet = 'allProjectsPageStreet';
-  static const String columnAllProjectsPageCalculationType = 'allProjectsPageCalculationName';
+  static const String columnAllProjectsPagePricingType = 'allProjectsPageCalculationName';
 
   static const _databaseName = 'allProjectsPageDatabase.db';
   static const _databaseVersion = 1;
@@ -68,7 +68,7 @@ class AllProjectsPageDatabase {
         $columnAllProjectsPageSociallyFriendly REAL,
         $columnAllProjectsPageCity TEXT,
         $columnAllProjectsPageStreet TEXT,
-        $columnAllProjectsPageCalculationType TEXT
+        $columnAllProjectsPagePricingType TEXT
       )
     ''');
   }
@@ -90,14 +90,14 @@ async {
   final db = await database;
   final maps = await db.query(
     tableAllProjectsPageData,
-    where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPageCalculationType = ?',
+    where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
     whereArgs: [allProjectsPageData.allProjectsPageProjectName, allProjectsPageData.allProjectsPageCalculationName],
   );
   if (maps.isNotEmpty) {
     await db.update(
       tableAllProjectsPageData,
       allProjectsPageData.toMap(),
-      where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPageCalculationType = ?',
+      where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
       whereArgs: [allProjectsPageData.allProjectsPageProjectName, allProjectsPageData.allProjectsPageCalculationName],
     );
     return maps.first[columnAllProjectsPageId] as int;
@@ -116,7 +116,7 @@ async {
     // Fetch existing row
     final maps = await db.query(
       tableAllProjectsPageData,
-      where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPageCalculationType = ?',
+      where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
       whereArgs: [newFinancialData.projectName, newFinancialData.calculationName],
     );
 
@@ -125,7 +125,7 @@ async {
       final id = await db.insert(tableAllProjectsPageData, {
         // Map fields from newFinancialData, add defaults for missing fields
         columnAllProjectsPageProjectName: newFinancialData.projectName,
-        columnAllProjectsPageCalculationType: newFinancialData.calculationName,
+        columnAllProjectsPagePricingType: newFinancialData.calculationName,
         columnAllProjectsPageCostOfProject: newFinancialData.costOfProject,
         columnAllProjectsPageIncomeOfProject: newFinancialData.incomeOfProject,
         columnAllProjectsPageProfitOfProject: newFinancialData.profitOfProject,
@@ -151,7 +151,7 @@ async {
 
       // Also keep identifying columns to avoid updating them
       columnAllProjectsPageProjectName: newFinancialData.projectName,
-      columnAllProjectsPageCalculationType: newFinancialData.calculationName,
+      columnAllProjectsPagePricingType: newFinancialData.calculationName,
     };
 
     final id = existingRecord[columnAllProjectsPageId] as int;
@@ -170,7 +170,7 @@ async {
 
   static Future<int> updateProjectOtherFields({
     required String projectName,
-    required String calculationType,
+    required String Pricing,
     required Map<String, dynamic> fieldsToUpdate,
   }) async {
     final db = await database;
@@ -178,8 +178,8 @@ async {
     final result = await db.update(
       tableAllProjectsPageData,
       fieldsToUpdate,
-      where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPageCalculationType = ?',
-      whereArgs: [projectName, calculationType],
+      where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
+      whereArgs: [projectName, Pricing],
     );
     return result; // returns number of rows affected
   }
@@ -202,7 +202,7 @@ async {
         allProjectsPageSociallyFriendly: maps[i][columnAllProjectsPageSociallyFriendly],
         allProjectsPageCity: maps[i][columnAllProjectsPageCity],
         allProjectsPageStreet: maps[i][columnAllProjectsPageStreet],
-        allProjectsPageCalculationName: maps[i][columnAllProjectsPageCalculationType],
+        allProjectsPageCalculationName: maps[i][columnAllProjectsPagePricingType],
       );
     });
   }
@@ -210,18 +210,18 @@ async {
   static Future<void> updateProjectNameInAllProjectsPageData(String oldProjectName, String newProjectName, String calcType) async {
     final db = await database;
 
-    if (calcType == 'simple') {
+    if (calcType == 'uniform') {
       await db.rawUpdate(
         'UPDATE $tableAllProjectsPageData SET $columnAllProjectsPageProjectName = ? '
             'WHERE $columnAllProjectsPageProjectName = ? '
-            'AND $columnAllProjectsPageCalculationType = ?',
+            'AND $columnAllProjectsPagePricingType = ?',
         [newProjectName, oldProjectName, calcType],
       );
-    } else if (calcType == 'complete') {
+    } else if (calcType == 'Differentiated') {
       await db.rawUpdate(
         'UPDATE $tableAllProjectsPageData SET $columnAllProjectsPageProjectName = ? '
             'WHERE $columnAllProjectsPageProjectName = ? '
-            'AND $columnAllProjectsPageCalculationType = ?',
+            'AND $columnAllProjectsPagePricingType = ?',
         [newProjectName, oldProjectName, calcType],
       );
     }
@@ -339,8 +339,8 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
 
     // Initialize selectedRows based on the length of allProjectsData
     selectedRows = List.filled(allProjectsData.length, false);
-    await CompleteCalculationDatabaseHelper
-        .deleteProjectOfCompleteCalculationDatabase('_oozz');
+    await DifferentiatedCalculationDatabaseHelper
+        .deleteProjectOfDifferentiatedCalculationDatabase('_oozz');
 
     //   setState(() {});
   }
@@ -372,7 +372,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
         AllProjectsPageDatabase.columnAllProjectsPageSociallyFriendly,
         AllProjectsPageDatabase.columnAllProjectsPageCity,
         AllProjectsPageDatabase.columnAllProjectsPageStreet,
-        AllProjectsPageDatabase.columnAllProjectsPageCalculationType,
+        AllProjectsPageDatabase.columnAllProjectsPagePricingType,
       ],
     );
 
@@ -390,7 +390,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
         map[AllProjectsPageDatabase.columnAllProjectsPageSociallyFriendly],
         map[AllProjectsPageDatabase.columnAllProjectsPageCity],
         map[AllProjectsPageDatabase.columnAllProjectsPageStreet],
-        map[AllProjectsPageDatabase.columnAllProjectsPageCalculationType],
+        map[AllProjectsPageDatabase.columnAllProjectsPagePricingType],
       ];
     }).toList();
   }
@@ -874,7 +874,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
 
                                                 DataColumn(
                                                   label: Text(
-                                                    'Calculation\nType',
+                                                    '   Pricing',
                                                     style: TextStyle(
                                                         color: Colors.white,
                                                         fontSize: textFontSize
@@ -995,7 +995,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                       style: TextStyle(
                                                           fontSize: textFontSize),
                                                     )),
-                                                    // Calculation Name
+                                                    // pricing Name
 
                                                     DataCell(Text(
                                                       '${rowData[10]}',
@@ -1101,43 +1101,41 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                         ),
                                                       );
                                                     }
-                                                    else if (1==1){//if (subscriptionsProvider.hasSimpleActiveSubscription || subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                                                    else if (1==1){//if (subscriptionsProvider.hasUniformActiveSubscription || subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
                                                       NavigationService().navigateToScreen(
-                                                        const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
+                                                        const UniformCalculationPage1(givenUniformProjectName: 'wwmm'),
                                                         arguments: 'wwmm',
                                                       );
                                                       Navigator.of(context).pop();
                                                     } else {
-                                                      subscriptionsProvider.showSimpleSubscriptionUI(context);
+                                                      subscriptionsProvider.showUniformSubscriptionUI(context);
                                                     }
                                                   },
                                                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                                                  child:  Text('   Simple Calculation   '
+                                                  child:  Text('   Uniform Pricing   '
                                                       , style: TextStyle(fontSize: textFontSize, color: Colors.white)),
                                                 ),
                                               ),*/
 
                                                         Flexible(
-                                                            flex: 1,
+                                                          flex: 1,
+                                                          child: SizedBox(
+                                                            width: double.infinity, // Force equal width
                                                             child: ElevatedButton(
                                                               onPressed: () async {
                                                                 final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
                                                                 final projectData = Provider.of<ProjectData>(context, listen: false);
 
-                                                                // Check if user has active subscription for Simple Calculation or Full Access
-                                                                if (subscriptionsProvider.hasSimpleActiveSubscription ||
-                                                                    subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
-                                                                  // Navigate directly to Simple Calculation page
+                                                                if (subscriptionsProvider.hasUniformActiveSubscription ||
+                                                                    subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
                                                                   projectData.setProjectName("_oozz");
                                                                   NavigationService().navigateToScreen(
-                                                                    const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
+                                                                    const UniformCalculationPage1(givenSimpleProjectName: 'wwmm'),
                                                                     arguments: 'wwmm',
                                                                   );
                                                                   return;
                                                                 }
-
-                                                                // Show subscription UI if no valid subscription
-                                                                await subscriptionsProvider.showSimpleSubscriptionUI(context);
+                                                                await subscriptionsProvider.showUniformSubscriptionUI(context);
                                                               },
                                                               style: ElevatedButton.styleFrom(
                                                                 backgroundColor: Colors.blue,
@@ -1146,41 +1144,36 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                                               ),
                                                               child: Text(
-                                                                'Simple Calculation',
+                                                                'Uniform Pricing',
                                                                 style: TextStyle(fontSize: textFontSize),
                                                               ),
-                                                            )
+                                                            ),
+                                                          ),
                                                         ),
 
-                                                        SizedBox(
-                                                            height: spacingHeight *
-                                                                2),
+                                                        SizedBox(height: spacingHeight * 2),
 
                                                         Flexible(
-                                                            flex: 1,
+                                                          flex: 1,
+                                                          child: SizedBox(
+                                                            width: double.infinity, // Force equal width
                                                             child: ElevatedButton(
                                                               onPressed: () async {
                                                                 final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
                                                                 final projectData = Provider.of<ProjectData>(context, listen: false);
 
-                                                                // Check if user has active subscription for Simple Calculation or Full Access
-                                                                       if (subscriptionsProvider
-                                                                    .hasCompleteActiveSubscription ||
+                                                                if (subscriptionsProvider
+                                                                    .hasDifferentiatedActiveSubscription ||
                                                                     subscriptionsProvider
-                                                                        .hasCompletePlusSimpleCalculationProductId) {
-                                                                  // Navigate directly
+                                                                        .hasDifferentiatedPlusUniformCalculationProductId) {
                                                                   projectData.setProjectName("_oozz");
-                                                                  NavigationService()
-                                                                      .navigateToScreen(
-                                                                    const LandInputs(
-                                                                        givenProjectName: '_oozz'),
+                                                                  NavigationService().navigateToScreen(
+                                                                    const LandInputs(givenProjectName: '_oozz'),
                                                                     arguments: '_oozz',
                                                                   );
                                                                   return;
                                                                 }
-
-                                                                // Show subscription UI if no valid subscription
-                                                                await subscriptionsProvider.showCompleteSubscriptionUI(context);
+                                                                await subscriptionsProvider.showDifferentiatedSubscriptionUI(context);
                                                               },
                                                               style: ElevatedButton.styleFrom(
                                                                 backgroundColor: Colors.blue,
@@ -1189,12 +1182,13 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                                               ),
                                                               child: Text(
-                                                                'Complete Calculation',
+                                                                'Differentiated Pricing',
                                                                 style: TextStyle(fontSize: textFontSize),
+                                                                textAlign: TextAlign.center, // Center the longer text
                                                               ),
-                                                            )
+                                                            ),
+                                                          ),
                                                         ),
-
                                                       /*  Flexible(
                                                             flex: 1,
                                                             child: ElevatedButton(
@@ -1212,9 +1206,9 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
 
                                                                 // Check if user already has active subscription
                                                                 if (subscriptionsProvider
-                                                                    .hasCompleteActiveSubscription ||
+                                                                    .hasDifferentiatedActiveSubscription ||
                                                                     subscriptionsProvider
-                                                                        .hasCompletePlusSimpleCalculationProductId) {
+                                                                        .hasDifferentiatedPlusUniformCalculationProductId) {
                                                                   // Navigate directly
                                                                   projectData.setProjectName("_oozz");
                                                                   NavigationService()
@@ -1276,9 +1270,9 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
 
                                                                                 if (restorationSuccess &&
                                                                                     (subscriptionsProvider
-                                                                                        .hasCompleteActiveSubscription ||
+                                                                                        .hasDifferentiatedActiveSubscription ||
                                                                                         subscriptionsProvider
-                                                                                            .hasCompletePlusSimpleCalculationProductId)) {
+                                                                                            .hasDifferentiatedPlusUniformCalculationProductId)) {
                                                                                   // Navigate to the next screen on success
                                                                                   projectData
                                                                                       .setProjectName(
@@ -1309,7 +1303,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                                                     context)
                                                                                                     .pop();
                                                                                                 subscriptionsProvider
-                                                                                                    .showCompleteSubscriptionUI(
+                                                                                                    .showDifferentiatedSubscriptionUI(
                                                                                                     context);
                                                                                               },
                                                                                               child: const Text(
@@ -1370,7 +1364,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                                   context)
                                                                                   .pop();
                                                                               subscriptionsProvider
-                                                                                  .showCompleteSubscriptionUI(
+                                                                                  .showDifferentiatedSubscriptionUI(
                                                                                   context);
                                                                             },
                                                                             child: Text(
@@ -1389,7 +1383,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                   backgroundColor: Colors
                                                                       .blue),
                                                               child: Text(
-                                                                'Complete Calculation',
+                                                                'Differentiated Pricing',
                                                                 style: TextStyle(
                                                                     fontSize: textFontSize,
                                                                     color: Colors
@@ -1466,7 +1460,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                       bool isLoadingIndicatorShown = false;
                       
                                                     if (subscriptionsProvider.isLoading ||
-                                                          (!subscriptionsProvider.hasSimpleActiveSubscription && !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId))
+                                                          (!subscriptionsProvider.hasUniformActiveSubscription && !subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId))
                                                       {
                       
                                                         // Show loading indicator
@@ -1485,10 +1479,10 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           print("Restoration result: $restorationSuccess");
                       
                                                           // Recheck subscription status
-                                                          subscriptionsProvider.hasSimpleActiveSubscription = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.simpleCalculationProductId);
-                                                          subscriptionsProvider.hasCompletePlusSimpleCalculationProductId = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.completePlusSimpleCalculationProductId);
-                                                          print("  Simple Active Subscription: ${subscriptionsProvider.hasSimpleActiveSubscription}");
-                                                          print("  Complete Plus Simple Calculation: ${subscriptionsProvider.hasCompletePlusSimpleCalculationProductId}");
+                                                          subscriptionsProvider.hasUniformActiveSubscription = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.UniformCalculationProductId);
+                                                          subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.differentiatedPlusUniformCalculationProductId);
+                                                          print("  uniform Active Subscription: ${subscriptionsProvider.hasUniformActiveSubscription}");
+                                                          print("  Differentiated Pricing Plus Uniform Pricing: ${subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId}");
                       
                                                         } catch (e) {
                                                           print("Error restoring purchases during button press: $e");
@@ -1502,19 +1496,19 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           Navigator.of(context, rootNavigator: true).pop();
                       
                                                         }
-                                                        print("  Complete Plus Simple Calculation 1: ${subscriptionsProvider.hasCompletePlusSimpleCalculationProductId}");
+                                                        print("  Differentiated Pricing Plus Uniform Pricing 1: ${subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId}");
                       
                                                       }
                       
                                                       // Proceed with checking subscription status and navigation
-                                                      if (subscriptionsProvider.hasSimpleActiveSubscription || subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                                                      if (subscriptionsProvider.hasUniformActiveSubscription || subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
                       
                                                         NavigationService().navigateToScreen(
-                                                          const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
+                                                          const UniformCalculationPage1(givenUniformProjectName: 'wwmm'),
                                                           arguments: 'wwmm',
                                                         );
                                                       } else {
-                                                        subscriptionsProvider.showSimpleSubscriptionUI(context);
+                                                        subscriptionsProvider.showUniformSubscriptionUI(context);
                                                       }
                                                     }
                                                   },
@@ -1522,7 +1516,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                     backgroundColor: Colors.blue,
                                                   ),
                                                   child:  Text(
-                                                    ' Simple Calculation ',
+                                                    ' Uniform Pricing ',
                                                     style: TextStyle(
                                                       fontSize: textFontSize,
                                                       color: Colors.white,
@@ -1594,7 +1588,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                       bool isLoadingIndicatorShown = false;
                       
                                                       if (subscriptionsProvider.isLoading ||
-                                                          (!subscriptionsProvider.hasCompleteActiveSubscription && !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)) {
+                                                          (!subscriptionsProvider.hasDifferentiatedActiveSubscription && !subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId)) {
                       
                                                         // Show loading indicator
                                                         showDialog(
@@ -1611,11 +1605,11 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           print("Restoration result: $restorationSuccess");
                       
                                                           // Recheck subscription status
-                                                          subscriptionsProvider.hasCompleteActiveSubscription = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.completeCalculationProductId);
-                                                          subscriptionsProvider.hasCompletePlusSimpleCalculationProductId = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.completePlusSimpleCalculationProductId);
+                                                          subscriptionsProvider.hasDifferentiatedActiveSubscription = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.differentiatedCalculationProductId);
+                                                          subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.differentiatedPlusUniformCalculationProductId);
                                                           print("Rechecked Subscription Status during button press:");
-                                                          print("  Complete Active Subscription: ${subscriptionsProvider.hasCompleteActiveSubscription}");
-                                                          print("  Complete Plus Simple Calculation: ${subscriptionsProvider.hasCompletePlusSimpleCalculationProductId}");
+                                                          print("  Differentiated Active Subscription: ${subscriptionsProvider.hasDifferentiatedActiveSubscription}");
+                                                          print("  Differentiated Plus Uniform Pricing: ${subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId}");
                       
                                                         } catch (e) {
                                                           print("Error restoring purchases during button press: $e");
@@ -1631,16 +1625,16 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                       }
                       
                                                       // Proceed with checking subscription status and navigation
-                                                    */ /*  if (subscriptionsProvider.hasCompleteActiveSubscription ||
-                                                          subscriptionsProvider.hasCompletePlusSimpleCalculationProductId)*/ /*
+                                                    */ /*  if (subscriptionsProvider.hasDifferentiatedActiveSubscription ||
+                                                          subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId)*/ /*
                       
                                                       if (1==1){
                                                    */ /*     final projectData = Provider.of<ProjectData>(context, listen: false);
-                                                        await CompleteCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
-                                                        await CompleteCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
-                                                        final projectNames = await CompleteCalculationDatabaseHelper.getAllProjectNames();
+                                                        await DifferentiatedCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
+                                                        await DifferentiatedCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
+                                                        final projectNames = await DifferentiatedCalculationDatabaseHelper.getAllProjectNames();
                                                         if (projectNames.contains("_oozz")) {
-                                                          await CompleteCalculationDatabaseHelper.deleteProjectOfCompleteCalculationDatabase("_oozz");
+                                                          await DifferentiatedCalculationDatabaseHelper.deleteProjectOfDifferentiatedCalculationDatabase("_oozz");
                                                         }
                                                         projectData.projectNameList.clear();
                                                         projectData.setProjectName('_oozz');*/ /*
@@ -1650,7 +1644,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           arguments: '_oozz',
                                                         );
                                                       } else {
-                                                        subscriptionsProvider.showCompleteSubscriptionUI(context);
+                                                        subscriptionsProvider.showDifferentiatedSubscriptionUI(context);
                                                       }
                                                     }
                                                   },
@@ -1658,7 +1652,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                     backgroundColor: Colors.blue,
                                                   ),
                                                   child:  Text(
-                                                    'Complete Calculation',
+                                                    'Differentiated Pricing',
                                                     style: TextStyle(
                                                       fontSize: textFontSize,
                                                       color: Colors.white,
@@ -1754,13 +1748,13 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                             } else if (trueCount == 1) {
                                               int selectedIndex = selectedRows
                                                   .indexOf(true);
-                                              String calculationType = snapshot
+                                              String Pricing = snapshot
                                                   .data![selectedIndex][10];
                                               String projectName = snapshot
                                                   .data![selectedIndex][1];
 
-                                              if (calculationType ==
-                                                  'complete') {
+                                              if (Pricing ==
+                                                  'differentiated') {
                                                 projectData.setProjectName(
                                                     projectName);
                                                 projectData.projectNameList
@@ -1774,14 +1768,14 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                 );
                                               }
                                               else if
-                                              (calculationType == 'simple') {
+                                              (Pricing == 'uniform') {
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) =>
-                                                        ResultSimpleCalculationPage(
+                                                        ResultUniformCalculationPage(
                                                           shouldRetrieveData: 1,
-                                                          givenResultSimpleProjectName: projectName,
+                                                          givenResultUniformProjectName: projectName,
                                                           landAreaValue: 0,
                                                           landPricePerMeter: 0,
                                                           buildabilityPercentageOrAreaValue: 0,
@@ -1925,11 +1919,11 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           onPressed: () async {
                                                             // Proceed with the deletion of the selected projects
                                                             for (String projectName in selectedProjects) {
-                                                              await CompleteCalculationDatabaseHelper
-                                                                  .deleteProjectOfCompleteCalculationDatabase(
+                                                              await DifferentiatedCalculationDatabaseHelper
+                                                                  .deleteProjectOfDifferentiatedCalculationDatabase(
                                                                   projectName);
-                                                              await SimpleCalculationDatabase
-                                                                  .deleteProjectOfSimpleCalculationDatabase();
+                                                              await UniformCalculationDatabase
+                                                                  .deleteProjectOfUniformCalculationDatabase();
                                                               await AllProjectsPageDatabase
                                                                   .deleteProjectFromAllProjectsPageData(
                                                                   projectName);
@@ -2004,8 +1998,8 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                       , style: TextStyle(
                                                     fontSize: textFontSize,)),
                                                   content: Text(
-                                                      'This icon allows you to delete all projects either from simple '
-                                                          'calculation type or complete calculation, or refresh the app to resolve potential issues.'
+                                                      'This icon allows you to delete all projects either from uniform '
+                                                          'pricing type or differentiated pricing type or refresh the app to resolve potential issues.'
                                                           '\n\nAre you sure you want to delete all project(s) or refresh the app? '
                                                           'If you press Yes you need to open app again.'
                                                       , style: TextStyle(
@@ -2029,14 +2023,14 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                         color: Colors.blue,),),
                                                       onPressed: () async {
                                                         // Delete all projects
-                                                        await CompleteCalculationDatabaseHelper
-                                                            .deleteCompleteCalculationDatabaseHelper();
+                                                        await DifferentiatedCalculationDatabaseHelper
+                                                            .deleteDifferentiatedCalculationDatabaseHelper();
 
                                                         await AllProjectsPageDatabase
                                                             .deleteAllProjectsPageDatabase();
 
-                                                        await SimpleCalculationDatabase
-                                                            .deleteSimpleCalculationDatabase();
+                                                        await UniformCalculationDatabase
+                                                            .deleteUniformCalculationDatabase();
 
                                                         allProjectsData.clear();
                                                         await showDialog(
@@ -2126,6 +2120,37 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                         children: [
 
                                                           TextSpan(
+                                                            text: '\nUniform Pricing',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                              fontWeight: FontWeight
+                                                                  .bold,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '\nUse a constant rate for the sale price and a constant rate for the '
+                                                                'construction cost per unit area to calculate building project profitability',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '\nDifferentiated Calculation',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                              fontWeight: FontWeight
+                                                                  .bold,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: '\nMaximize accuracy: input custom sale '
+                                                                'prices and construction costs per unit area for each part of a building project to generate a '
+                                                                'detailed profitability report.\n',
+                                                            style: TextStyle(
+                                                              fontSize: textFontSize,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
                                                             text: '\nAdding a New Project',
                                                             style: TextStyle(
                                                               fontSize: textFontSize,
@@ -2152,10 +2177,10 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           ),
                                                           TextSpan(
                                                             text: '. When you press this icon, a dialog will pop up asking you'
-                                                                ' to select whether you want to perform a simple calculation or '
-                                                                'a complete calculation. If you choose to proceed with the simple '
+                                                                ' to select whether you want to perform a uniform pricing or '
+                                                                'a differentiated pricing. If you choose to proceed with the uniform '
                                                                 'calculation, you\'ll get a quick estimate of the project\'s cost-benefit. '
-                                                                'If you choose to proceed with the complete calculation, you\'ll '
+                                                                'If you choose to proceed with the differentiated pricing, you\'ll '
                                                                 'get a more detailed and comprehensive analysis. Once you\'ve '
                                                                 'entered the data, you can save the project and it will be '
                                                                 'added to the list of saved projects.',
@@ -2197,7 +2222,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 'on the data you entered when you created the project. '
                                                                 'However, you can also view key results in a summary table, '
                                                                 'allowing you to compare different projects saved from either '
-                                                                'the simple or complete calculations. You can sort the rows '
+                                                                'the uniform or differentiated pricing. You can sort the rows '
                                                                 'by pressing the title of each column in the table. For example, '
                                                                 'if you want to sort the projects based on cost, simply click on '
                                                                 'the "Cost" header in the table.',

@@ -67,7 +67,7 @@ class _ResultPage1State extends State<ResultPage1> {
 
 
   Future<List<List<dynamic>>> _getResultFloorData(String projectName) async {
-    List<ProjectResultFloorData> floorData = await CompleteCalculationDatabaseHelper.getProjectResultFloorData(projectName);
+    List<ProjectResultFloorData> floorData = await DifferentiatedCalculationDatabaseHelper.getProjectResultFloorData(projectName);
     List<List<dynamic>> data = [];
     for (int i = 0; i < floorData.length; i++) {
       data.add([
@@ -83,7 +83,7 @@ class _ResultPage1State extends State<ResultPage1> {
 
   Future<List<List<dynamic>>> _getResultConstructionData(String projectName) async {
     List<projectResultCppData> constructionData =
-    await CompleteCalculationDatabaseHelper.getProjectResultCppData(projectName);
+    await DifferentiatedCalculationDatabaseHelper.getProjectResultCppData(projectName);
     List<List<dynamic>> data = [];
     for (int i = 0; i < constructionData.length; i++) {
       data.add([
@@ -97,7 +97,7 @@ class _ResultPage1State extends State<ResultPage1> {
 
   Future<List<List<dynamic>>> _getResultTotalData(String projectName) async {
     List<ResultProjectColumnsClassData> projectData = await
-    CompleteCalculationDatabaseHelper.getResultProjectColumnsClassData(projectName);
+    DifferentiatedCalculationDatabaseHelper.getResultProjectColumnsClassData(projectName);
     List<List<dynamic>> data = [];
     for (int i = 0; i < projectData.length; i++) {
       data.add( [
@@ -144,7 +144,7 @@ class _ResultPage1State extends State<ResultPage1> {
 
   Future<List<List<dynamic>>> getResultData(String projectName) async {
     List<ResultProjectColumnsClassData> projectData = await
-    CompleteCalculationDatabaseHelper.getResultProjectColumnsClassData(projectName);
+    DifferentiatedCalculationDatabaseHelper.getResultProjectColumnsClassData(projectName);
     List<List<dynamic>> resultData = [];
 
     for (int i = 0; i < projectData.length; i++) {
@@ -227,10 +227,10 @@ class _ResultPage1State extends State<ResultPage1> {
     String profitOfProject = '';
     String profitPercentageOfProject = '';
     String nameOfProject = '';
-    String calculationType = '';
+    String Pricing = '';
     var projectData = context.read<ProjectData>();
     ProjectAddressData? addressData = await
-        CompleteCalculationDatabaseHelper.getAddressProjectData(givenProjectName);
+        DifferentiatedCalculationDatabaseHelper.getAddressProjectData(givenProjectName);
 
     // Update the text field and dropdown values based on the retrieved address data
     if (addressData != null && givenProjectName != "_oozz") {
@@ -352,7 +352,7 @@ class _ResultPage1State extends State<ResultPage1> {
                 } else {
                   final String projectNameControllerText = projectNameController.text;
                   final List<String> existingProjectNames =
-                  await CompleteCalculationDatabaseHelper.getAllProjectNames();
+                  await DifferentiatedCalculationDatabaseHelper.getAllProjectNames();
 
                   if (existingProjectNames.contains(projectNameControllerText) &&
                       projectNameControllerText != givenProjectName) {
@@ -372,7 +372,7 @@ class _ResultPage1State extends State<ResultPage1> {
 
 
                     if (givenProjectName != projectNameController.text) {
-                      await CompleteCalculationDatabaseHelper.updateProjectNameInAllTables(
+                      await DifferentiatedCalculationDatabaseHelper.updateProjectNameInAllTables(
                         projectNameController.text,
                         projectData.projectName,
                       );
@@ -381,7 +381,7 @@ class _ResultPage1State extends State<ResultPage1> {
                     }
 
                     final ProjectAddressData projectAddressData = ProjectAddressData(
-                      addressTableId: await CompleteCalculationDatabaseHelper.getNextAddressProjectID(),
+                      addressTableId: await DifferentiatedCalculationDatabaseHelper.getNextAddressProjectID(),
                       addressTableProjectName: projectNameController.text,
                       addressTableEnvironmentallyFriendly: environmentallyFriendlyController.text,
                       addressTableSociallyFriendly: sociallyFriendlyController.text,
@@ -393,10 +393,10 @@ class _ResultPage1State extends State<ResultPage1> {
                       addressTableOther: otherController.text,
                     );
 
-                    await CompleteCalculationDatabaseHelper.insertOrUpdateAddressProjectData(projectAddressData);
+                    await DifferentiatedCalculationDatabaseHelper.insertOrUpdateAddressProjectData(projectAddressData);
 
                     List<ResultProjectColumnsClassData> resultProjectData =
-                    await CompleteCalculationDatabaseHelper.getResultProjectColumnsClassData(givenProjectName);
+                    await DifferentiatedCalculationDatabaseHelper.getResultProjectColumnsClassData(givenProjectName);
 
                     if (resultProjectData.isNotEmpty) {
                       nameOfProject = resultProjectData[0].resultProjectTableProjectName;
@@ -411,7 +411,7 @@ class _ResultPage1State extends State<ResultPage1> {
                       sociallyFriendly = (sociallyFriendlyController.text.isNotEmpty)
                           ? double.parse(sociallyFriendlyController.text.replaceAll(',', ''))
                           : 1;
-                      calculationType = 'complete';
+                      Pricing = 'differentiated';
                     }
 
                     String city = cityController.text;
@@ -427,7 +427,7 @@ class _ResultPage1State extends State<ResultPage1> {
                       allProjectsPageSociallyFriendly: sociallyFriendly,
                       allProjectsPageCity: city,
                       allProjectsPageStreet: street,
-                      allProjectsPageCalculationName: calculationType,
+                      allProjectsPageCalculationName: Pricing,
                     );
 
                     await AllProjectsPageDatabase.insertOrUpdateAllProjectsPageData(

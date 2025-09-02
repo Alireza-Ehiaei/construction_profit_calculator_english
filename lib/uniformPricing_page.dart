@@ -8,7 +8,7 @@ import 'all_projects.dart';
 import 'ad_mob.dart';
 import 'navigation_service.dart';
 
-class SimpleCalculationDatabase {
+class UniformCalculationDatabase {
   static const String tableSimpleCalculationData = 'simpleCalculationDataTable';
   static const String columnSimpleCalculationProjectName = 'simpleCalculationProjectName';
   static const String columnSimpleCalculationProjectId = 'simpleCalculationProjectId';
@@ -47,7 +47,7 @@ class SimpleCalculationDatabase {
   static const String tableSimpleCalculationAddress = 'simpleCalculationAddressTable';
   static const String columnSimpleCalculationAddressTableId = 'simpleCalculationAddressTableId';
   static const String columnSimpleCalculationAddressProjectName = 'simpleCalculationAddressProjectName';
-  static const String columnCalculationType = 'calculationType';
+  static const String columnPricing = 'Pricing';
   static const String columnProvinceName = 'ProvinceName';
   static const String columnCityName = 'CityName';
   static const String columnStreetName = 'StreetName';
@@ -57,7 +57,7 @@ class SimpleCalculationDatabase {
   static const String columnSociallyFriendly = 'socially_friendly';
   static const String columnEnvironmentallyFriendly = 'environmentally_friendly';
 
-  static const _databaseName = 'simpleCalculationDatabase1.db';
+  static const _databaseName = 'uniformCalculationDatabase1.db';
 
   static Database? _database;
 
@@ -89,39 +89,39 @@ class SimpleCalculationDatabase {
   static Future<void> _onCreateSimpleCalculationTable(Database db, int version) async {
     await db.execute('''
     CREATE TABLE $tableSimpleCalculationData (
-      ${SimpleCalculationDatabase.columnSimpleCalculationProjectName} TEXT,
-      ${SimpleCalculationDatabase.columnSimpleCalculationProjectId} INTEGER PRIMARY KEY,
-      ${SimpleCalculationDatabase.columnLandAreaValueText} TEXT,
-      ${SimpleCalculationDatabase.columnTotalIncomeText} TEXT,
-      ${SimpleCalculationDatabase.columnTotalCostText} TEXT,
-      ${SimpleCalculationDatabase.columnProfitText} TEXT,
-      ${SimpleCalculationDatabase.columnProfitPercentageText} TEXT,
-      ${SimpleCalculationDatabase.columnFloorCommonAreaText} TEXT,
-      ${SimpleCalculationDatabase.columnApartmentSellPricePerMeterValueText} TEXT,
-      ${SimpleCalculationDatabase.columnFloorConstructedLandAreaText} TEXT,
-      ${SimpleCalculationDatabase.columnPermissionPerMeterOrTotalPermissionCostText} TEXT,
-      ${SimpleCalculationDatabase.columnBuildabilityPercentageOrAreaValueText} TEXT,
-      ${SimpleCalculationDatabase.columnTotalPermissionCostText} TEXT,
-      ${SimpleCalculationDatabase.columnTotalUsefulAreaText} TEXT,
-      ${SimpleCalculationDatabase.columnTotalConstructedAreaText} TEXT,
-      ${SimpleCalculationDatabase.columnOtherCostText} TEXT,
-      ${SimpleCalculationDatabase.columnCostOfLandText} TEXT,
-      ${SimpleCalculationDatabase.columnConstructionCostOfAllFloorsText} TEXT,
-      ${SimpleCalculationDatabase.columnConstructionCostPerMeterText} TEXT,
-      ${SimpleCalculationDatabase.columnFloorUsefulAreaText} TEXT,
-      ${SimpleCalculationDatabase.columnFloorTotalPriceText} TEXT,
-      ${SimpleCalculationDatabase.columnAllCostsIncurredPerMeterOfUsefulAreaText} TEXT,
-      ${SimpleCalculationDatabase.columnProfitPerUsefulAreaText} TEXT,
-      ${SimpleCalculationDatabase.columnProfitPercentagePerUsefulAreaText} TEXT,
-      ${SimpleCalculationDatabase.columnUsefulAreaConstructedBy1BillionText} TEXT,
-      ${SimpleCalculationDatabase.columnTotalNumberOfPropertiesByOneMillionText} TEXT,
-      ${SimpleCalculationDatabase.columnLandPricePerMeter} TEXT,
-      ${SimpleCalculationDatabase.columnTenXOfTotalCostForUnit} TEXT,
-      ${SimpleCalculationDatabase.columnPermissionBoolValue} INTEGER,
-      ${SimpleCalculationDatabase.columnBuildabilityBoolIntValue} INTEGER,
-      ${SimpleCalculationDatabase.columnTotalNumberOfFloors} REAL,
-      ${SimpleCalculationDatabase.columnTotalNumberOfProperties} REAL,
-      ${SimpleCalculationDatabase.columnNumberOfSaleableFloorsValue} REAL
+      ${UniformCalculationDatabase.columnSimpleCalculationProjectName} TEXT,
+      ${UniformCalculationDatabase.columnSimpleCalculationProjectId} INTEGER PRIMARY KEY,
+      ${UniformCalculationDatabase.columnLandAreaValueText} TEXT,
+      ${UniformCalculationDatabase.columnTotalIncomeText} TEXT,
+      ${UniformCalculationDatabase.columnTotalCostText} TEXT,
+      ${UniformCalculationDatabase.columnProfitText} TEXT,
+      ${UniformCalculationDatabase.columnProfitPercentageText} TEXT,
+      ${UniformCalculationDatabase.columnFloorCommonAreaText} TEXT,
+      ${UniformCalculationDatabase.columnApartmentSellPricePerMeterValueText} TEXT,
+      ${UniformCalculationDatabase.columnFloorConstructedLandAreaText} TEXT,
+      ${UniformCalculationDatabase.columnPermissionPerMeterOrTotalPermissionCostText} TEXT,
+      ${UniformCalculationDatabase.columnBuildabilityPercentageOrAreaValueText} TEXT,
+      ${UniformCalculationDatabase.columnTotalPermissionCostText} TEXT,
+      ${UniformCalculationDatabase.columnTotalUsefulAreaText} TEXT,
+      ${UniformCalculationDatabase.columnTotalConstructedAreaText} TEXT,
+      ${UniformCalculationDatabase.columnOtherCostText} TEXT,
+      ${UniformCalculationDatabase.columnCostOfLandText} TEXT,
+      ${UniformCalculationDatabase.columnConstructionCostOfAllFloorsText} TEXT,
+      ${UniformCalculationDatabase.columnConstructionCostPerMeterText} TEXT,
+      ${UniformCalculationDatabase.columnFloorUsefulAreaText} TEXT,
+      ${UniformCalculationDatabase.columnFloorTotalPriceText} TEXT,
+      ${UniformCalculationDatabase.columnAllCostsIncurredPerMeterOfUsefulAreaText} TEXT,
+      ${UniformCalculationDatabase.columnProfitPerUsefulAreaText} TEXT,
+      ${UniformCalculationDatabase.columnProfitPercentagePerUsefulAreaText} TEXT,
+      ${UniformCalculationDatabase.columnUsefulAreaConstructedBy1BillionText} TEXT,
+      ${UniformCalculationDatabase.columnTotalNumberOfPropertiesByOneMillionText} TEXT,
+      ${UniformCalculationDatabase.columnLandPricePerMeter} TEXT,
+      ${UniformCalculationDatabase.columnTenXOfTotalCostForUnit} TEXT,
+      ${UniformCalculationDatabase.columnPermissionBoolValue} INTEGER,
+      ${UniformCalculationDatabase.columnBuildabilityBoolIntValue} INTEGER,
+      ${UniformCalculationDatabase.columnTotalNumberOfFloors} REAL,
+      ${UniformCalculationDatabase.columnTotalNumberOfProperties} REAL,
+      ${UniformCalculationDatabase.columnNumberOfSaleableFloorsValue} REAL
     )
   ''');
   }
@@ -129,17 +129,17 @@ class SimpleCalculationDatabase {
   static Future<void> _onCreateSimpleCalculationAddressTable(Database db, int version) async {
     await db.execute('''
     CREATE TABLE $tableSimpleCalculationAddress (
-      ${SimpleCalculationDatabase.columnSimpleCalculationAddressProjectName} TEXT,
-      ${SimpleCalculationDatabase.columnSimpleCalculationAddressTableId} INTEGER PRIMARY KEY,
-      ${SimpleCalculationDatabase.columnCalculationType} TEXT,
-      ${SimpleCalculationDatabase.columnProvinceName} TEXT,
-      ${SimpleCalculationDatabase.columnCityName} TEXT,
-      ${SimpleCalculationDatabase.columnStreetName} TEXT,
-      ${SimpleCalculationDatabase.columnBuildingNumber} TEXT,
-      ${SimpleCalculationDatabase.columnPhoneNumber} TEXT,
-      ${SimpleCalculationDatabase.columnOtherInfo} TEXT,
-      ${SimpleCalculationDatabase.columnSociallyFriendly} REAL,
-      ${SimpleCalculationDatabase.columnEnvironmentallyFriendly} REAL
+      ${UniformCalculationDatabase.columnSimpleCalculationAddressProjectName} TEXT,
+      ${UniformCalculationDatabase.columnSimpleCalculationAddressTableId} INTEGER PRIMARY KEY,
+      ${UniformCalculationDatabase.columnPricing} TEXT,
+      ${UniformCalculationDatabase.columnProvinceName} TEXT,
+      ${UniformCalculationDatabase.columnCityName} TEXT,
+      ${UniformCalculationDatabase.columnStreetName} TEXT,
+      ${UniformCalculationDatabase.columnBuildingNumber} TEXT,
+      ${UniformCalculationDatabase.columnPhoneNumber} TEXT,
+      ${UniformCalculationDatabase.columnOtherInfo} TEXT,
+      ${UniformCalculationDatabase.columnSociallyFriendly} REAL,
+      ${UniformCalculationDatabase.columnEnvironmentallyFriendly} REAL
     )
   ''');
   }
@@ -266,7 +266,7 @@ class SimpleCalculationDatabase {
       return SimpleCalculationAddress1(
         addressTableProjectName: maps[i][columnSimpleCalculationAddressProjectName],
         addressTableId: maps[i][columnSimpleCalculationAddressTableId],
-        addressCalculationType: maps[i][columnCalculationType],
+        addressPricing: maps[i][columnPricing],
         addressProvinceName: maps[i][columnProvinceName],
         addressCityName: maps[i][columnCityName],
         addressStreetName: maps[i][columnStreetName],
@@ -291,10 +291,10 @@ class SimpleCalculationDatabase {
     );
   }
 
-  static Future<void> deleteSimpleCalculationDatabase()
+  static Future<void> deleteUniformCalculationDatabase()
   async {
     final dbPath = await getApplicationDocumentsDirectory();
-    final databasePath = join(dbPath.path, 'simpleCalculationDatabase1.db');
+    final databasePath = join(dbPath.path, 'uniformCalculationDatabase1.db');
     await deleteDatabase(databasePath);
   }
 
@@ -303,17 +303,17 @@ class SimpleCalculationDatabase {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableSimpleCalculationData,
-      columns: [SimpleCalculationDatabase.columnSimpleCalculationProjectName],
+      columns: [UniformCalculationDatabase.columnSimpleCalculationProjectName],
     );
 
     List<String> projectNames = List.generate(maps.length, (i) {
-      return maps[i][SimpleCalculationDatabase.columnSimpleCalculationProjectName] as String;
+      return maps[i][UniformCalculationDatabase.columnSimpleCalculationProjectName] as String;
     });
 
     return projectNames;
   }
 
-  static Future deleteProjectOfSimpleCalculationDatabase()
+  static Future deleteProjectOfUniformCalculationDatabase()
   async {
     await _database?.execute('DROP TABLE IF EXISTS tableSimpleCalculationData');
 
@@ -325,11 +325,11 @@ class SimpleCalculationDatabase {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableSimpleCalculationAddress,
-      columns: [SimpleCalculationDatabase.columnSimpleCalculationAddressProjectName],
+      columns: [UniformCalculationDatabase.columnSimpleCalculationAddressProjectName],
     );
 
     List<String> simpleCalculationAddressProjectNames = List.generate(maps.length, (i) {
-      return maps[i][SimpleCalculationDatabase.columnSimpleCalculationAddressProjectName] as String;
+      return maps[i][UniformCalculationDatabase.columnSimpleCalculationAddressProjectName] as String;
     });
 
     return simpleCalculationAddressProjectNames;
@@ -346,7 +346,7 @@ class SimpleCalculationDatabase {
     await db.rawUpdate('UPDATE $tableSimpleCalculationAddress SET $columnSimpleCalculationAddressProjectName = ? WHERE '
         '$columnSimpleCalculationAddressProjectName = ?', [newProjectName, oldProjectName]);
 
-    await AllProjectsPageDatabase.updateProjectNameInAllProjectsPageData(oldProjectName, newProjectName, 'simple');    // Show a message or perform any other action after updating the project name
+    await AllProjectsPageDatabase.updateProjectNameInAllProjectsPageData(oldProjectName, newProjectName, 'uniform');    // Show a message or perform any other action after updating the project name
   }
 
   static Future<int> getNextSimpleCalculationProjectID() async {
@@ -364,7 +364,7 @@ class SimpleCalculationDatabase {
     int nextID = maps.first[columnSimpleCalculationAddressTableId] ?? 1;
     return nextID;
   }
-} // SimpleCalculationDataBase
+} // uniformCalculationDatabase
 
 class SimpleCalculationClassData {
   String simpleCalculationProjectName;
@@ -481,7 +481,7 @@ class SimpleCalculationClassData {
 class SimpleCalculationAddress1 {
   final String addressTableProjectName; // Fixed variable name for clarity
   final int addressTableId;
-  final String addressCalculationType;
+  final String addressPricing;
   final String addressProvinceName;
   final String addressCityName;
   final String addressStreetName;
@@ -494,7 +494,7 @@ class SimpleCalculationAddress1 {
   SimpleCalculationAddress1({
     required this.addressTableProjectName,
     required this.addressTableId,
-    required this.addressCalculationType,
+    required this.addressPricing,
     required this.addressProvinceName,
     required this.addressCityName,
     required this.addressStreetName,
@@ -510,7 +510,7 @@ class SimpleCalculationAddress1 {
     return {
       'simpleCalculationAddressProjectName': addressTableProjectName,
       'simpleCalculationAddressTableId': addressTableId,
-      'calculationType': addressCalculationType,
+      'Pricing': addressPricing,
       'ProvinceName': addressProvinceName,
       'CityName': addressCityName,
       'StreetName': addressStreetName,
@@ -524,17 +524,17 @@ class SimpleCalculationAddress1 {
 }
 
 
-class SimpleCalculationPage1 extends StatefulWidget {
+class UniformCalculationPage1 extends StatefulWidget {
   final String givenSimpleProjectName;
 
-  const SimpleCalculationPage1({super.key, required this.givenSimpleProjectName,});
+  const UniformCalculationPage1({super.key, required this.givenSimpleProjectName,});
 
 
 @override
-State<SimpleCalculationPage1> createState() => _SimpleCalculationPage1State();
+State<UniformCalculationPage1> createState() => _UniformCalculationPage1State();
 }
 
-class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
+class _UniformCalculationPage1State extends State<UniformCalculationPage1> {
 
   final TextEditingController _landAreaController = TextEditingController();
   final TextEditingController _landPricePerMeterController = TextEditingController();
@@ -584,8 +584,8 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
 
 
   void checkSimpleCalculationData(String simpleCalProjectName) async {
-    // Call the method to get simple calculation data for the given project name
-    final simpleCalculationData = await SimpleCalculationDatabase.getSimpleCalculationData(simpleCalProjectName);
+    // Call the method to get Uniform Pricing data for the given project name
+    final simpleCalculationData = await UniformCalculationDatabase.getSimpleCalculationData(simpleCalProjectName);
 
     // Check if the retrieved data is not empty
     if (simpleCalculationData.isNotEmpty) {
@@ -658,7 +658,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
   }
 
 
-  Widget _buildRowSimpleCalculationPage1(
+  Widget _buildRowUniformCalculationPage1(
       BuildContext context,
       String labelText,
       String alertText,
@@ -839,16 +839,16 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 25,),
-                          _buildRowSimpleCalculationPage1(context, 'Land Area', '\nThe total area of land or plot that needs to be '
+                          _buildRowUniformCalculationPage1(context, 'Land Area', '\nThe total area of land or plot that needs to be '
                               'purchased for the project, upon which the construction will take place',
                               _landAreaController, ),
                           SizedBox(height: spacingHeight),
-                          _buildRowSimpleCalculationPage1(context,'Land Price \n(m²/ft²)', '\nLand purchase price '
+                          _buildRowUniformCalculationPage1(context,'Land Price \n(m²/ft²)', '\nLand purchase price '
                               'per square foot or square meter',
                               _landPricePerMeterController),
                           SizedBox(height: spacingHeight),
-                          _buildRowSimpleCalculationPage1(context, 'Number of Saleable Floors',
-                              '\nIn this section of the app (Simple Calculation), '
+                          _buildRowUniformCalculationPage1(context, 'Number of Saleable Floors',
+                              '\nIn this section of the app (Uniform Pricing), '
                                   'the term "saleable floors" refers to the floors of the building that have properties '
                                   'available for sale, separate '
                                   'from the property types which can be residential, commercial, administrative, or others, and '
@@ -863,14 +863,19 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                   'it effectively has four saleable floors and one common floor that is the parking floor'
                                   '\u202a.\u202b'
                                   '\n\nIf you have floors with different built-up areas for saleable properties '
-                                  'or want to sell each property at different prices, you should use the Complete Calculation section of this app\u202a.\u202b',
+                                  'or want to sell each property at different prices, you should use the Differentiated '
+                                  'Pricing section of this app\u202a.\u202b',
                               _numberOfSaleableFloorsController),
             
                           SizedBox(height: spacingHeight),
-                          _buildRowSimpleCalculationPage1(context,'Number of Common Floors', '\nThe total number of floors '
-                              'within a building '
-                              'that are designated completely for common use, such as parking or utility areas, and so, do not '
-                              'contain any properties available for sale', _numberOfCommonFloorsController),
+                          _buildRowUniformCalculationPage1(context,'Number of Common Floors',
+                              '\nThe total number of floors within a building that '
+                              'are designated completely'
+                              ' for common use, such as parking, lobbies, or utility areas. These floors do not '
+                              'contain any properties available for separate sale. Even if ownership of a common '
+                              'area is allocated to individual property holders, its value is inherently factored'
+                              ' into their property\'s overall value and it is not a saleable asset on '
+                              'its own\u202a.\u202b', _numberOfCommonFloorsController),
                           SizedBox(height: spacingHeight),
             
             Row(
@@ -969,7 +974,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                           'allocated for yards or other areas not classified '
                                           'as built-up space that typically require special permit fees.'
                                           '\n\nBe careful when using the switch: ',
-                                      style: TextStyle(fontSize: isIpad ? fontSizePad : fontSizePhone),
+                                      style: TextStyle(fontSize: isIpad ? 34 : 22),
                                     ),
                                     WidgetSpan(
                                       child: Transform.rotate(
@@ -1004,7 +1009,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                           '\n\n■ If this area (here 300) is multiplied by the number of Saleable Floors, '
                                           'the total saleable area is calculated. Then, by multiplying the total saleable '
                                           'area by the selling price per square foot/meter, the total income is calculated.',
-                                      style: TextStyle(fontSize: isIpad ? fontSizePad : fontSizePhone),
+                                      style: TextStyle(fontSize: isIpad ? 34 : 22),
                                     ),
                                   ],
                                 ),
@@ -1033,8 +1038,8 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
             ),
                            SizedBox(height: spacingHeight),
             
-                          _buildRowSimpleCalculationPage1(context,'Common Area in each Floor',
-                                  '\nEach floor of a property in this part of the app, Simple Calculation, is divided into two parts: '
+                          _buildRowUniformCalculationPage1(context,'Common Area in each Floor',
+                                  '\nEach floor of a property in this part of the app, Uniform Pricing, is divided into two parts: '
                                   '\n\n▶ The saleable area, also known as the usable area, '
                                   '\n▶ The common area that includes '
                                   'spaces with common usage such as staircases, elevators, and non-habitable areas that are not '
@@ -1056,7 +1061,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                               _floorCommonAreaController,
                               lastRow: true),
                           SizedBox(height: spacingHeight),
-                          _buildRowSimpleCalculationPage1(context, 'Sell Price (m²/ft²)','\nThe Sell price for each square meter (m²) or '
+                          _buildRowUniformCalculationPage1(context, 'Sell Price (m²/ft²)','\nThe Sell price for each square meter (m²) or '
                               'square foot (ft²) of saleable area within a property. \n\nThe saleable area refers to '
                               'the livable or occupiable space, excluding common areas, and may include walls '
                               'and non-habitable spaces as defined by local regulations. This metric is used '
@@ -1065,7 +1070,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                               apartmentSellPricePerMeterController),
                           SizedBox(height: spacingHeight),
             
-                          _buildRowSimpleCalculationPage1(context, 'Construction Cost (m²/ft²)',
+                          _buildRowUniformCalculationPage1(context, 'Construction Cost (m²/ft²)',
                               '\n\n■ Construction cost per square meter (m² or sqm) or per square foot (ft² or sqft) '
                                   'refers to the cost for constructing each square meter or square foot of the built-up area.'
                                   ' \n\nThe construction cost per m²/ft² is calculated '
@@ -1094,11 +1099,11 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                   'as developers, real estate brokers, and construction professionals familiar '
                                   'with similar projects in the region where you intend to invest.'
             
-                                  '\n\nIn simple calculation part of this app, the construction cost of both saleable '
+                                  '\n\nIn Uniform Pricing part of this app, the construction cost of both saleable '
                                   'and common areas is considered equal, and it is assumed that all floors '
                                   'have the same construction cost per m²/ft². '
                                   'However, if you wish to have different construction costs on each '
-                                  'unit, floor or across various floors, use the complete calculation part.',
+                                  'unit, floor or across various floors, use the Differentiated Pricing part.',
                               constructionCostPerMeterController),
                           SizedBox(height: spacingHeight),
                           Row(
@@ -1209,7 +1214,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                                         'whether above or below ground. This total built-up area is '
                                                         'obtained by multiplying the built-up area on the ground by '
                                                         'the number of floors.',
-                                                    style: TextStyle(fontSize: textFieldFontSize),
+                                                    style: TextStyle(fontSize: isIpad ? 34 : 22),
                                                   ),
                                                 ],
                                               ),
@@ -1236,23 +1241,25 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                           ),
             
                           SizedBox(height: spacingHeight),
-                          _buildRowSimpleCalculationPage1(context, 'Other Cost',
+                          _buildRowUniformCalculationPage1(context, 'Other Cost',
                               '\nAny other costs such as financial consultation expenses'
                                   ', transaction costs, etc., in total NOT per square meter/foot',
                               otherCostController, lastRow: true),
                           SizedBox(height: spacingHeight),
-                          _buildRowSimpleCalculationPage1(
+                          _buildRowUniformCalculationPage1(
                             context,
                             'Number of Properties',
                             'The total number of saleable properties across all floors. For example, '
                                 'if a building has 4 floors with 2 properties each, '
-                                'enter 8 as the total number of constructed properties. This number '
+                                'enter 8 as the total number of constructed properties. \n\nThis number '
                                 'helps us compare different projects built with '
                                 'different capital amounts more easily in terms of the number of constructed properties. '
-                                'Having development approach, between different projects runnable with a fixed capital amount, such as 1000,000\$, '
+                                '\n\nHaving human development approach, between different projects runnable with a fixed capital amount, such as 1000,000\$, '
                                 'the project that produces more properties (residential, office, commercial) '
             
-                                'has higher productivity in terms of property production\u202a.\u202b',
+                                'has higher productivity in terms of property production. '
+                                'So it is more effective because more number of families and individuals have '
+                                'access property for living or working that will decrease inequality in the society.\u202a.\u202b',
                             totalNumberOfPropertiesController,
                           ),
             
@@ -1315,13 +1322,13 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                           double apartmentSellPricePerMeter =
                           double.parse(apartmentSellPricePerMeterController.text.replaceAll(',', '')) ;
 
-                          await SimpleCalculationDatabase.getSimpleCalculationAddressData(simpleCalProjectName);
+                          await UniformCalculationDatabase.getSimpleCalculationAddressData(simpleCalProjectName);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ResultSimpleCalculationPage(
+                                builder: (context) => ResultUniformCalculationPage(
                                   shouldRetrieveData: 0,
-                                  givenResultSimpleProjectName: simpleCalProjectName,
+                                  givenResultUniformProjectName: simpleCalProjectName,
                                   landAreaValue: double.parse(_landAreaController.text.replaceAll(',', '')),
                                   landPricePerMeter: double.parse(_landPricePerMeterController.text.replaceAll(',', '')),
                                   buildabilityPercentageOrAreaValue: double.parse(_buildabilityPercentageOrAreaController.text.replaceAll(',', '')),
@@ -1424,7 +1431,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                     children: [
                                        TextSpan(
                                         text: '\nThis is a financial calculator specifically designed for analyzing the cost '
-                                            'benefits of constructing a building. For every data entry,'
+                                            'benefits of constructing a building. \n\nFor every data entry,'
                                             ' a ',
                                         style: TextStyle(
                                           fontSize: textFieldFontSize,
@@ -1517,7 +1524,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                         ),
                                       ),
                                        TextSpan(
-                                        text: '\nEnter the relevant price data of the project:',
+                                        text: '\nEnter the relevant price data of the project, including:',
                                         style: TextStyle(
                                           fontSize: textFieldFontSize,color: Colors.black,
                                         ),
@@ -1555,14 +1562,14 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                         ),
                                       ),
                                        TextSpan(
-                                        text: '\n\n■ In the Simple Calculation of this app, each floor of the building is categorized as either a Common floor or a Saleable floor:',
+                                        text: '\n\n■ In this part of the app called Uniform Pricing, each floor of the building is categorized as either a Common floor or a Saleable floor:',
                                         style: TextStyle(
                                           fontSize: textFieldFontSize,color: Colors.black,
                                         ),
                                       ),
                                        TextSpan(
                                         text: '\n\n1. Common Floors: These floors do not contain any properties or '
-                                            'spaces available for sale, such as parking areas, but still incur construction and permission costs. '
+                                            'spaces available for sale, such as parking floor, but still incur construction and permission costs. '
                                             'If your project has no common floors, enter zero for the number of common floors.',
                                         style: TextStyle(
                                           fontSize: textFieldFontSize,
@@ -1587,9 +1594,9 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                        TextSpan(
                                         text: '\n2) A common area designated for elevators and staircases '
                                             '(which is not saleable but still incurs construction and permission costs).'
-                                            'All saleable floors in a construction project'
+                                            '\n\nIn the Uniform Pricing part, all saleable floors in a construction project'
                                             ' will be considered the same in terms of the common area, saleable area, '
-                                            'and their associated sell price and costs.',
+                                            'and their associated sell price and costs. Also:',
                                         style: TextStyle(
                                           fontSize: textFieldFontSize,color: Colors.black,
                                         ),
@@ -1657,9 +1664,10 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
                                       ),
                                        TextSpan(
                                         text: '\n\n■ The uniformity of sell prices, construction costs, and permission costs across '
-                                       ' floors is a feature of this part of the app, known as the "simple calculation". '
-                                        'However, in the Complete Calculation, you can define different sell prices and costs '
-                                        'for each square feet, and even specify different areas for each floor. Below an example '
+                                       ' floors is a feature of this part of the app, known as the "Uniform Pricing". '
+                                        'However, in the "Differentiated Pricing", you can define different sell prices and costs '
+                                        'for each square feet, and even specify different areas for each floor. '
+                                            '\n\nBelow an example '
                                             'is provided to see how you can enter data of a construction project'
                                             ' and what results you would get after '
                                             'pressing the result icon.\n\n',
@@ -1753,7 +1761,7 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
             
                                        TextSpan(
                                         text: 'In this app, you can easily '
-                                            'see the changes in results by changing the prices. In the example above, if the selling price per square '
+                                            'see the changes in results by changing the variables. In the example above, if the selling price per square '
                                             'meter is 65 instead of 60, and the construction cost per square meter is 17  instead '
                                             'of 15, the following results are obtained.',
                                         style: TextStyle(
@@ -1843,9 +1851,9 @@ class _SimpleCalculationPage1State extends State<SimpleCalculationPage1> {
 
 
 ///////////////////////////////////////////////////////////////// Result page
-class ResultSimpleCalculationPage extends StatefulWidget {
+class ResultUniformCalculationPage extends StatefulWidget {
   final int shouldRetrieveData;
-  final String givenResultSimpleProjectName;
+  final String givenResultUniformProjectName;
   final double landAreaValue;
   final double landPricePerMeter;
   final double buildabilityPercentageOrAreaValue;
@@ -1860,10 +1868,10 @@ class ResultSimpleCalculationPage extends StatefulWidget {
   final double numberOfSaleableFloorsValue;
   final double totalNumberOfPropertiesValue;
 
-  const ResultSimpleCalculationPage({
+  const ResultUniformCalculationPage({
     super.key,
     required this.shouldRetrieveData,
-    required this.givenResultSimpleProjectName,
+    required this.givenResultUniformProjectName,
     required this.landAreaValue,
     required this.landPricePerMeter,
     required this.buildabilityPercentageOrAreaValue,
@@ -1880,11 +1888,11 @@ class ResultSimpleCalculationPage extends StatefulWidget {
   });
 
   @override
-  State createState() => _ResultSimpleCalculationPageState();
+  State createState() => _ResultUniformCalculationPageState();
 }
 class NewFinancialData {
   final String projectName;
-  final String calculationName; // This identifies the calculation type
+  final String calculationName; // This identifies the Pricingtype
   final String costOfProject;
   final String incomeOfProject;
   final String profitOfProject;
@@ -1912,7 +1920,7 @@ class NewFinancialData {
 
 // Override equality and hashCode if needed (optional)
 }
-class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPage> {
+class _ResultUniformCalculationPageState extends State<ResultUniformCalculationPage> {
   late double landAreaValue;
   late double landPricePerMeter;
   late double buildabilityPercentageOrAreaValue;
@@ -1961,7 +1969,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
 
   late int addressTableId;
   late String addressTableProjectName;
-  late String addressCalculationType;
+  late String addressPricing;
   late String addressProvinceName;
   late String addressCityName;
   late String addressStreetName;
@@ -1987,7 +1995,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
   @override
   void initState() {
     super.initState();
-    simpleCalProjectName = widget.givenResultSimpleProjectName;
+    simpleCalProjectName = widget.givenResultUniformProjectName;
     _loadProjectData();
     // interstitialAdManager = InterstitialAdManager();
     // interstitialAdManager.loadInterstitialAd();
@@ -1999,7 +2007,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
   }
   void _loadProjectData() async {
     shouldRetrieveData = widget.shouldRetrieveData;
-    if (widget.givenResultSimpleProjectName == 'wwbb' || shouldRetrieveData == 0) {
+    if (widget.givenResultUniformProjectName == 'wwbb' || shouldRetrieveData == 0) {
       landAreaValue = widget.landAreaValue;
       landPricePerMeter = widget.landPricePerMeter;
       buildabilityPercentageOrAreaValue = widget.buildabilityPercentageOrAreaValue;
@@ -2013,14 +2021,14 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
       totalNumberOfFloorsValue = widget.totalNumberOfFloorsValue;
       numberOfSaleableFloorsValue = widget.numberOfSaleableFloorsValue;
       totalNumberOfPropertiesValue = widget.totalNumberOfPropertiesValue;
-      await calculateResults(widget.givenResultSimpleProjectName);
+      await calculateResults(widget.givenResultUniformProjectName);
       setState(() {
         _isLoading = 0; // Update loading state
       }
       );
     } else {
       // Retrieve the project data from the database
-      await retrieveSimpleCalculationData(widget.givenResultSimpleProjectName);
+      await retrieveSimpleCalculationData(widget.givenResultUniformProjectName);
 
       setState(() {
         _isLoading = 0; // Update loading state
@@ -2121,9 +2129,9 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
     tenXOfTotalCostForUnit = formatNumberWithThousandSeparator(int.parse(tenXOfTotalCostForUnit));
 
   if(projectName != 'wwbb') {
-    final updatedSimpleCalculationData = SimpleCalculationClassData(
+    final updatedUniformCalculationData = SimpleCalculationClassData(
       simpleCalculationProjectName: projectName,
-      simpleCalculationProjectId: await SimpleCalculationDatabase.getNextSimpleCalculationProjectID(),
+      simpleCalculationProjectId: await UniformCalculationDatabase.getNextSimpleCalculationProjectID(),
       landAreaValueText: landAreaValueText,
       totalIncomeText: totalIncomeText,
       totalCostText: totalCostText,
@@ -2156,8 +2164,8 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
       permissionBoolValue: permissionPerMeterBoolValue, // == 1 ? true : false,
       buildabilityBoolIntValueClass: givenBuildablePercentageBoolValue, // == 1 ? true : false,
     );
-    // Save the simple calculation data
-    await SimpleCalculationDatabase.insertOrUpdateSimpleCalculationData(updatedSimpleCalculationData);
+    // Save the Uniform Pricing data
+    await UniformCalculationDatabase.insertOrUpdateSimpleCalculationData(updatedUniformCalculationData);
 
     final NewFinancialData updatedData = NewFinancialData(
       projectName: simpleCalProjectName,
@@ -2165,7 +2173,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
       incomeOfProject: totalIncomeText,
       profitOfProject: profitText,
       profitPercentageOfProject: profitPercentageText,
-      calculationName: 'simple',
+      calculationName: 'uniform',
     );
 
 
@@ -2175,8 +2183,8 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
 
 // currently not used
   Future<void> retrieveSimpleCalculationData(String projectName) async {
-    // Retrieve the simple calculation data for the given project name
-    final simpleCalculationData = await SimpleCalculationDatabase.getSimpleCalculationData(projectName);
+    // Retrieve the Uniform Pricing data for the given project name
+    final simpleCalculationData = await UniformCalculationDatabase.getSimpleCalculationData(projectName);
 
     // Check if the retrieved data is not empty
     if (simpleCalculationData.isNotEmpty) {
@@ -2220,15 +2228,15 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
   }
 
   Future<void> retrieveSimpleCalculationAddressData(String projectName) async {
-    // Retrieve the simple calculation address data for the given project name
-    final simpleCalculationAddressData = await SimpleCalculationDatabase.getSimpleCalculationAddressData(projectName);
+    // Retrieve the Uniform Pricing address data for the given project name
+    final simpleCalculationAddressData = await UniformCalculationDatabase.getSimpleCalculationAddressData(projectName);
 
     // Check if the retrieved data is not empty
     if (simpleCalculationAddressData.isNotEmpty) {
       // Initialize variables with retrieved data
       addressTableProjectName = simpleCalculationAddressData[0].addressTableProjectName;
       addressTableId = simpleCalculationAddressData[0].addressTableId;
-      addressCalculationType = simpleCalculationAddressData[0].addressCalculationType;
+      addressPricing = simpleCalculationAddressData[0].addressPricing;
       addressProvinceName = simpleCalculationAddressData[0].addressProvinceName;
       addressCityName = simpleCalculationAddressData[0].addressCityName;
       addressStreetName = simpleCalculationAddressData[0].addressStreetName;
@@ -2246,6 +2254,37 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
   }
 
   Future<void> _showAlertDialog(BuildContext context) async {
+    double rowWidth = MediaQuery.of(context).size.width;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    const ipadBreakpoint = 850.0;
+    final bool isIpad = screenWidth > ipadBreakpoint;
+
+    // Use your adaptive constants or define them here
+    const double buttonWidthPhone = 350.0;
+    const double fontSizePhone = 18.0;
+    const double titleFontSizePhone = 22.0;
+    const double iconSizeLargePhone = 30.0;
+    const double iconSizeSmallPhone = 28.0;
+    const double rowHeightPhone = 60.0;
+
+// iPad sizes (larger)
+    final double buttonWidthPad = screenWidth *  0.5;
+    const double fontSizePad = 36.0;
+    const double titleFontSizePad = 40.0;
+    const double iconSizeLargePad = 55.0;
+    const double iconSizeSmallPad = 46.0;
+    const double rowHeightPad = 70.0;
+
+    final double labelFontSize = isIpad ? fontSizePad : fontSizePhone;
+    final double textFieldFontSize = isIpad ? fontSizePad : fontSizePhone;
+    final double titleFontSize = isIpad ? titleFontSizePad : titleFontSizePhone;
+    final double hintFontSize = isIpad ? fontSizePad - 5 : fontSizePhone - 5;
+    final double iconButtonSize = isIpad ? iconSizeSmallPad : iconSizeSmallPhone;
+    final double rowHeight = isIpad ? rowHeightPad : rowHeightPhone;
+    final double labelWidth = rowWidth * .3;
+    final double iconButtonWidth = rowWidth * .1;
+    final double spacingHeight = isIpad ? 16.0 : 6;
 
     showDialog(
       context: context,
@@ -2261,18 +2300,18 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                     children: [
                       TextField(
                         controller: projectNameController,
-                        decoration: const InputDecoration(
+                        decoration:  InputDecoration(
                           labelText: 'Project Name',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle(fontSize: isIpad ? 30 : 20,
                             color: Colors.purpleAccent,
                           ),
                         ),
                       ),
                       TextField(
                         controller: provinceController,
-                        decoration: const InputDecoration(
+                        decoration:  InputDecoration(
                           labelText: 'Province',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle(fontSize: isIpad ? 30 : 20,
                           color: Colors.purpleAccent,
                         ),
                         ),
@@ -2280,63 +2319,63 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                       ),
                       TextField(
                         controller: cityController,
-                        decoration: const InputDecoration(
+                        decoration:  InputDecoration(
                           labelText: 'City',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle(fontSize: isIpad ? 30 : 20,
                             color: Colors.purpleAccent,
                           ),
                         ),
                       ),
                       TextField(
                         controller: streetController,
-                        decoration: const InputDecoration(
+                        decoration:  InputDecoration(
                           labelText: 'Street',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle(fontSize: isIpad ? 30 : 20,
                             color: Colors.purpleAccent,
                           ),
                         ),
                       ),
                       TextField(
                         controller: buildingNumberController,
-                        decoration: const InputDecoration(
+                        decoration:  InputDecoration(
                           labelText: 'Building Number',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle(fontSize: isIpad ? 30 : 20,
                             color: Colors.purpleAccent,
                           ),
                         ),
                       ),
                       TextField(
                         controller: phoneNumberController,
-                        decoration: const InputDecoration(
+                        decoration:  InputDecoration(
                           labelText: 'Phone Number',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle(fontSize: isIpad ? 30 : 20,
                             color: Colors.purpleAccent,
                           ),
                         ),
                       ),
                       TextField(
                         controller: sociallyFriendlyController,
-                        decoration: const InputDecoration(
+                        decoration:  InputDecoration(
                           labelText: 'Socially Friendly',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle(fontSize: isIpad ? 30 : 20,
                             color: Colors.purpleAccent,
                           ),
                         ),
                       ),
                       TextField(
                         controller: environmentallyFriendlyController,
-                        decoration: const InputDecoration(
+                        decoration:  InputDecoration(
                           labelText: 'Environmentally Friendly',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle(fontSize: isIpad ? 30 : 20,
                             color: Colors.purpleAccent,
                           ),
                         ),
                       ),
                       TextField(
                         controller: otherInfoController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Other Info',
-                          labelStyle: TextStyle(
+                          labelStyle: TextStyle( fontSize: isIpad ? 30 : 20,
                             color: Colors.purpleAccent,
                           ),
                         ),
@@ -2373,21 +2412,21 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
 
                     final String projectNameControllerText = projectNameController.text;
                     final List<String> existingSimpleCalculationProjectNames =
-                    await SimpleCalculationDatabase.getAllSimpleCalculationProjectNames();
+                    await UniformCalculationDatabase.getAllSimpleCalculationProjectNames();
 
                     if (existingSimpleCalculationProjectNames.contains(projectNameControllerText) &&
                         projectNameControllerText != simpleCalProjectName) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('A simple calculation project with this name already exists. Please choose another name.'),
+                            content: Text('A Uniform Pricing project with this name already exists. Please choose another name.'),
                             backgroundColor: Color(0xFF9A87BE),
                           ),
                         );
                       }
                     } else {
                       if (simpleCalProjectName != projectNameController.text) {
-                        await SimpleCalculationDatabase
+                        await UniformCalculationDatabase
                             .updateProjectNameInAllSimpleCalculationTables(
                           projectNameController.text,
                           simpleCalProjectName,
@@ -2400,8 +2439,8 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
 
                       final SimpleCalculationAddress1 simpleCalculationAddress1 = SimpleCalculationAddress1(
                         addressTableProjectName: projectNameController.text,
-                        addressTableId: await SimpleCalculationDatabase.getNextSimpleCalculationAddressID(),
-                        addressCalculationType: 'simple', // Assuming this is a simple calculation project
+                        addressTableId: await UniformCalculationDatabase.getNextSimpleCalculationAddressID(),
+                        addressPricing: 'uniform', // Assuming this is a Uniform Pricing project
                         addressProvinceName: provinceController.text,
                         addressCityName: cityController.text,
                         addressStreetName: streetController.text,
@@ -2412,13 +2451,13 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                         addressEnvironmentallyFriendly: double.tryParse(environmentallyFriendlyController.text) ?? 1,
                       );
 
-                      await SimpleCalculationDatabase.insertOrUpdateSimpleCalculationAddressData(simpleCalculationAddress1);
+                      await UniformCalculationDatabase.insertOrUpdateSimpleCalculationAddressData(simpleCalculationAddress1);
 
 
-                      // Initialize the variable from the result calculation into the class for saving into the database
-                      final updatedSimpleCalculationData = SimpleCalculationClassData(
+                      // Initialize the variable from the result Pricing into the class for saving into the database
+                      final updatedUniformCalculationData = SimpleCalculationClassData(
                         simpleCalculationProjectName: projectNameController.text,
-                        simpleCalculationProjectId: await SimpleCalculationDatabase.getNextSimpleCalculationProjectID(),
+                        simpleCalculationProjectId: await UniformCalculationDatabase.getNextSimpleCalculationProjectID(),
                         landAreaValueText: landAreaValueText,
                         totalIncomeText: totalIncomeText,
                         totalCostText: totalCostText,
@@ -2452,14 +2491,14 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                         buildabilityBoolIntValueClass: givenBuildablePercentageBoolValue, // == 1 ? true : false,
                       );
 
-                      // Save the simple calculation data
-                      await SimpleCalculationDatabase.insertOrUpdateSimpleCalculationData(updatedSimpleCalculationData);
+                      // Save the Uniform Pricing data
+                      await UniformCalculationDatabase.insertOrUpdateSimpleCalculationData(updatedUniformCalculationData);
 
                       // to insert Data In to AllProjectsTable
                       simpleCalProjectName = projectNameController.text;
                       String cityName = cityController.text.isEmpty ? '' : cityController.text;
                       String streetName = streetController.text.isEmpty ? '' : streetController.text;
-                      String calculationName = 'simple';
+                      String calculationName = 'uniform';
                       double? environmentallyFriendly = environmentallyFriendlyController.text.isEmpty
                           ? 1
                           : double.tryParse(environmentallyFriendlyController.text);
@@ -2499,9 +2538,9 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                     side: const BorderSide(color: Colors.black),
                   ),
                 ),
-                child:  const Text('Save Project',
+                child:  Text('Save Project',
                   style: TextStyle(
-       // fontSize: isIpad ? fontSizeIpad : fontSizePhone,
+        fontSize: isIpad ? 30 : 20,
         fontWeight: FontWeight.bold,
         ),),
               ),
@@ -2585,7 +2624,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
       AllProjectsPageDatabase.columnAllProjectsPageSociallyFriendly: sociallyFriendly,
       AllProjectsPageDatabase.columnAllProjectsPageCity: city,
       AllProjectsPageDatabase.columnAllProjectsPageStreet: street,
-      AllProjectsPageDatabase.columnAllProjectsPageCalculationType: calculationName,
+      AllProjectsPageDatabase.columnAllProjectsPagePricingType: calculationName,
     };
 
     await db.insert(
@@ -2645,10 +2684,10 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                         const SizedBox(height: 30,),
-                      _buildRowResultSimpleCalculationPage(context, 'Income', totalIncomeText),
-                      _buildRowResultSimpleCalculationPage(context, 'Total Cost', totalCostText),
-                      _buildRowResultSimpleCalculationPage(context, 'Profit', profitText),
-                      _buildRowResultSimpleCalculationPage(context, 'Profit Percentage', profitPercentageText),
+                      _buildRowResultUniformCalculationPage(context, 'Income', totalIncomeText),
+                      _buildRowResultUniformCalculationPage(context, 'Total Cost', totalCostText),
+                      _buildRowResultUniformCalculationPage(context, 'Profit', profitText),
+                      _buildRowResultUniformCalculationPage(context, 'Profit Percentage', profitPercentageText),
               
                       const SizedBox(height: 16),
                       Container(color: Colors.grey[200],
@@ -2974,7 +3013,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SimpleCalculationPage1(
+                            builder: (context) => UniformCalculationPage1(
                               givenSimpleProjectName: simpleCalProjectName,
                             ),
                           ),
@@ -2991,7 +3030,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
                       size: iconSizeLarge,),
                     onPressed: () async {
         
-                      final simpleCalculationAddress = await SimpleCalculationDatabase.getSimpleCalculationAddressData(simpleCalProjectName);
+                      final simpleCalculationAddress = await UniformCalculationDatabase.getSimpleCalculationAddressData(simpleCalProjectName);
         
                       // Check if simpleCalculationData is not empty Update the text field
                       if (simpleCalculationAddress.isNotEmpty && simpleCalProjectName != 'wwbb') {
@@ -3240,7 +3279,7 @@ class _ResultSimpleCalculationPageState extends State<ResultSimpleCalculationPag
     );
   }
 
-  Widget _buildRowResultSimpleCalculationPage(
+  Widget _buildRowResultUniformCalculationPage(
       BuildContext context, String labelText, String valueText) {
     final screenWidth = MediaQuery.of(context).size.width;
     const ipadBreakpoint = 850.0;

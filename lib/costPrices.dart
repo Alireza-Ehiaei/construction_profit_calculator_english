@@ -104,7 +104,7 @@ class _CostPricesState extends State<CostPrices> {
 
   void checkCostPriceData() async {
     List<ProjectTableData> data =
-        await CompleteCalculationDatabaseHelper.getCostPricingDataByCpp(
+        await DifferentiatedCalculationDatabaseHelper.getCostPricingDataByCpp(
             widget.givenProjectName, 1);
     setState(() {
       hasData = data.isNotEmpty;
@@ -118,9 +118,9 @@ class _CostPricesState extends State<CostPrices> {
   Future<void> _updatePercentageData(BuildContext context, int segmentNumber1, int similarFloor, int startingFloor,
       int numberOfSegments,  double costPercent, double costPerMeter,   double sellPercent, double sellPerMeter)
   async {
-  await CompleteCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
+  await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
     (ProjectStartingSimilarTableData(
-      startingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
+      startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
       startingSimilarTableProjectName: projectName1,
       startingSimilarTableCpp: cppValue,
       startingSimilarTableStartingFloor: startingFloor,
@@ -134,7 +134,7 @@ class _CostPricesState extends State<CostPrices> {
       startingSimilarTableSellPricePerMeter: sellPerMeter,
     ));
   ProjectStartingSimilarTableData? data =
-  await CompleteCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
+  await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
       projectName1, cppValue, segmentNumber1);
   }
 
@@ -153,11 +153,11 @@ class _CostPricesState extends State<CostPrices> {
   async {
     // Retrieve the data from the StartingSimilar table in the database
     ProjectStartingSimilarTableData? dataSimilarStarting =
-    await CompleteCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
+    await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
         projectName1, ccpValue, segmentNumber);
 
     List<ProjectTableData> projectDataByCpp =
-    await CompleteCalculationDatabaseHelper.getCostPricingDataByCpp(projectName1, ccpValue);
+    await DifferentiatedCalculationDatabaseHelper.getCostPricingDataByCpp(projectName1, ccpValue);
 
     int? startingFloor = dataSimilarStarting?.startingSimilarTableStartingFloor;
     int startingFloorIndex = 0;
@@ -246,13 +246,13 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
   async {
     // Retrieve the data from the StartingSimilar table in the database
     ProjectStartingSimilarTableData? dataSimilarStarting = await
-    CompleteCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
+    DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
         projectName1, ccpValue, segmentNumber);
 
     // Loop through the data and update the segmentCost values for the other floors
     // with the same segmentNumber, so we don't need to pass segment number as argument here
     List<ProjectTableData> projectDataByCpp = await
-    CompleteCalculationDatabaseHelper.getCostPricingDataByCpp(projectName1, ccpValue);
+    DifferentiatedCalculationDatabaseHelper.getCostPricingDataByCpp(projectName1, ccpValue);
 
     int? startingFloor = dataSimilarStarting?.startingSimilarTableStartingFloor;
     int startingFloorIndex = 0;
@@ -336,7 +336,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
   {
     // Retrieve existing data
     ProjectStartingSimilarTableData? data =
-    await CompleteCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
+    await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
         projectName1, cppValue, segmentNumber2);
 
     bool isSalable = !(nonSalableSegments.contains(segmentNumber2));
@@ -356,9 +356,9 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
     }
 
     // Insert or update StartingSimilarTableData with correct sellability and prices
-    await CompleteCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
+    await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
       ProjectStartingSimilarTableData(
-        startingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
+        startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
         startingSimilarTableProjectName: projectName1,
         startingSimilarTableCpp: cppValue,
         startingSimilarTableStartingFloor: startingFloor,
@@ -378,7 +378,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
     );
 
     // Save ProjectTableData for all segments
-    int nextId = await CompleteCalculationDatabaseHelper.getNextProjectId();
+    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
     for (int i = 0; i < priceTableData.length; i++) {
       int segNum = int.parse(priceTableData[i].name.split(' ')[3]);
       bool segmentIsSalable = !(nonSalableSegments.contains(segNum));
@@ -389,7 +389,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
           : 0)
           : 0; // force zero for non-salable segments
 
-      await CompleteCalculationDatabaseHelper.insertOrUpdateProjectData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(
         ProjectTableData(
           costPricingTableProjectId: nextId++,
           costPricingTableProjectName: projectName1,
@@ -429,14 +429,14 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
     // saving data with same segment numbers
     // Saving data for starting similar data table
     ProjectStartingSimilarTableData? data =
-       await CompleteCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
+       await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
         projectName1, cppValue, segmentNumber2);
 
     // If StartingSimilar data is not null, set the text of the corresponding text fields and toggle buttons
     if (data != null) {
-      await CompleteCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
           ProjectStartingSimilarTableData(
-            startingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
+            startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
             startingSimilarTableProjectName: projectName1,
             startingSimilarTableCpp: cppValue,
             startingSimilarTableStartingFloor: startingFloor,
@@ -455,9 +455,9 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
     }
     else {
-      await CompleteCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
           ProjectStartingSimilarTableData(
-            startingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
+            startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
             startingSimilarTableProjectName: projectName1,
             startingSimilarTableCpp: cppValue,
             startingSimilarTableStartingFloor: startingFloor,
@@ -482,9 +482,9 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
     }
 
 
-    int nextId = await CompleteCalculationDatabaseHelper.getNextProjectId();
+    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
     for (int i = 0; i < priceTableData.length; i++) {
-      await CompleteCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
         costPricingTableProjectId: nextId++,
         costPricingTableProjectName: projectName1,
         costPricingTableCpp: cppValue,
@@ -522,7 +522,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
   }*/
 
   Future<void> profitCalculationForEachSegment() async {
-    int nextId = await CompleteCalculationDatabaseHelper.getNextProjectId();
+    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
     for (int i = 0; i < priceTableData.length; i++) {
       double segmentArea = priceTableData[i].textField2Controller.text.isNotEmpty
           ? double.parse(priceTableData[i].textField2Controller.text)
@@ -553,7 +553,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
         profitOfSegment = 0;
       }*/
 
-      await CompleteCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
         costPricingTableProjectId: nextId++,
         costPricingTableProjectName: projectName1,
         costPricingTableCpp: cppValue,
@@ -570,7 +570,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
       // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
 
-      List<Map<String, dynamic>> data = await CompleteCalculationDatabaseHelper.fetchProjectStartingSimilarData(
+      List<Map<String, dynamic>> data = await DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
           projectName1, cppValue, startingFloor);
       bool isDataFound = false;
       for (int j = 0; j < data.length; j++) {
@@ -580,9 +580,9 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
         }
       }
       if (!isDataFound) {
-        await CompleteCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
+        await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
           ProjectStartingSimilarTableData(
-            startingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
+            startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
             startingSimilarTableProjectName: projectName1,
             startingSimilarTableCpp: cppValue,
             startingSimilarTableStartingFloor: startingFloor,
@@ -614,7 +614,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
 
 /*  Future<void> profitCalculationForEachSegment() async {
-    int nextId = await CompleteCalculationDatabaseHelper.getNextProjectId();
+    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
     for (int i = 0; i < priceTableData.length; i++) {
       double segmentArea = priceTableData[i].textField2Controller.text.isNotEmpty
           ? double.parse(priceTableData[i].textField2Controller.text)
@@ -639,7 +639,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
       int floor = int.parse(priceTableData[i].name.split(' ')[1]);
       int segment = int.parse(priceTableData[i].name.split(' ')[3]);
-      await CompleteCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
         costPricingTableProjectId: nextId++,
         costPricingTableProjectName: projectName1,
         costPricingTableCpp: cppValue,
@@ -657,7 +657,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
       // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
 
-      List<Map<String, dynamic>> data = await CompleteCalculationDatabaseHelper.fetchProjectStartingSimilarData(
+      List<Map<String, dynamic>> data = await DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
           projectName1,cppValue, startingFloor);
       bool isDataFound = false;
       for (int j = 0; j < data.length; j++) {
@@ -668,9 +668,9 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
         }
       }
       if (!isDataFound) {
-        await CompleteCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
+        await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
           (ProjectStartingSimilarTableData(
-          startingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
+          startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
           startingSimilarTableProjectName: projectName1,
           startingSimilarTableCpp: cppValue,
           startingSimilarTableStartingFloor: startingFloor,
@@ -757,7 +757,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
   Future<void> checkVisibility() async {
     String project_ = projectName1;
     Map<String, int?> maxValues = await  
-        CompleteCalculationDatabaseHelper.getMaxFloorCppByProject(project_);
+        DifferentiatedCalculationDatabaseHelper.getMaxFloorCppByProject(project_);
     int maxCpp = maxValues['maxCpp'] ?? 1;
     setState(() {
       checkMaxCPP = cppValue <= maxCpp;
@@ -766,7 +766,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
   void retrieveRowByCondition(String projectName, int cppValue) async
   {
-    //  await CompleteCalculationDatabaseHelper.retriveRowByCondition(projectName, cppValue);
+    //  await DifferentiatedCalculationDatabaseHelper.retriveRowByCondition(projectName, cppValue);
   }
 
   void showSaveDialog(BuildContext context, VoidCallback onSave) {
@@ -853,7 +853,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
     // Retrieve the data associated with project name and cost-price plan value
     List<ProjectTableData> retrievedPriceTableData =
-    await CompleteCalculationDatabaseHelper.getCostPricingDataByCpp(projectName, cppValue);
+    await DifferentiatedCalculationDatabaseHelper.getCostPricingDataByCpp(projectName, cppValue);
 
  /*   if (retrievedPriceTableData.isEmpty) {
       // Handle empty data gracefully
@@ -864,7 +864,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
     // Retrieve all segments data for the starting floor (includes sealability)
     List<ProjectStartingSimilarTableData> projectStartingSimilarData =
-    await CompleteCalculationDatabaseHelper.getStartingSimilarTableSegments(projectName, cppValue);
+    await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegments(projectName, cppValue);
 
     // --- Build a map from segmentNumber to sealability ---
     Map<int, bool> segmentSalableMap = {
@@ -1019,12 +1019,12 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
        async {
 
     // Retrieve the data associated with project name and cost-price plan value
-    List<ProjectTableData> retrievedPriceTableData = await CompleteCalculationDatabaseHelper.
+    List<ProjectTableData> retrievedPriceTableData = await DifferentiatedCalculationDatabaseHelper.
       getCostPricingDataByCpp(projectName, cppValue);
 
     int segmentNumber = retrievedPriceTableData[0].costPricingTableSegmentNumber;
 
-    final ProjectStartingSimilarTableData? projectStartingSimilarData = await CompleteCalculationDatabaseHelper.
+    final ProjectStartingSimilarTableData? projectStartingSimilarData = await DifferentiatedCalculationDatabaseHelper.
             getStartingSimilarTableSegmentData(projectName, cppValue, segmentNumber);
     numberOfSegmentsController.text = projectStartingSimilarData!.startingSimilarTableNumberOfSegments.toString();
     numberOfSegmentsSaved = projectStartingSimilarData.startingSimilarTableNumberOfSegments;
@@ -1335,7 +1335,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                               );
 
                                               if (shouldDelete == true) {
-                                                await CompleteCalculationDatabaseHelper.deleteCpp(
+                                                await DifferentiatedCalculationDatabaseHelper.deleteCpp(
                                                     projectName1, cppValue);
 
                                           //      cppValue--;
@@ -1450,7 +1450,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'a project involving the construction of a villa on a 3,000 '
                                                                           'ft² plot of land with a single floor of 1,700 ft² built-up '
                                                                           'area that totally is salable. To do this, after opening the app,'
-                                                                          'adding a new Complete Calculation project and entering '
+                                                                          'adding a new Differentiated Pricing project and entering '
                                                                           'the basic project data, such as land information, then in the next '
                                                                           'page, you need to define the cost-price segments for the built-up '
                                                                           'area of the project in this page.'
@@ -1817,7 +1817,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "cost-price segments in each floor. "
                                                                           "Since the floors are the same, their cost-price segments can be defined in "
                                                                           "cost-price plan 1. "
-                                                                          '\n\nSo, after opening the app and adding a new complete calculation project and inputting'
+                                                                          '\n\nSo, after opening the app and adding a new Differentiated Pricing project and inputting'
                                                                           ' basic data of the project, define the cost-price segments as below:\n\n',
                                                                       style: TextStyle(
                                                                         fontSize: textFontSize,
@@ -3774,7 +3774,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'by \$150 per square foot.'
                                                                           '\n\nTo implement the cost benefit analysis of the repairment of this project:\n'
               
-                                                                          '▶ Open app and add a new complete calculation, on the first page of '
+                                                                          '▶ Open app and add a new differentiated pricing, on the first page of '
                                                                           'defining the new project, enter 0 for land area and the price of '
                                                                           'land and costs related to the roof-yard and transaction cost since there is no '
                                                                           'purchase cost for land or renovations in the yard or roof.'
@@ -4504,7 +4504,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                             }
                                                           }
 
-                                                          await CompleteCalculationDatabaseHelper.deleteCpp(projectName1, cppValue);
+                                                          await DifferentiatedCalculationDatabaseHelper.deleteCpp(projectName1, cppValue);
                                                           priceTableData.clear();
                                                           await checkVisibility();
 
@@ -5635,7 +5635,7 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
   async {
     // Retrieve the project starting similar data from the database
     ProjectStartingSimilarTableData? data = 
-    await CompleteCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
+    await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
         widget.projectName, widget.CPPNumber, widget.segmentNumber1);
 
     // If the data is not null, set the text of the corresponding text fields and toggle buttons

@@ -1,6 +1,5 @@
 import 'dart:math';
-import 'package:construction_profit_calculator_english/simple_calc_page.dart';
-
+import 'package:construction_profit_calculator_english/uniformPricing_page.dart';
 import 'package:flutter/material.dart';
 import 'package:construction_profit_calculator_english/social.dart';
 import 'package:flutter/services.dart';
@@ -296,7 +295,7 @@ class _HomePageState extends State<HomePage>
                       if (_validateCredentials(username, password)) {
                         Navigator.of(context).pop();
                         NavigationService().navigateToScreen(
-                          const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
+                          const UniformCalculationPage1(givenSimpleProjectName: 'wwmm'),
                           arguments: 'wwmm',
                         );
                       } else {
@@ -310,7 +309,7 @@ class _HomePageState extends State<HomePage>
                       backgroundColor: Colors.blue,
                     ),
                     child: const Text(
-                      ' Simple Calculation ',
+                      '  Uniform Pricing  ',
                       style: TextStyle(
                         fontSize: 20,
                         color: Colors.white,
@@ -322,11 +321,11 @@ class _HomePageState extends State<HomePage>
                       if (_validateCredentials(username, password)) {
                         Navigator.of(context).pop();
                         final projectData = Provider.of<ProjectData>(context, listen: false);
-                        await CompleteCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
-                        await CompleteCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
-                        final projectNames = await CompleteCalculationDatabaseHelper.getAllProjectNames();
+                        await DifferentiatedCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
+                        await DifferentiatedCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
+                        final projectNames = await DifferentiatedCalculationDatabaseHelper.getAllProjectNames();
                         if (projectNames.contains("_oozz")) {
-                          await CompleteCalculationDatabaseHelper.deleteProjectOfCompleteCalculationDatabase("_oozz");
+                          await DifferentiatedCalculationDatabaseHelper.deleteProjectOfDifferentiatedCalculationDatabase("_oozz");
                         }
                         projectData.projectNameList.clear();
                         projectData.setProjectName('_oozz');
@@ -345,7 +344,7 @@ class _HomePageState extends State<HomePage>
                       backgroundColor: Colors.blue,
                     ),
                     child: const Text(
-                      ' Complete Calculation ',
+                      ' Differentiated Pricing ',
                       style: TextStyle(
                         fontSize: 20,
                         color: Colors.white,
@@ -652,13 +651,19 @@ class _HomePageState extends State<HomePage>
                                                       '\n\nThe app is divided into four main sections:'
                                                       '\n\n1. Financial calculators:\nThe standout feature of this app is the Investment Analyzer. '
                                                       'The two powerful tools provided in the return on investment (ROI) part of the app '
-                                                      'allow you to input the specifications of a property or development project '
+                                                      'allow you to input the specifications of a construction project '
                                                       'and receive detailed projections on the potential cost benefit of the project. '
-                                                      'Compare different scenarios side-by-side to make the most informed decisions '
+                                                      'Simply change each variables and compare different scenarios to make the most informed decisions '
                                                       'for your real estate investments.'
-                                                      '\n\n2. Social Aspect:\nExplore the interplay between individual and community behaviors, and how they shape the dynamics of the real estate market across different city districts and property types.'
-                                                      '\n\n3. Environmental Aspect:\nAnalyze the environmental issues related to real estate construction and the use of existing properties, including energy efficiency, water management, and sustainability.'
-                                                      '\n\n4. Economic Insights:\nDive into the analytical theories behind the effects of different types of homes, development projects, and market activities on property prices and the overall real estate economy.'
+                                                      '\n\n2. Social Aspect:\n Another feature of the app is a short exploration on'
+                                                      ' the interplay between individual and community behaviors, and how they shape '
+                                                      'the dynamics of the real estate market across different city districts and property types.'
+                                                      '\n\n3. Environmental Aspect:\nAnalyze the environmental issues related to real '
+                                                      'estate construction and the use of existing properties, including energy efficiency, '
+                                                      'water management, and sustainability.'
+                                                      '\n\n4. Economic Insights:\nDive into the analytical theories behind the effects of '
+                                                      'different types of homes, development projects, and market activities on '
+                                                      'property prices and the overall real estate economy.'
                                                   ,
                                                   style: TextStyle(
                                                     fontSize: textFontSize,
@@ -676,8 +681,8 @@ class _HomePageState extends State<HomePage>
                                                 ),
 
                                                 TextSpan(
-                                                  text: '\nFinancial Calculations: Simple '
-                                                      'and Complete ROI Tools\n\n',
+                                                  text: '\nFinancial Calculations: Uniform Pricing '
+                                                      'and Differentiated Pricing ROI Tools\n\n',
                                                   style: TextStyle(
                                                     fontSize: textFontSize,
                                                     fontWeight: FontWeight.bold,
@@ -685,7 +690,7 @@ class _HomePageState extends State<HomePage>
                                                 ),
                                                 TextSpan(
                                                   text:
-                                                  'Simple and Complete ROI Tools are calculators for calculating '
+                                                  'Uniform and Differentiated Pricing ROI Tools are calculators for calculating '
                                                       'cost and income of investment in a construction project '
                                                       'beneficial for:\n',
                                                   style: TextStyle(
@@ -725,7 +730,7 @@ class _HomePageState extends State<HomePage>
                                                   ),
                                                 ),
                                                 TextSpan(
-                                                  text: 'Apart from income, cost, and profit, the app provides key metrics for better analytics, such as the percentage of total costs attributed to land purchasing and permission fees, which are usually paid at the start of a project. This information is more readily available in the complete calculation results, allowing you to make more strategic decisions by understanding the relative significance of each cost component.',
+                                                  text: 'Apart from income, cost, and profit, the app provides key metrics for better analytics, such as the percentage of total costs attributed to land purchasing and permission fees, which are usually paid at the start of a project. This information is more readily available in the Differentiated Pricing calculation results, allowing you to make more strategic decisions by understanding the relative significance of each cost component.',
                                                   style: TextStyle(
                                                     fontSize: textFontSize,
                                                   ),
@@ -757,8 +762,8 @@ class _HomePageState extends State<HomePage>
                                                 TextSpan(
                                                   text: "\nThe ROI calculators of the app provides you with "
                                                       "two ways to assess the potential profitability of a construction Investment"
-                                                      ": a simple calculation and a complete calculation.\n\nIn the Simple "
-                                                      "Calculation, you can easily input the key information about the "
+                                                      ": a uniform pricing and a differentiated pricing.\n\nIn the Uniform "
+                                                      "Pricing, you can easily input the key information about the "
                                                       "construction of a building, including costs and "
                                                       "sell price per square meter (m²) or square foot (ft²). Based on this data,"
                                                       " the app will quickly generate the results of the investment analysis, "
@@ -767,11 +772,11 @@ class _HomePageState extends State<HomePage>
                                                       "understanding of the potential viability of a real estate construction project"
                                                       "that uses a uniform pricing model. "
                                                       "\n\nFor a more comprehensive analysis, you "
-                                                      "can use the Complete Calculation feature. In this mode, you can define "
+                                                      "can use the Differentiated Pricing calculation feature. In this mode, you can define "
                                                       "specific costs and sell prices per m²/ft² for each individual property "
                                                       "or even different segments of a single property. This allows you to build a "
                                                       "detailed, multi-faceted investment model and get a more accurate and "
-                                                      "insightful set of results.\n\nThe Complete Calculation by having a "
+                                                      "insightful set of results.\n\nThe Differentiated Pricing calculation by having a "
                                                       "price differentiation model gives you the "
                                                       "ability to account for the nuances and complexities of real estate "
                                                       "development, providing you with a deeper understanding of the potential "

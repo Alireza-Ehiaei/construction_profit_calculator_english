@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -11,18 +10,18 @@ class SubscriptionsProvider with ChangeNotifier {
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
 
   // Your product IDs
-  static const String simpleCalculationProductId = 'constructionprofitcalc.simplecalculation.3mo';
-  static const String completeCalculationProductId = 'constructionprofitcalc.completecalculation.3mo';
-  static const String completePlusSimpleCalculationProductId = 'constructionprofitcalc.fullaccess.6mo';
+  static const String uniformPricingProductId = 'constructionProfitCalc.uniformPricing.3mo';
+  static const String differentiatedPricingProductId = 'constructionProfitCalc.differentiatedPricing.3mo.v1';
+  static const String differentiatedPlusUniformPricingProductId = 'constructionProfitCalc.fullAccess.6mo';
 
   // Product and purchase lists
   final List<ProductDetails> _products = [];
   final List<PurchaseDetails> _purchases = [];
 
   // Subscription status flags
-  bool hasSimpleActiveSubscription = false;
-  bool hasCompleteActiveSubscription = false;
-  bool hasCompletePlusSimpleCalculationProductId = false;
+  bool hasUniformActiveSubscription = false;
+  bool hasDifferentiatedActiveSubscription = false;
+  bool hasDifferentiatedPlusUniformCalculationProductId = false;
 
   // Loading state
   bool _isLoading = false;
@@ -77,9 +76,9 @@ class SubscriptionsProvider with ChangeNotifier {
     } catch (e) {
       print("Error during subscription initialization: $e");
       // Reset all subs flags on error
-      hasSimpleActiveSubscription = false;
-      hasCompleteActiveSubscription = false;
-      hasCompletePlusSimpleCalculationProductId = false;
+      hasUniformActiveSubscription = false;
+      hasDifferentiatedActiveSubscription = false;
+      hasDifferentiatedPlusUniformCalculationProductId = false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -93,9 +92,9 @@ class SubscriptionsProvider with ChangeNotifier {
     try {
       final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(
         {
-          simpleCalculationProductId,
-          completeCalculationProductId,
-          completePlusSimpleCalculationProductId,
+          uniformPricingProductId,
+          differentiatedPricingProductId,
+          differentiatedPlusUniformPricingProductId,
         },
       );
 
@@ -186,36 +185,35 @@ class SubscriptionsProvider with ChangeNotifier {
 
   // Central method to update subscription flags based on _purchases
   void _updateSubscriptionStatus() {
-    hasSimpleActiveSubscription = isProductPurchased(simpleCalculationProductId);
-    hasCompleteActiveSubscription = isProductPurchased(completeCalculationProductId);
-    hasCompletePlusSimpleCalculationProductId = isProductPurchased(completePlusSimpleCalculationProductId);
+    hasUniformActiveSubscription = isProductPurchased(uniformPricingProductId);
+    hasDifferentiatedActiveSubscription = isProductPurchased(differentiatedPricingProductId);
+    hasDifferentiatedPlusUniformCalculationProductId = isProductPurchased(differentiatedPlusUniformPricingProductId);
 
     notifyListeners();
   }
 
   // Handle incoming purchase updates
   void _handlePurchaseUpdates(List<PurchaseDetails> purchasesList) {
-    bool updated = false; // Track if any new purchase added
+    bool updated = false;
 
     for (var purchase in purchasesList) {
       if (purchase.status == PurchaseStatus.pending) {
-        print("Purchase is pending: ${purchase.productID}");
+        debugPrint("Purchase is pending: ${purchase.productID}");
       } else if (purchase.status == PurchaseStatus.purchased || purchase.status == PurchaseStatus.restored) {
-        print("Purchase successful or restored: ${purchase.productID}");
+        debugPrint("Purchase successful or restored: ${purchase.productID}");
 
         if (purchase.pendingCompletePurchase) {
           _inAppPurchase.completePurchase(purchase);
         }
 
-        // Only add if purchaseID is not already in _purchases
         if (!_purchases.any((p) => p.purchaseID == purchase.purchaseID)) {
           _purchases.add(purchase);
           updated = true;
         }
       } else if (purchase.status == PurchaseStatus.error) {
-        print("Error purchasing: ${purchase.error?.message}");
+        debugPrint("Error purchasing: ${purchase.error?.message}");
       } else if (purchase.status == PurchaseStatus.canceled) {
-        print("Purchase was canceled: ${purchase.productID}");
+        debugPrint("Purchase was canceled: ${purchase.productID}");
       }
     }
 
@@ -223,6 +221,7 @@ class SubscriptionsProvider with ChangeNotifier {
       _updateSubscriptionStatus();
     }
   }
+
 
   // Method to initiate a subscription purchase
   Future<bool> buySubscription(ProductDetails productDetails) async {
@@ -247,60 +246,51 @@ class SubscriptionsProvider with ChangeNotifier {
     super.dispose();
   }
 
+
+// Show subscription management dialog with multiple buttons
   Future<void> showManageSubscriptions(BuildContext context) async {
-    final subscriptionsProvider = context.read<SubscriptionsProvider>();
-    const String simpleCalculationProductId = 'com.tech4dev.construction.simple.3m';
-
-    // Check if Simple Calculation is active
-    bool hasSimpleActive = subscriptionsProvider.hasSimpleActiveSubscription;
-
-    // Build dialog content
-    String message = hasSimpleActive
-        ? 'You have an active Simple Calculation subscription (\$5.99/3 months) for Simple Calculation product. Manage or cancel it below.'
-        : 'No active Simple Calculation subscription found. Subscribe to access Simple Calculation.';
+    String message;
+    if (hasUniformActiveSubscription && hasDifferentiatedActiveSubscription && hasDifferentiatedPlusUniformCalculationProductId) {
+      message = 'You have active subscriptions for Uniform Pricing, Differentiated Pricing, and Full Access. Manage or cancel below.';
+    } else if (hasUniformActiveSubscription && hasDifferentiatedActiveSubscription) {
+      message = 'Active subscriptions: Uniform Pricing and Differentiated Pricing. Manage below.';
+    } else if (hasUniformActiveSubscription && hasDifferentiatedPlusUniformCalculationProductId) {
+      message = 'Active subscriptions: Uniform Pricing and Full Access. Manage below.';
+    } else if (hasDifferentiatedActiveSubscription && hasDifferentiatedPlusUniformCalculationProductId) {
+      message = 'Active subscriptions: Differentiated Pricing and Full Access. Manage below.';
+    } else if (hasUniformActiveSubscription) {
+      message = 'Active Uniform Pricing subscription. Manage or cancel below.';
+    } else if (hasDifferentiatedActiveSubscription) {
+      message = 'Active Differentiated Pricing subscription. Manage or cancel below.';
+    } else if (hasDifferentiatedPlusUniformCalculationProductId) {
+      message = 'Active Full Access subscription. Manage or cancel below.';
+    } else {
+      message = 'No active subscription found. Subscribe to access premium features.';
+    }
 
     await showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text('Manage Subscriptions'),
-        content: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16),
-        ),
+        content: Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
         actions: [
-          if (hasSimpleActive)
+          if (hasUniformActiveSubscription)
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () async {
-                try {
-                  // Call platform channel to open StoreKit's subscription management
-                  await const MethodChannel('com.tech4dev.construction/subscriptions')
-                      .invokeMethod('showManageSubscriptions');
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  Navigator.of(context).pop();
-                  showDialog(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Error'),
-                      content: const Text('Error opening subscription management. Please go to iOS Settings > Your Apple ID > Subscriptions to manage.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              },
-              child: const Text('Manage/Cancel Simple Calculation', style: TextStyle(fontSize: 16)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => _openSubscriptionManagement(context),
+              child: const Text('Manage/Cancel Uniform Pricing', style: TextStyle(fontSize: 16)),
+            ),
+          if (hasDifferentiatedActiveSubscription)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => _openSubscriptionManagement(context),
+              child: const Text('Manage/Cancel Differentiated Pricing', style: TextStyle(fontSize: 16)),
+            ),
+          if (hasDifferentiatedPlusUniformCalculationProductId)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => _openSubscriptionManagement(context),
+              child: const Text('Manage/Cancel Full Access', style: TextStyle(fontSize: 16)),
             ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -309,6 +299,31 @@ class SubscriptionsProvider with ChangeNotifier {
         ],
       ),
     );
+  }
+
+
+  Future<void> _openSubscriptionManagement(BuildContext context) async {
+    const platform = MethodChannel(
+        'subscriptionsManagement');
+    try {
+      await platform.invokeMethod('showManageSubscriptions');
+      Navigator.of(context).pop();
+    } catch (e) {
+      Navigator.of(context).pop();
+      showDialog(
+        context: context,
+        builder: (_) =>
+            AlertDialog(
+              title: const Text('Error'),
+              content: const Text(
+                  'Error opening subscription management. Please go to iOS Settings > Your Apple ID > Subscriptions to manage.'),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK')),
+              ],
+            ),
+      );
+    }
   }
 
 
@@ -374,28 +389,26 @@ class SubscriptionsProvider with ChangeNotifier {
     }
   }
 
-
-/*  Future<void> showSimpleSubscriptionUI(BuildContext context) async {
+/*  Future<void> showUniformSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
-    const String simpleCalculationProductId = 'com.tech4dev.construction.simple.3m';
-    const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
+    const String uniformPricingProductId = 'constructionProfitCalc.uniformPricing.3mo';
+    const String differentiatedPlusUniformPricingProductId = 'constructionProfitCalc.fullAccess.6mo';
 
-    // Mock subscription data for Android Studio testing
     const bool isDebugMode = !kReleaseMode;
     List<ProductDetails> mockProducts = isDebugMode
         ? [
       ProductDetails(
-        id: simpleCalculationProductId,
-        title: 'Simple Calculation',
-        description: 'Access Simple Calculation for basic construction cost estimates for 3 months.',
+        id: uniformPricingProductId,
+        title: 'Uniform Pricing',
+        description: 'Access Uniform Pricing for basic construction cost estimates for 3 months.',
         price: '\$5.99',
         rawPrice: 5.99,
         currencyCode: 'USD',
       ),
       ProductDetails(
-        id: completePlusSimpleCalculationProductId,
+        id: differentiatedPlusUniformPricingProductId,
         title: 'Full Access',
-        description: 'Access both Simple Calculation and Complete Calculation for 6 months, saving 60%.',
+        description: 'Access both Uniform Pricing and Differentiated Pricing for 6 months, saving 50%.',
         price: '\$12.99',
         rawPrice: 12.99,
         currencyCode: 'USD',
@@ -406,13 +419,10 @@ class SubscriptionsProvider with ChangeNotifier {
     ProductDetailsResponse response;
     if (isDebugMode) {
       response = ProductDetailsResponse(productDetails: mockProducts, notFoundIDs: []);
-      print('Debug: Mock ProductDetailsResponse: ${response.productDetails.map((p) => p.id).toList()}');
+   //   print('Debug: Mock ProductDetailsResponse: ${response.productDetails.map((p) => p.id).toList()}');
     } else {
       try {
-        response = await InAppPurchase.instance.queryProductDetails({
-          simpleCalculationProductId,
-          completePlusSimpleCalculationProductId,
-        });
+        response = await InAppPurchase.instance.queryProductDetails({uniformPricingProductId, differentiatedPlusUniformPricingProductId});
         if (response.error != null) {
           _showErrorDialog(context, response.error!.message);
           return;
@@ -427,16 +437,15 @@ class SubscriptionsProvider with ChangeNotifier {
       }
     }
 
-    // Check active subscriptions (use mock state for debugging)
-    bool hasFullAccess = isDebugMode ? false : subscriptionsProvider.hasCompletePlusSimpleCalculationProductId;
-    bool hasSimpleActive = isDebugMode ? false : subscriptionsProvider.hasSimpleActiveSubscription;
+    bool hasFullAccess = isDebugMode ? false : subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
+    bool hasUniformActive = isDebugMode ? false : subscriptionsProvider.hasUniformActiveSubscription;
     if (isDebugMode) {
-      print('Debug: hasFullAccess=$hasFullAccess, hasSimpleActive=$hasSimpleActive');
+      print('Debug: hasFullAccess=$hasFullAccess, hasUniformActive=$hasUniformActive');
     }
 
     List<Widget> subscriptionTiles = [
       const SizedBox(height: 20),
-      // Simple Calculation subscription
+      // Uniform Pricing subscription
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -454,16 +463,16 @@ class SubscriptionsProvider with ChangeNotifier {
               ? null
               : () async {
             if (isDebugMode) {
-              print('Debug: Simulating purchase of $simpleCalculationProductId');
+              print('Debug: Simulating purchase of $uniformPricingProductId');
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Debug: Simulated purchase of $simpleCalculationProductId')),
+                SnackBar(content: Text('Debug: Simulated purchase of $uniformPricingProductId')),
               );
               Navigator.of(context).pop();
             } else {
               try {
                 final product = response.productDetails.firstWhere(
-                      (product) => product.id == simpleCalculationProductId,
-                  orElse: () => throw Exception('$simpleCalculationProductId not found'),
+                      (product) => product.id == uniformPricingProductId,
+                  orElse: () => throw Exception('$uniformPricingProductId not found'),
                 );
                 await subscriptionsProvider.buySubscription(product);
                 Navigator.of(context).pop();
@@ -473,7 +482,7 @@ class SubscriptionsProvider with ChangeNotifier {
             }
           },
           child: const Text(
-            'Simple Calculation\n\$5.99 / 3 months',
+            'Uniform Pricing\n\$5.99 / 3 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -496,16 +505,16 @@ class SubscriptionsProvider with ChangeNotifier {
           ),
           onPressed: () async {
             if (isDebugMode) {
-              print('Debug: Simulating purchase of $completePlusSimpleCalculationProductId');
+           //   print('Debug: Simulating purchase of $differentiatedPlusUniformPricingProductId');
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Debug: Simulated purchase of $completePlusSimpleCalculationProductId')),
+                const SnackBar(content: Text('Debug: Simulated purchase of $differentiatedPlusUniformPricingProductId')),
               );
               Navigator.of(context).pop();
             } else {
               try {
                 final product = response.productDetails.firstWhere(
-                      (product) => product.id == completePlusSimpleCalculationProductId,
-                  orElse: () => throw Exception('$completePlusSimpleCalculationProductId not found'),
+                      (product) => product.id == differentiatedPlusUniformPricingProductId,
+                  orElse: () => throw Exception('$differentiatedPlusUniformPricingProductId not found'),
                 );
                 await subscriptionsProvider.buySubscription(product);
                 Navigator.of(context).pop();
@@ -524,15 +533,11 @@ class SubscriptionsProvider with ChangeNotifier {
       const SizedBox(height: 12),
       const Text(
         'Save 50% by subscribing to Full Access!',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.green,
-        ),
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.green),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 20),
-      // Learn More/Cancel Subscription button
+      // Learn More / Cancel Subscription
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -554,28 +559,26 @@ class SubscriptionsProvider with ChangeNotifier {
                 title: const Text('Subscription Info'),
                 content: Text(
                   'Choose your calculation method:\n\n'
-                      '• Simple: Uniform rate (sqft/sqm) for the entire project\n'
-                      '• Complete: Custom rates (sqft/sqm) for each project part\n\n'
-                      'Tap ? icon at the bottom of the first page of each product for details, especially during your trial. '
-                      '\n\nStatus: ${hasSimpleActive || hasFullAccess ?
-                  'Active ${hasFullAccess ? "Full Access" : "Simple"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
+                      '• Uniform: Constant pricing (sqft/sqm) for the entire building project\n'
+                      '• Differentiated: Custom pricing (sqft/sqm) for each part of your building project\n'
+                      '• Full Access: Access to both uniform and differentiated pricing calculators\n\n'
+                      'Tap ? icons across all pages for details.\n\n'  'Status: ${hasUniformActive || hasFullAccess ? "Active ${hasFullAccess ? "Full Access" : "Simple"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}" : "No active subscription."}',
                   textAlign: TextAlign.left,
                   style: const TextStyle(fontSize: 20, height: 1.5, fontWeight: FontWeight.bold),
                 ),
                 actions: [
-                  if (hasSimpleActive || hasFullAccess)
+                  if (hasUniformActive || hasFullAccess)
                     TextButton(
                       onPressed: () async {
                         if (isDebugMode) {
-                          print('Debug: Simulating cancel subscription');
+                      //    print('Debug: Simulating cancel subscription');
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Debug: Simulated cancel subscription')),
                           );
                           Navigator.of(context).pop();
                         } else {
                           try {
-                            await const MethodChannel('com.tech4dev.construction/subscriptions')
-                                .invokeMethod('showManageSubscriptions');
+                            await const MethodChannel('subscriptionsManagement').invokeMethod('showManageSubscriptions');
                             Navigator.of(context).pop();
                           } catch (e) {
                             Navigator.of(context).pop();
@@ -615,25 +618,23 @@ class SubscriptionsProvider with ChangeNotifier {
             elevation: 0,
           ),
           onPressed: () async {
-            print('Debug: Simulating restore purchases');
+        //    print('Debug: Simulating restore purchases');
             showDialog(
               context: context,
               barrierDismissible: false,
               builder: (_) => const Center(child: CircularProgressIndicator()),
             );
             if (isDebugMode) {
-              await Future.delayed(const Duration(seconds: 1)); // Simulate async work
+              await Future.delayed(const Duration(seconds: 1));
               Navigator.of(context, rootNavigator: true).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Debug: Simulated restore purchases')),
               );
             } else {
               try {
-                bool restorationSuccess = await subscriptionsProvider.initializeSubscriptions();
+                bool restored = await subscriptionsProvider.initializeSubscriptions();
                 Navigator.of(context, rootNavigator: true).pop();
-                if (!restorationSuccess &&
-                    !subscriptionsProvider.hasSimpleActiveSubscription &&
-                    !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                if (!restored && !subscriptionsProvider.hasUniformActiveSubscription && !subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No active subscriptions found. Please purchase a subscription.')),
                   );
@@ -650,47 +651,6 @@ class SubscriptionsProvider with ChangeNotifier {
           ),
         ),
       ),
-      const SizedBox(height: 20),
-      // Privacy Policy and Terms of Use links
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TextButton(
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => _launchUrl(context, 'https://www.termsfeed.com/live/228b3ef3-78b7-4838-a02a-77fb59345193'),
-            child: const Text(
-              'Privacy Policy',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.blue,
-                fontWeight: FontWeight.w500,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          TextButton(
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => _launchUrl(context, 'https://www.apple.com/legal/internet-services/itunes/us/terms.html'),
-            child: const Text(
-              'Terms of Use',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.blue,
-                fontWeight: FontWeight.w500,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 20),
     ];
 
     await showDialog(
@@ -701,7 +661,7 @@ class SubscriptionsProvider with ChangeNotifier {
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
-        contentPadding: const EdgeInsets.all(16.0),
+        contentPadding: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: Colors.white,
         content: SingleChildScrollView(
@@ -720,17 +680,18 @@ class SubscriptionsProvider with ChangeNotifier {
     );
   }*/
 
-Future<void> showSimpleSubscriptionUI(BuildContext context) async {
+
+Future<void> showUniformSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
-    const String simpleCalculationProductId = 'com.tech4dev.construction.simple.3m';
-    const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
+    const String uniformPricingProductId = 'constructionProfitCalc.uniformPricing.3mo';
+    const String differentiatedPlusUniformPricingProductId = 'constructionProfitCalc.fullAccess.6mo';
 
     // Fetch subscription data from StoreKit
     ProductDetailsResponse response;
     try {
       response = await InAppPurchase.instance.queryProductDetails({
-        simpleCalculationProductId,
-        completePlusSimpleCalculationProductId,
+        uniformPricingProductId,
+        differentiatedPlusUniformPricingProductId,
       });
       if (response.error != null) {
         _showErrorDialog(context, response.error!.message);
@@ -746,12 +707,12 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
     }
 
     // Check active subscriptions
-    bool hasFullAccess = subscriptionsProvider.hasCompletePlusSimpleCalculationProductId;
-    bool hasSimpleActive = subscriptionsProvider.hasSimpleActiveSubscription;
+    bool hasFullAccess = subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
+    bool hasSimpleActive = subscriptionsProvider.hasUniformActiveSubscription;
 
     List<Widget> subscriptionTiles = [
       const SizedBox(height: 20),
-      // Simple Calculation subscription
+      // Uniform Pricing subscription
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -770,8 +731,8 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
               : () async {
             try {
               final product = response.productDetails.firstWhere(
-                    (product) => product.id == simpleCalculationProductId,
-                orElse: () => throw Exception('$simpleCalculationProductId not found'),
+                    (product) => product.id == uniformPricingProductId,
+                orElse: () => throw Exception('$uniformPricingProductId not found'),
               );
               await subscriptionsProvider.buySubscription(product);
               Navigator.of(context).pop();
@@ -780,7 +741,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             }
           },
           child: const Text(
-            'Simple Calculation\n\$5.99 / 3 months',
+            'Uniform Pricing\n\$5.99 / 3 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -804,8 +765,8 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
           onPressed: () async {
             try {
               final product = response.productDetails.firstWhere(
-                    (product) => product.id == completePlusSimpleCalculationProductId,
-                orElse: () => throw Exception('$completePlusSimpleCalculationProductId not found'),
+                    (product) => product.id == differentiatedPlusUniformPricingProductId,
+                orElse: () => throw Exception('$differentiatedPlusUniformPricingProductId not found'),
               );
               await subscriptionsProvider.buySubscription(product);
               Navigator.of(context).pop();
@@ -832,10 +793,10 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 20),
-      // Learn More\nCancel Subscription button
+      // L earn More\nCancel Subscription button
       SizedBox(
         width: 300,
-        child: ElevatedButton(
+        child:ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: null,
             foregroundColor: Colors.black,
@@ -853,10 +814,11 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
                 title: const Text('Subscription Info'),
                 content: Text(
                   'Choose your calculation method:\n\n'
-                      '• Simple: Uniform rate (sqft/sqm) for the entire project\n'
-                      '• Complete: Custom rates (sqft/sqm) for each project part\n\n'
-                      'Tap ? icon at the bottom of the first page of each product for details, especially during your trial. '
-                      '\n\nStatus: ${hasSimpleActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Simple"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
+                      '• Uniform: Constant pricing (sqft/sqm) for the entire building project\n'
+                      '• Differentiated: Custom pricing (sqft/sqm) for each part of your building project\n'
+                      '• Full Access: Access to both uniform and differentiated pricing calculators\n\n'
+                      'Tap ? icons across all pages for details.\n\n'
+                      'Status: ${hasSimpleActive || hasFullAccess ? 'Active subscription: ${hasFullAccess ? "Full Access" : "Simple"}. ${!hasFullAccess ? "Upgrade to get both." : ""}' : "No active subscription."}',
                   textAlign: TextAlign.left,
                   style: const TextStyle(fontSize: 20, height: 1.5, fontWeight: FontWeight.bold),
                 ),
@@ -865,7 +827,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
                     TextButton(
                       onPressed: () async {
                         try {
-                          await const MethodChannel('com.tech4dev.construction/subscriptions')
+                          await const MethodChannel('subscriptionsManagement')
                               .invokeMethod('showManageSubscriptions');
                           Navigator.of(context).pop();
                         } catch (e) {
@@ -886,8 +848,10 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
           child: const Text(
             'Learn More \nCancel Subscription',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
           ),
         ),
+
       ),
       const SizedBox(height: 12),
       // Restore Purchases button
@@ -914,8 +878,8 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
               bool restorationSuccess = await subscriptionsProvider.initializeSubscriptions();
               Navigator.of(context, rootNavigator: true).pop();
               if (!restorationSuccess &&
-                  !subscriptionsProvider.hasSimpleActiveSubscription &&
-                  !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                  !subscriptionsProvider.hasUniformActiveSubscription &&
+                  !subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('No active subscriptions found. Please purchase a subscription.')),
                 );
@@ -1002,27 +966,26 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
   }
 
 
-/*  Future<void> showCompleteSubscriptionUI(BuildContext context) async {
+/*  Future<void> showDifferentiatedSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
-    const String completeCalculationProductId = 'com.tech4dev.construction.complete.3m';
-    const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
+    const String differentiatedPricingProductId = 'constructionProfitCalc.differentiatedPricing.3mo.v1';
+    const String differentiatedPlusUniformPricingProductId = 'constructionProfitCalc.fullAccess.6mo';
 
-    // Mock subscription data for Android Studio testing
     final bool isDebugMode = !kReleaseMode;
     List<ProductDetails> mockProducts = isDebugMode
         ? [
       ProductDetails(
-        id: completeCalculationProductId,
-        title: 'Complete Calculation',
-        description: 'Access Complete Calculation for custom construction cost estimates for 3 months.',
+        id: differentiatedPricingProductId,
+        title: 'Differentiated Pricing',
+        description: 'Access Differentiated Pricing for custom construction cost estimates for 3 months.',
         price: '\$6.99',
         rawPrice: 6.99,
         currencyCode: 'USD',
       ),
       ProductDetails(
-        id: completePlusSimpleCalculationProductId,
+        id: differentiatedPlusUniformPricingProductId,
         title: 'Full Access',
-        description: 'Access both Simple Calculation and Complete Calculation for 6 months, saving 60%.',
+        description: 'Access both Uniform Pricing and Differentiated Pricing for 6 months, saving 50%.',
         price: '\$12.99',
         rawPrice: 12.99,
         currencyCode: 'USD',
@@ -1033,13 +996,10 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
     ProductDetailsResponse response;
     if (isDebugMode) {
       response = ProductDetailsResponse(productDetails: mockProducts, notFoundIDs: []);
-      print('Debug: Mock ProductDetailsResponse: ${response.productDetails.map((p) => p.id).toList()}');
+   //   print('Debug: Mock ProductDetailsResponse: ${response.productDetails.map((p) => p.id).toList()}');
     } else {
       try {
-        response = await InAppPurchase.instance.queryProductDetails({
-          completeCalculationProductId,
-          completePlusSimpleCalculationProductId,
-        });
+        response = await InAppPurchase.instance.queryProductDetails({differentiatedPricingProductId, differentiatedPlusUniformPricingProductId});
         if (response.error != null) {
           _showErrorDialog(context, response.error!.message);
           return;
@@ -1054,16 +1014,15 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
       }
     }
 
-    // Check active subscriptions (use mock state for debugging)
-    bool hasFullAccess = isDebugMode ? false : subscriptionsProvider.hasCompletePlusSimpleCalculationProductId;
-    bool hasCompleteActive = isDebugMode ? false : subscriptionsProvider.hasCompleteActiveSubscription;
+    bool hasFullAccess = isDebugMode ? false : subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
+    bool hasDifferentiatedActive = isDebugMode ? false : subscriptionsProvider.hasDifferentiatedActiveSubscription;
     if (isDebugMode) {
-      print('Debug: hasFullAccess=$hasFullAccess, hasCompleteActive=$hasCompleteActive');
+      print('Debug: hasFullAccess=$hasFullAccess, hasDifferentiatedActive=$hasDifferentiatedActive');
     }
 
     List<Widget> subscriptionTiles = [
       const SizedBox(height: 20),
-      // Complete Calculation subscription
+      // Differentiated Pricing subscription
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -1081,16 +1040,16 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
               ? null
               : () async {
             if (isDebugMode) {
-              print('Debug: Simulating purchase of $completeCalculationProductId');
+              print('Debug: Simulating purchase of $differentiatedPricingProductId');
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Debug: Simulated purchase of $completeCalculationProductId')),
+                SnackBar(content: Text('Debug: Simulated purchase of $differentiatedPricingProductId')),
               );
               Navigator.of(context).pop();
             } else {
               try {
                 final product = response.productDetails.firstWhere(
-                      (product) => product.id == completeCalculationProductId,
-                  orElse: () => throw Exception('$completeCalculationProductId not found'),
+                      (product) => product.id == differentiatedPricingProductId,
+                  orElse: () => throw Exception('$differentiatedPricingProductId not found'),
                 );
                 await subscriptionsProvider.buySubscription(product);
                 Navigator.of(context).pop();
@@ -1100,7 +1059,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             }
           },
           child: const Text(
-            'Complete Calculation\n\$6.99 / 3 months',
+            'Differentiated Pricing\n\$6.99 / 3 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -1123,16 +1082,16 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
           ),
           onPressed: () async {
             if (isDebugMode) {
-              print('Debug: Simulating purchase of $completePlusSimpleCalculationProductId');
+              print('Debug: Simulating purchase of $differentiatedPlusUniformPricingProductId');
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Debug: Simulated purchase of $completePlusSimpleCalculationProductId')),
+                SnackBar(content: Text('Debug: Simulated purchase of $differentiatedPlusUniformPricingProductId')),
               );
               Navigator.of(context).pop();
             } else {
               try {
                 final product = response.productDetails.firstWhere(
-                      (product) => product.id == completePlusSimpleCalculationProductId,
-                  orElse: () => throw Exception('$completePlusSimpleCalculationProductId not found'),
+                      (product) => product.id == differentiatedPlusUniformPricingProductId,
+                  orElse: () => throw Exception('$differentiatedPlusUniformPricingProductId not found'),
                 );
                 await subscriptionsProvider.buySubscription(product);
                 Navigator.of(context).pop();
@@ -1159,7 +1118,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 20),
-      // Learn More/Cancel Subscription button
+      // Learn More / Cancel Subscription button
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -1181,16 +1140,16 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
                 title: const Text('Subscription Info'),
                 content: Text(
                   'Choose your calculation method:\n\n'
-                      '• Simple: Uniform rate (sqft/sqm) for the entire project\n'
-                      '• Complete: Custom rates (sqft/sqm) for each project part\n\n'
-                      'Tap ? icon at the bottom of the first page of each product for details, especially during your trial. '
-                      'Full Access includes both methods at a significant discount.\n\n'
-                      '\n\nStatus: ${hasCompleteActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Complete"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
+                      '• Uniform: Constant pricing (sqft/sqm) for the entire building project\n'
+                      '• Differentiated: Custom pricing (sqft/sqm) for each part of your building project\n'
+                      '• Full Access: Access to both uniform and differentiated pricing calculators\n\n'
+                      'Tap ? icons across all pages for details.\n\n'
+                      '\n\nStatus: ${hasDifferentiatedActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Differentiated"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
                   textAlign: TextAlign.left,
                   style: const TextStyle(fontSize: 20, height: 1.5, fontWeight: FontWeight.bold),
                 ),
                 actions: [
-                  if (hasCompleteActive || hasFullAccess)
+                  if (hasDifferentiatedActive || hasFullAccess)
                     TextButton(
                       onPressed: () async {
                         if (isDebugMode) {
@@ -1201,8 +1160,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
                           Navigator.of(context).pop();
                         } else {
                           try {
-                            await const MethodChannel('com.tech4dev.construction/subscriptions')
-                                .invokeMethod('showManageSubscriptions');
+                            await const MethodChannel('subscriptionsManagement').invokeMethod('showManageSubscriptions');
                             Navigator.of(context).pop();
                           } catch (e) {
                             Navigator.of(context).pop();
@@ -1250,7 +1208,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
               builder: (_) => const Center(child: CircularProgressIndicator()),
             );
             if (isDebugMode) {
-              await Future.delayed(const Duration(seconds: 1)); // Simulate async work
+              await Future.delayed(const Duration(seconds: 1));
               Navigator.of(context, rootNavigator: true).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Debug: Simulated restore purchases')),
@@ -1260,8 +1218,8 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
                 bool restorationSuccess = await subscriptionsProvider.initializeSubscriptions();
                 Navigator.of(context, rootNavigator: true).pop();
                 if (!restorationSuccess &&
-                    !subscriptionsProvider.hasCompleteActiveSubscription &&
-                    !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                    !subscriptionsProvider.hasDifferentiatedActiveSubscription &&
+                    !subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No active subscriptions found. Please purchase a subscription.')),
                   );
@@ -1348,17 +1306,18 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
     );
   }*/
 
-  Future<void> showCompleteSubscriptionUI(BuildContext context) async {
+
+  Future<void> showDifferentiatedSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
-    const String completeCalculationProductId = 'com.tech4dev.construction.complete.3m';
-    const String completePlusSimpleCalculationProductId = 'com.tech4dev.construction.full.6m';
+    const String differentiatedPricingProductId = 'constructionProfitCalc.differentiatedPricing.3mo.v1';
+    const String differentiatedPlusUniformPricingProductId = 'constructionProfitCalc.fullAccess.6mo';
 
     // Fetch subscription data from StoreKit
     ProductDetailsResponse response;
     try {
       response = await InAppPurchase.instance.queryProductDetails({
-        completeCalculationProductId,
-        completePlusSimpleCalculationProductId,
+        differentiatedPricingProductId,
+        differentiatedPlusUniformPricingProductId,
       });
       if (response.error != null) {
         _showErrorDialog(context, response.error!.message);
@@ -1374,12 +1333,12 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
     }
 
     // Check active subscriptions
-    bool hasFullAccess = subscriptionsProvider.hasCompletePlusSimpleCalculationProductId;
-    bool hasCompleteActive = subscriptionsProvider.hasCompleteActiveSubscription;
+    bool hasFullAccess = subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
+    bool hasDifferentiatedActive = subscriptionsProvider.hasDifferentiatedActiveSubscription;
 
     List<Widget> subscriptionTiles = [
       const SizedBox(height: 20),
-      // Complete Calculation subscription
+      // Differentiated Pricing subscription
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -1398,8 +1357,8 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
               : () async {
             try {
               final product = response.productDetails.firstWhere(
-                    (product) => product.id == completeCalculationProductId,
-                orElse: () => throw Exception('$completeCalculationProductId not found'),
+                    (product) => product.id == differentiatedPricingProductId,
+                orElse: () => throw Exception('$differentiatedPricingProductId not found'),
               );
               await subscriptionsProvider.buySubscription(product);
               Navigator.of(context).pop();
@@ -1408,7 +1367,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             }
           },
           child: const Text(
-            'Complete Calculation\n\$6.99 / 3 months',
+            'Differentiated Pricing\n\$6.99 / 3 months',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -1432,8 +1391,8 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
           onPressed: () async {
             try {
               final product = response.productDetails.firstWhere(
-                    (product) => product.id == completePlusSimpleCalculationProductId,
-                orElse: () => throw Exception('$completePlusSimpleCalculationProductId not found'),
+                    (product) => product.id == differentiatedPlusUniformPricingProductId,
+                orElse: () => throw Exception('$differentiatedPlusUniformPricingProductId not found'),
               );
               await subscriptionsProvider.buySubscription(product);
               Navigator.of(context).pop();
@@ -1459,7 +1418,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 20),
-      // Learn More/Cancel Subscription button
+      // L earn More/Cancel Subscription button
       SizedBox(
         width: 300,
         child: ElevatedButton(
@@ -1480,24 +1439,24 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
                 title: const Text('Subscription Info'),
                 content: Text(
                   'Choose your calculation method:\n\n'
-                      '• Simple: Uniform rate (sqft/sqm) for the entire project\n'
-                      '• Complete: Custom rates (sqft/sqm) for each project part\n\n'
-                      'Tap ? icon at the bottom of the first page of each product for details, especially during your trial. '
-                      '\n\nStatus: ${hasCompleteActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Complete"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
+                     '• Uniform: Constant pricing (sqft/sqm) for the entire building project\n'
+                      '• Differentiated: Custom pricing (sqft/sqm) for each part of your building project\n'
+                      '• Full Access: Access to both uniform and differentiated pricing calculators\n\n'
+                      'Tap ? icons across all pages for details.\n\n'
+                        '\n\nStatus: ${hasDifferentiatedActive || hasFullAccess ? 'Active ${hasFullAccess ? "Full Access" : "Differentiated"} subscription. ${hasFullAccess ? "" : "Upgrade to get both."}' : "No active subscription."}',
                   textAlign: TextAlign.left,
                   style: const TextStyle(fontSize: 20, height: 1.5, fontWeight: FontWeight.bold),
                 ),
                 actions: [
-                  if (hasCompleteActive || hasFullAccess)
+                  if (hasDifferentiatedActive || hasFullAccess)
                     TextButton(
                       onPressed: () async {
-                        try {
-                          await const MethodChannel('com.tech4dev.construction/subscriptions')
-                              .invokeMethod('showManageSubscriptions');
+                        const subscriptionManagementUrl = 'https://apps.apple.com/account/subscriptions';
+                        if (await canLaunch(subscriptionManagementUrl)) {
+                          await launch(subscriptionManagementUrl);
+                        } else {
                           Navigator.of(context).pop();
-                        } catch (e) {
-                          Navigator.of(context).pop();
-                          _showErrorDialog(context, 'Error opening subscription management. Go to iOS Settings > Your Apple ID > Subscriptions.');
+                          _showErrorDialog(context, 'Cannot open subscription management page. Please open it manually in your device settings.');
                         }
                       },
                       child: const Text('Cancel Subscription', style: TextStyle(fontSize: 16)),
@@ -1516,6 +1475,7 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ),
+
       ),
       const SizedBox(height: 12),
       // Restore Purchases button
@@ -1542,8 +1502,8 @@ Future<void> showSimpleSubscriptionUI(BuildContext context) async {
               bool restorationSuccess = await subscriptionsProvider.initializeSubscriptions();
               Navigator.of(context, rootNavigator: true).pop();
               if (!restorationSuccess &&
-                  !subscriptionsProvider.hasCompleteActiveSubscription &&
-                  !subscriptionsProvider.hasCompletePlusSimpleCalculationProductId) {
+                  !subscriptionsProvider.hasDifferentiatedActiveSubscription &&
+                  !subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('No active subscriptions found. Please purchase a subscription.')),
                 );

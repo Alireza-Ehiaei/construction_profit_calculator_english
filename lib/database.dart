@@ -5,11 +5,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'ad_mob.dart';
 import 'all_projects.dart';
-import 'land.dart';
-import 'main.dart';
-import 'navigation_service.dart';
-import 'permit_fees.dart';
-import 'costPrices.dart';
+
 
 class AreaTableRowData {
   final String name;
@@ -375,7 +371,7 @@ class ResultProjectColumnsClassData {
   String resultProjectTableLandPermissionCostsPerTotalCosts;
   String resultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost;
   String resultProjectTableSalableAreaConstructedPerMillionCurrencySegments;
-  String resultProjectTableCalculationType;
+  String resultProjectTablePricing;
   String resultProjectTableNumberOfSalableProperties;
   String resultProjectTableNumberOfSalablePropertiesPerMillionCurrencySegments;
 
@@ -414,7 +410,7 @@ class ResultProjectColumnsClassData {
     required this.resultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost,
     required this.resultProjectTableNumberOfSalablePropertiesPerMillionCurrencySegments,
     required this.resultProjectTableNumberOfSalableProperties,
-    required this.resultProjectTableCalculationType,
+    required this.resultProjectTablePricing,
   });
 
   Map<String, dynamic> toMap() {
@@ -451,7 +447,7 @@ class ResultProjectColumnsClassData {
       'resultProjectTableNumberOfSalablePropertiesPerMillionCurrencySegments': resultProjectTableNumberOfSalablePropertiesPerMillionCurrencySegments,
       'resultProjectTableLandPermissionCostsPerTotalCosts': resultProjectTableLandPermissionCostsPerTotalCosts,
       'resultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost': resultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost,
-      'resultProjectTableCalculationType': resultProjectTableCalculationType,
+      'resultProjectTablePricing': resultProjectTablePricing,
       'resultProjectTableRoofAndYardConstructionCostsText': resultProjectTableRoofAndYardConstructionCostsText,
     };
   }
@@ -498,7 +494,7 @@ class ProjectAddressData {
   }
 }
 
-class CompleteCalculationDatabaseHelper {
+class DifferentiatedCalculationDatabaseHelper {
 
   static const String tableBasicData = 'projectBasicDataTable';
   static const String columnProjectBasicTableId = 'projectBasicTableId';
@@ -534,7 +530,7 @@ class CompleteCalculationDatabaseHelper {
   static const columnStartingSimilarTableSimilarFloor = 'startingSimilarTableSimilarFloor';
   static const columnStartingSimilarTableNumberOfSegments = 'startingSimilarTableNumberOfSegments';
   static const columnStartingSimilarTableSegmentNumber = 'startingSimilarTableSegmentNumber';
-  static const columnstartingSimilarTableSegmentSalable = 'startingSimilarTableSegmentSalable';
+  static const columnStartingSimilarTableSegmentSalable = 'startingSimilarTableSegmentSalable';
   static const columnStartingSimilarTableCostPercentage = 'startingSimilarTableCostPercentage';
   static const columnStartingSimilarTableCostPerMeter = 'startingSimilarTableCostPerMeter';
   static const columnStartingSimilarTableSellPricePercentage = 'startingSimilarTableSellPricePercentage';
@@ -589,7 +585,7 @@ class CompleteCalculationDatabaseHelper {
   static const String columnResultProjectTableAllCostsIncurredPerMeterOfSalableArea = 'resultProjectTableAllCostsIncurredPerMeterOfSalableArea';
   static const String columnResultProjectTableProfitPerSalableArea = 'resultProjectTableProfitPerSalableArea';
   static const String columnResultProjectTableSalableAreaConstructedPerMillionCurrencySegments = 'resultProjectTableSalableAreaConstructedPerMillionCurrencySegments';
-  static const String columnResultProjectTableCalculationType = 'resultProjectTableCalculationType';
+  static const String columnResultProjectTablePricing = 'resultProjectTablePricing';
   static const String columnResultProjectTableLandPricePerMeterToAverageSellPricePerMeter = 'resultProjectTableLandPricePerMeterToAverageSellPricePerMeter';
   static const String columnResultProjectTableLandPermissionCostsPerTotalCosts = 'resultProjectTableLandPermissionCostsPerTotalCosts';
   static const String columnResultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost =
@@ -720,7 +716,7 @@ class CompleteCalculationDatabaseHelper {
         $columnStartingSimilarTableSimilarFloor INTEGER NOT NULL,
         $columnStartingSimilarTableNumberOfSegments INTEGER NOT NULL,
         $columnStartingSimilarTableSegmentNumber INTEGER NOT NULL,
-        $columnstartingSimilarTableSegmentSalable INTEGER NOT NULL,
+        $columnStartingSimilarTableSegmentSalable INTEGER NOT NULL,
         $columnStartingSimilarTableCostPercentage REAL NOT NULL,
         $columnStartingSimilarTableCostPerMeter REAL NOT NULL,
         $columnStartingSimilarTableSellPricePercentage REAL NOT NULL,
@@ -819,7 +815,7 @@ class CompleteCalculationDatabaseHelper {
     $columnResultProjectTableSalableAreaConstructedPerMillionCurrencySegments TEXT NOT NULL,
     $columnResultProjectTableLandPermissionCostsPerTotalCosts TEXT NOT NULL,
     $columnResultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost TEXT NOT NULL,
-    $columnResultProjectTableCalculationType TEXT NOT NULL,
+    $columnResultProjectTablePricing TEXT NOT NULL,
     $columnResultProjectTableLandPricePerMeterToAverageSellPricePerMeter TEXT NOT NULL,
     $columnResultProjectTableRoofAndYardConstructionCostsText TEXT NOT NULL,
     $columnResultProjectTableTransactionCostsText TEXT NOT NULL,
@@ -1267,7 +1263,7 @@ class CompleteCalculationDatabaseHelper {
         startingSimilarTableCostPerMeter: maps[0][columnStartingSimilarTableCostPerMeter],
         startingSimilarTableSellPricePercentage: maps[0][columnStartingSimilarTableSellPricePercentage],
         startingSimilarTableSellPricePerMeter: maps[0][columnStartingSimilarTableSellPricePerMeter],
-        startingSimilarTableSegmentSalable: maps[0][columnstartingSimilarTableSegmentSalable],
+        startingSimilarTableSegmentSalable: maps[0][columnStartingSimilarTableSegmentSalable],
       );
     } else {
       return null;
@@ -1297,7 +1293,7 @@ class CompleteCalculationDatabaseHelper {
         startingSimilarTableCostPerMeter: maps[i][columnStartingSimilarTableCostPerMeter],
         startingSimilarTableSellPricePercentage: maps[i][columnStartingSimilarTableSellPricePercentage],
         startingSimilarTableSellPricePerMeter: maps[i][columnStartingSimilarTableSellPricePerMeter],
-        startingSimilarTableSegmentSalable: maps[i][columnstartingSimilarTableSegmentSalable],
+        startingSimilarTableSegmentSalable: maps[i][columnStartingSimilarTableSegmentSalable],
       );
     });
   }
@@ -1343,7 +1339,8 @@ class CompleteCalculationDatabaseHelper {
 
   Future<List<Map<String, dynamic>>> calculatePermitFeeForEachFloor(String projectName) async {
     List<Map<String, dynamic>> floorPermitFees = [];
-    List<PermitFeeSegmentPricingData> permitFeeData = await CompleteCalculationDatabaseHelper.getPermitFeeSegmentPricingData(projectName);
+    List<PermitFeeSegmentPricingData> permitFeeData =
+      await DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentPricingData(projectName);
     Map<int, double> floorPermitFeesMap = {};
 
     for (var data in permitFeeData) {
@@ -1423,7 +1420,7 @@ class CompleteCalculationDatabaseHelper {
         startingSimilarTableCostPerMeter: maps[0][columnStartingSimilarTableCostPerMeter],
         startingSimilarTableSellPricePercentage: maps[0][columnStartingSimilarTableSellPricePercentage],
         startingSimilarTableSellPricePerMeter: maps[0][columnStartingSimilarTableSellPricePerMeter],
-        startingSimilarTableSegmentSalable: maps[0][columnstartingSimilarTableSegmentSalable],
+        startingSimilarTableSegmentSalable: maps[0][columnStartingSimilarTableSegmentSalable],
 
       );
     });
@@ -1541,7 +1538,7 @@ class CompleteCalculationDatabaseHelper {
         resultProjectTableSalableAreaConstructedPerMillionCurrencySegments: maps[i][columnResultProjectTableSalableAreaConstructedPerMillionCurrencySegments] ?? 0.0,
         resultProjectTableNumberOfSalableProperties: maps[i][columnResultProjectTableNumberOfSalableProperties] ?? 0.0,
         resultProjectTableNumberOfSalablePropertiesPerMillionCurrencySegments: maps[i][columnResultProjectTableNumberOfSalablePropertiesPerMillionCurrencySegments] ?? 0.0,
-        resultProjectTableCalculationType: maps[i][columnResultProjectTableCalculationType] ?? '',
+        resultProjectTablePricing: maps[i][columnResultProjectTablePricing] ?? '',
         resultProjectTableLandPermissionCostsPerTotalCosts: maps[i][columnResultProjectTableLandPermissionCostsPerTotalCosts] ?? 0,
         resultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost: maps[i][columnResultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost] ?? 0,
         resultProjectTableLandPricePerMeterToAverageSellPricePerMeter: maps[i][columnResultProjectTableLandPricePerMeterToAverageSellPricePerMeter] ?? 0,
@@ -1549,7 +1546,6 @@ class CompleteCalculationDatabaseHelper {
         resultProjectTableRoofAndYardConstructionCostsText: maps[i][columnResultProjectTableRoofAndYardConstructionCostsText] ?? 0,
         resultProjectTableTransactionCostsText: maps[i][columnResultProjectTableTransactionCostsText] ?? 0,
         resultProjectTableOtherCostsText: maps[i][columnResultProjectTableOtherCostsText] ?? 0,
-
       );
     });
   }
@@ -1594,7 +1590,7 @@ class CompleteCalculationDatabaseHelper {
   static Future<void> insertOrUpdateProjectResultFloorData(String projectName,
       int cpp, int floorNumber, String costOfFloor, String incomeOfFloor, String profitOfFloor)
   async {
-    Database db = await CompleteCalculationDatabaseHelper.database;
+    Database db = await DifferentiatedCalculationDatabaseHelper.database;
     List<Map<String, dynamic>> maps = await db.query(
       tableResultFloorData,
       where: '$columnResultFloorTableProjectName = ? AND $columnResultFloorTableCostPricePlan = ? '
@@ -1629,7 +1625,7 @@ class CompleteCalculationDatabaseHelper {
   }
 
   static Future<void> insertOrUpdateResultProjectData(ResultProjectColumnsClassData data) async {
-    Database db = await CompleteCalculationDatabaseHelper.database;
+    Database db = await DifferentiatedCalculationDatabaseHelper.database;
     List<Map<String, dynamic>> maps = await db.query(
       tableResultProjectData,
       where: '$columnResultProjectTableProjectName = ?',
@@ -1691,7 +1687,7 @@ class CompleteCalculationDatabaseHelper {
   }
 
 
-  static Future<void> deleteProjectOfCompleteCalculationDatabase(String projectName) async {
+  static Future<void> deleteProjectOfDifferentiatedCalculationDatabase(String projectName) async {
     final db = await database;
     // Define a list of tables and their corresponding project name columns
     final tablesToDelete = [
@@ -1956,7 +1952,7 @@ class CompleteCalculationDatabaseHelper {
 
     await db.rawUpdate('UPDATE $tableBasicData SET $columnProjectBasicTableProjectName = ? WHERE $columnProjectBasicTableProjectName = ?', [newProjectName, oldProjectName]);
 
-    await AllProjectsPageDatabase.updateProjectNameInAllProjectsPageData(oldProjectName, newProjectName, 'complete');    // Show a message or perform any other action after updating the project name
+    await AllProjectsPageDatabase.updateProjectNameInAllProjectsPageData(oldProjectName, newProjectName, 'differentiated');    // Show a message or perform any other action after updating the project name
   }
 
   static Future<List<String>> getAllProjectNamesFromStartingSimilarTable() async {
@@ -2217,7 +2213,7 @@ class CompleteCalculationDatabaseHelper {
   }
 
 
-  static Future<void> deleteCompleteCalculationDatabaseHelper() async {
+  static Future<void> deleteDifferentiatedCalculationDatabaseHelper() async {
     final dbPath = await getApplicationDocumentsDirectory();
     final databasePath = join(dbPath.path, 'homePriceDatabase1.db');
     await deleteDatabase(databasePath);
@@ -2233,7 +2229,7 @@ class CompleteCalculationDatabaseHelper {
   }
 
 
-  static Future deleteTablesOfCompleteCalculationDatabaseHelper() async {
+  static Future deleteTablesOfDifferentiatedCalculationDatabaseHelper() async {
     await _database?.execute('DROP TABLE IF EXISTS tableCostPricing');
     await _database?.execute('DROP TABLE IF EXISTS tableStartingSimilar');
     await _database?.execute('DROP TABLE IF EXISTS tablePermitFeeSegmentPricing');
@@ -2266,7 +2262,7 @@ class CompleteCalculationDatabaseHelper {
         startingSimilarTableCostPerMeter: maps[i][columnStartingSimilarTableCostPerMeter],
         startingSimilarTableSellPricePercentage: maps[i][columnStartingSimilarTableSellPricePercentage],
         startingSimilarTableSellPricePerMeter: maps[i][columnStartingSimilarTableSellPricePerMeter],
-        startingSimilarTableSegmentSalable: maps[0][columnstartingSimilarTableSegmentSalable],
+        startingSimilarTableSegmentSalable: maps[0][columnStartingSimilarTableSegmentSalable],
 
       );
     });
@@ -2460,7 +2456,7 @@ class CompleteCalculationDatabaseHelper {
 
 }
 
-// DatabaseHelper CompleteCalculationDatabaseHelper
+// DatabaseHelper DifferentiatedCalculationDatabaseHelper
 
 
 
@@ -2517,7 +2513,7 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
   String profitOfProjectAllProjects = '';
   String profitPercentageOfProjectAllProjects = '';
   String nameOfProjectAllProjects = '';
-  String calculationTypeAllProjects = '';
+  String PricingAllProjects = '';
 
   @override
   void initState() {
@@ -2527,7 +2523,7 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
 
 
   Future<void> _retrieveAddressData() async {
-    ProjectAddressData? addressData = await CompleteCalculationDatabaseHelper.getAddressProjectData(widget.projectName);
+    ProjectAddressData? addressData = await DifferentiatedCalculationDatabaseHelper.getAddressProjectData(widget.projectName);
 
     if (addressData != null) {
       _projectNameController.text = (widget.projectName == "_oozz") ? "hhh" : widget.projectName;
@@ -2608,7 +2604,7 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
 
                     if (_projectNameController.text.isNotEmpty  || _projectNameController.text== '_oozz') {
                       final String projectNameControllerText = _projectNameController.text;
-                      final List<String> existingProjectNames = await CompleteCalculationDatabaseHelper.getAllProjectNames();
+                      final List<String> existingProjectNames = await DifferentiatedCalculationDatabaseHelper.getAllProjectNames();
                       if (existingProjectNames.contains(projectNameControllerText) &&
                           projectNameControllerText != projectName2) {
                         if (mounted) {
@@ -2623,7 +2619,7 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
                       } else {
                         if (projectName2 != _projectNameController.text) {
                           var projectData = context.read<ProjectData>();
-                          await CompleteCalculationDatabaseHelper.updateProjectNameInAllTables(
+                          await DifferentiatedCalculationDatabaseHelper.updateProjectNameInAllTables(
                             _projectNameController.text,
                             projectData.projectName,
                           );
@@ -2634,7 +2630,7 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
                         String city = _cityController.text;
                         String street = _streetController.text;
                         final ProjectAddressData projectAddressData = ProjectAddressData(
-                          addressTableId: await CompleteCalculationDatabaseHelper.getNextAddressProjectID(),
+                          addressTableId: await DifferentiatedCalculationDatabaseHelper.getNextAddressProjectID(),
                           addressTableProjectName: _projectNameController.text,
                           addressTableEnvironmentallyFriendly: _environmentallyFriendlyController.text,
                           addressTableSociallyFriendly: _sociallyFriendlyController.text,
@@ -2646,10 +2642,10 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
                           addressTableOther: _otherController.text,
                         );
 
-                        await CompleteCalculationDatabaseHelper.insertOrUpdateAddressProjectData(projectAddressData);
+                        await DifferentiatedCalculationDatabaseHelper.insertOrUpdateAddressProjectData(projectAddressData);
 
                         List<ResultProjectColumnsClassData> resultProjectData = await
-                        CompleteCalculationDatabaseHelper.getResultProjectColumnsClassData(projectName2);
+                        DifferentiatedCalculationDatabaseHelper.getResultProjectColumnsClassData(projectName2);
 
                         // Initialize the variables from the retrieved data
                         if (resultProjectData.isNotEmpty) {
@@ -2664,7 +2660,7 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
                           double.parse (_environmentallyFriendlyController.text) : 1;
                           sociallyFriendlyAllProjects = (_sociallyFriendlyController.text.isNotEmpty) ?
                           double.parse (_sociallyFriendlyController.text) : 1;
-                          calculationTypeAllProjects = 'complete';
+                          PricingAllProjects = 'differentiated';
 
                         }
                         final AllProjectsPageData1 allProjectsPageDataArguments =
@@ -2678,7 +2674,7 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
                           allProjectsPageSociallyFriendly: sociallyFriendlyAllProjects,
                           allProjectsPageCity: city,
                           allProjectsPageStreet: street,
-                          allProjectsPageCalculationName: calculationTypeAllProjects,
+                          allProjectsPageCalculationName: PricingAllProjects,
                         );
 
                         await AllProjectsPageDatabase.insertOrUpdateAllProjectsPageData(allProjectsPageDataArguments);
@@ -2693,7 +2689,7 @@ class _AddressBottomSheetState extends State<AddressBottomSheet> {
                           sociallyFriendly,
                           city,
                           street,
-                          calculationType,
+                          Pricing,
                         );*//*
 
                       }

@@ -16,7 +16,7 @@ Future<Map<String, dynamic>> getFloorRanges(String projectName, int startingFloo
       {
   // Retrieve project data and permit fee floor areas from the database
   final List<ProjectTableData> projectData =
-     await CompleteCalculationDatabaseHelper.getCostPricingData(projectName);
+     await DifferentiatedCalculationDatabaseHelper.getCostPricingData(projectName);
 
 
   // Step 1: Create a map to hold total area for each floor
@@ -57,7 +57,7 @@ Future<Map<String, dynamic>> getFloorRanges(String projectName, int startingFloo
   // Step 3: Compare the floor areas in costPricingTable with permit fee floor areas
   List<int> differentFloors = [];
   final List<List<dynamic>> permitFeeFloorAreas =
-  await CompleteCalculationDatabaseHelper.getPermitFeeFloorArea(projectName);
+  await DifferentiatedCalculationDatabaseHelper.getPermitFeeFloorArea(projectName);
 
 // First, check all floors in costPricingTable are in permitFeeFloorAreas and match area
         if (permitFeeFloorAreas.isNotEmpty) {
@@ -120,7 +120,7 @@ Future<Map<String, dynamic>> getFloorRanges(String projectName, int startingFloo
 
 
 Future<Map<int, double>> getFloorNumberToAreaMap(String projectName) async {
-  final List<ProjectTableData> projectData = await CompleteCalculationDatabaseHelper.getCostPricingData(projectName);
+  final List<ProjectTableData> projectData = await DifferentiatedCalculationDatabaseHelper.getCostPricingData(projectName);
   final Map<int, double> floorNumberToAreaMap = {};
 
   for (int i = 0; i < projectData.length; i++) {
@@ -419,7 +419,7 @@ class _FloorRangesPageState extends State<FloorRangesPage> {
                           }
                           else
                           {
-                            await CompleteCalculationDatabaseHelper.deletePermitFeeDataByProjectName(projectName1);
+                            await DifferentiatedCalculationDatabaseHelper.deletePermitFeeDataByProjectName(projectName1);
                             NavigationService().navigateToScreen(
                               PermitFeeInputs(
                                 givenProjectName: widget.givenProjectName,
@@ -572,7 +572,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
   void checkPermitFeeData() async {
     List<PermitFeeSegmentPricingData> data = await
-        CompleteCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan(
+        DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan(
         widget.givenProjectName, 1);
     setState(() {
       hasData = data.isNotEmpty;
@@ -585,7 +585,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
   }
 
   Future<void> _getMaxFloorNumber() async {
-   // maxFloorInPermitFee = (await CompleteCalculationDatabaseHelper
+   // maxFloorInPermitFee = (await DifferentiatedCalculationDatabaseHelper
     // .getMaxFloorNumberByProject(projectName1))!;
   /*  setState(() {
       // Update any UI that depends on maxFloor
@@ -610,12 +610,12 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
     // Retrieve the data from the StartingSimilar table in database
     PermitFeeStartingSimilarTableData? permitFeeStartingSimilarTableSegmentData = await
-    CompleteCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
+    DifferentiatedCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
         projectName1, feePlanValue, permitFeeSegmentNumber);
 
     // Loop through the data and update the unitCost values for the other floors with the same segmentNumber
     List<PermitFeeSegmentPricingData> permitFeeSegmentPricingDataByFeePlan = await
-    CompleteCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan(projectName1, feePlanValue);
+    DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan(projectName1, feePlanValue);
     // startingFloor Is a starting floor number but i- in the following lines is the number of
     // row in the price table shown in the screen
     int? stf = permitFeeStartingSimilarTableSegmentData?.permitFeeStartingSimilarTableStartingFloor;
@@ -723,8 +723,8 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
       int permitFeeStartingSimilarTableNumberOfSegments,  double permitFeeStartingSimilarTableFeePercentage,
       double permitFeeStartingSimilarTableFeePerMeter) 
   async {
-    await CompleteCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(PermitFeeStartingSimilarTableData(
-      permitFeeStartingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
+    await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(PermitFeeStartingSimilarTableData(
+      permitFeeStartingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
       permitFeeStartingSimilarTableProjectName: projectName1,
       permitFeeStartingSimilarTableSegmentNumber: permitFeeStartingSimilarTableSegmentNumber,
       permitFeeStartingSimilarTableStartingFloor:  permitFeeStartingSimilarTableStartingFloor,
@@ -740,7 +740,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
   void saveCurrentSegmentOfFeeTableStartingFloor(int segmentNumber2) async {
     // Retrieve existing data
     PermitFeeStartingSimilarTableData? data =
-    await CompleteCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
+    await DifferentiatedCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
         projectName1, permitFeePlanValue, segmentNumber2);
 
     final similarFloor = feeSimilarFloorController.text.isNotEmpty
@@ -763,10 +763,10 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
 
     // Insert or update
-    await CompleteCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(
+    await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(
       PermitFeeStartingSimilarTableData(
         permitFeeStartingSimilarTableId:
-        await CompleteCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
+        await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
         permitFeeStartingSimilarTableProjectName: projectName1,
         permitFeeStartingSimilarTableSegmentNumber:
         int.parse(permitFeeTableData[segmentNumber2 - 1].name.split(' ')[4]),
@@ -781,9 +781,9 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
     // Insert or update fee segments
     for (int i = 0; i < permitFeeTableData.length; i++) {
-      await CompleteCalculationDatabaseHelper.insertOrUpdatePermitFeeSegmentPricingData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeSegmentPricingData(
         PermitFeeSegmentPricingData(
-          permitFeeSegmentPricingTableId: await CompleteCalculationDatabaseHelper.getNextPermitFeeSegmentPricingTableId(),
+          permitFeeSegmentPricingTableId: await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeSegmentPricingTableId(),
           permitFeeSegmentPricingTableProjectName: projectName1,
           permitFeeSegmentPricingTableSegmentNumber:
           int.parse(permitFeeTableData[i].name.split(' ')[4].trim()),
@@ -816,14 +816,14 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
   async { // saving data with same segment numbers, this Happens just for the row that has a setting icon
     // Saving data for starting similar data table
     PermitFeeStartingSimilarTableData? data = await
-       CompleteCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
+       DifferentiatedCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
         projectName1, permitFeePlanValue, segmentNumber2);
     // If StartingSimilar data is not null, set the text of the corresponding text fields and toggle buttons
     if (data != null)
     { print('data.is not null ');
-      await CompleteCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(
           PermitFeeStartingSimilarTableData(
-        permitFeeStartingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
+        permitFeeStartingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
         permitFeeStartingSimilarTableProjectName: projectName1,
         permitFeeStartingSimilarTableSegmentNumber: int.parse(permitFeeTableData[segmentNumber2 - 1].name.split(' ')[4]),
         permitFeeStartingSimilarTableStartingFloor:  startingFloor,
@@ -853,9 +853,9 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
       print('_pppermitFeePercentageController.text '
           '${double.parse(_permitFeePercentageController.text)}');
 
-      await CompleteCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(
           PermitFeeStartingSimilarTableData(
-        permitFeeStartingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
+        permitFeeStartingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
         permitFeeStartingSimilarTableProjectName: projectName1,
         permitFeeStartingSimilarTableSegmentNumber: int.parse(permitFeeTableData[segmentNumber2 - 1].name.split(' ')[4]),
         permitFeeStartingSimilarTableStartingFloor:  startingFloor,
@@ -876,8 +876,8 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
     for (int i = 0; i < permitFeeTableData.length; i++)
     {
-      await CompleteCalculationDatabaseHelper.insertOrUpdatePermitFeeSegmentPricingData(PermitFeeSegmentPricingData(
-        permitFeeSegmentPricingTableId: await CompleteCalculationDatabaseHelper.getNextPermitFeeSegmentPricingTableId(),
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeSegmentPricingData(PermitFeeSegmentPricingData(
+        permitFeeSegmentPricingTableId: await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeSegmentPricingTableId(),
         permitFeeSegmentPricingTableProjectName: projectName1,
         permitFeeSegmentPricingTableSegmentNumber :int.parse(permitFeeTableData[i].name.split(' ')[4].trim()),
         permitFeeSegmentPricingTableFloorNumber: int.parse(permitFeeTableData[i].name.split(' ')[1].trim()),
@@ -902,12 +902,12 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
        async {
 
     // Retrieve the data associated with project name and cost-price plan value
-    List<ProjectTableData> retrievedPriceTableData = await CompleteCalculationDatabaseHelper.
+    List<ProjectTableData> retrievedPriceTableData = await DifferentiatedCalculationDatabaseHelper.
       getCostPricingDataByCpp(projectName, cppValue);
 
     int segmentNumber = retrievedPriceTableData[0].costPricingTableSegmentNumber;
 
-    final ProjectStartingSimilarTableData? projectStartingSimilarData = await CompleteCalculationDatabaseHelper.
+    final ProjectStartingSimilarTableData? projectStartingSimilarData = await DifferentiatedCalculationDatabaseHelper.
             getStartingSimilarTableSegmentData(projectName, cppValue, segmentNumber);
     numberOfSegmentsController.text = projectStartingSimilarData!.startingSimilarTableNumberOfSegments.toString();
     numberOfSegmentsSaved = projectStartingSimilarData.startingSimilarTableNumberOfSegments;
@@ -960,7 +960,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
   Future<void> permitFeeCalculationForEachSegment()
     async {
-    int nextId = await CompleteCalculationDatabaseHelper.getNextPermitFeeSegmentPricingTableId();
+    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeSegmentPricingTableId();
     for (int i = 0; i < permitFeeTableData.length; i++) {
       double segmentArea = permitFeeTableData[i].textField2Controller.text.isNotEmpty
           ? double.parse(permitFeeTableData[i].textField2Controller.text)
@@ -975,7 +975,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
       int floorNumber = int.parse(permitFeeTableData[i].name.split(' ')[1]);
       int segmentNumber = int.parse(permitFeeTableData[i].name.split(' ')[4]);
-      await CompleteCalculationDatabaseHelper.insertOrUpdatePermitFeeSegmentPricingData(PermitFeeSegmentPricingData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeSegmentPricingData(PermitFeeSegmentPricingData(
         permitFeeSegmentPricingTableId: nextId++,
         permitFeeSegmentPricingTableProjectName: projectName1,
         permitFeeSegmentPricingTableSegmentNumber: segmentNumber,
@@ -988,7 +988,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
       // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
       List<Map<String, dynamic>> data = await
-      CompleteCalculationDatabaseHelper.fetchPermitFeeStartingSimilarTableData(projectName1,
+      DifferentiatedCalculationDatabaseHelper.fetchPermitFeeStartingSimilarTableData(projectName1,
           permitFeePlanValue, startingFloor);
       bool isDataFound = false;
       for (int j = 0; j < data.length; j++) {
@@ -1000,10 +1000,10 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
         }
       }
       if (!isDataFound) {
-        await CompleteCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData
+        await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData
           (PermitFeeStartingSimilarTableData(
           permitFeeStartingSimilarTableId:
-          await CompleteCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
+          await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
           permitFeeStartingSimilarTableProjectName: projectName1,
           permitFeeStartingSimilarTableSegmentNumber: segmentNumber ,
           permitFeeStartingSimilarTableStartingFloor:  startingFloor,
@@ -1065,7 +1065,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
   }
 
 /*  Future<void> profitCalculationForEachSegment() async {
-    int nextId = await CompleteCalculationDatabaseHelper.getNextProjectId();
+    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
     for (int i = 0; i < priceTableData.length; i++) {
       double segmentArea = priceTableData[i].textField2Controller.text.isNotEmpty
           ? double.parse(priceTableData[i].textField2Controller.text)
@@ -1090,7 +1090,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
       int floor = int.parse(priceTableData[i].name.split(' ')[1]);
       int segment = int.parse(priceTableData[i].name.split(' ')[3]);
-      await CompleteCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
         costPricingTableProjectId: nextId++,
         costPricingTableProjectName: projectName1,
         costPricingTableCpp: cppValue,
@@ -1108,7 +1108,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
       // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
 
-      List<Map<String, dynamic>> data = await CompleteCalculationDatabaseHelper.fetchProjectStartingSimilarData(
+      List<Map<String, dynamic>> data = await DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
           projectName1,cppValue, startingFloor);
       bool isDataFound = false;
       for (int j = 0; j < data.length; j++) {
@@ -1119,9 +1119,9 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
         }
       }
       if (!isDataFound) {
-        await CompleteCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
+        await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
           (ProjectStartingSimilarTableData(
-          startingSimilarTableId: await CompleteCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
+          startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
           startingSimilarTableProjectName: projectName1,
           startingSimilarTableCpp: cppValue,
           startingSimilarTableStartingFloor: startingFloor,
@@ -1147,7 +1147,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
   Future<void> checkPermitFeeVisibility() async {
     String project_ = projectName1;
     Map<String, int?> maxValues = await
-       CompleteCalculationDatabaseHelper.getMaxFeePlanFloorNumberByProjectName(project_);
+       DifferentiatedCalculationDatabaseHelper.getMaxFeePlanFloorNumberByProjectName(project_);
 
     int maxFeePlanNumber = maxValues['maxFeePlan'] ?? 1;
 
@@ -1158,7 +1158,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
   }
 
   void retrieveRowByCondition(String projectName, int permitFeePlanValue) async {
-    //  await CompleteCalculationDatabaseHelper.retriveRowByCondition(projectName, feeSegmentValue);
+    //  await DifferentiatedCalculationDatabaseHelper.retriveRowByCondition(projectName, feeSegmentValue);
   }
 
 
@@ -1167,13 +1167,13 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
     // Retrieve the data associated with project name and cpp value
     List<PermitFeeSegmentPricingData> retrievedPermitFeeTableData = await
-      CompleteCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan
+      DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan
       (projectName, permitFeePlanValue);
 
     int segmentNumber = retrievedPermitFeeTableData[0].permitFeeSegmentPricingTableSegmentNumber;
     
     final PermitFeeStartingSimilarTableData? projectStartingSimilarData =
-      await CompleteCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData
+      await DifferentiatedCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData
         (projectName, permitFeePlanValue, segmentNumber);
 
     numberOfSegmentsController.text =
@@ -1666,7 +1666,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
                                         },
                                       );
                                       if (shouldDelete == true) {
-                                     await   CompleteCalculationDatabaseHelper.deletePermitFeePlan
+                                     await   DifferentiatedCalculationDatabaseHelper.deletePermitFeePlan
                                        (projectName1, permitFeePlanValue);
                                       permitFeePlanValue--;
                                       if (permitFeePlanValue > 0) {
@@ -2678,7 +2678,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
                                                         );
                 
                                                         if (isValid) {
-                                                          CompleteCalculationDatabaseHelper.deletePermitFeePlan(
+                                                          DifferentiatedCalculationDatabaseHelper.deletePermitFeePlan(
                                                               projectName1, permitFeePlanValue);
                                                           permitFeeTableData.clear();
                                                           await checkPermitFeeVisibility();
@@ -3606,7 +3606,7 @@ class FeeChangeRateDialogState extends State<FeeChangeRateDialog> {
   async {
     // Retrieve the project starting similar data from the database
     PermitFeeStartingSimilarTableData? data = await
-         CompleteCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
+         DifferentiatedCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
         widget.permitFeeTableProjectName, widget.permitFeeTableFeePlanNumber,
              widget.permitFeeTableSegmentNumber);
 

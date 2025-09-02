@@ -1,4 +1,4 @@
-import 'package:construction_profit_calculator_english/simple_calc_page.dart';
+import 'package:construction_profit_calculator_english/uniformPricing_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'database.dart';
@@ -122,7 +122,7 @@ class _SwipeDetectorState extends State<SwipeDetector> {
                 onPressed: () async {
                   if (isReviewMode) {
                     NavigationService().navigateToScreen(
-                      const SimpleCalculationPage1(givenSimpleProjectName: 'wwmm'),
+                      const UniformCalculationPage1(givenSimpleProjectName: 'wwmm'),
                       arguments: 'wwmm',
                     );
                   } else {
@@ -136,7 +136,7 @@ class _SwipeDetectorState extends State<SwipeDetector> {
                   backgroundColor: Colors.blue,
                 ),
                 child: const Text(
-                  ' Simple Calculation ',
+                  ' Uniform Pricing ',
                   style: TextStyle(
                     fontSize: 20,
                     color: Colors.white,
@@ -147,11 +147,11 @@ class _SwipeDetectorState extends State<SwipeDetector> {
                 onPressed: () async {
                   if (isReviewMode) {
                     final projectData = Provider.of<ProjectData>(context, listen: false);
-                    await CompleteCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
-                    await CompleteCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
-                    final projectNames = await CompleteCalculationDatabaseHelper.getAllProjectNames();
+                    await DifferentiatedCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
+                    await DifferentiatedCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
+                    final projectNames = await DifferentiatedCalculationDatabaseHelper.getAllProjectNames();
                     if (projectNames.contains("_oozz")) {
-                      await CompleteCalculationDatabaseHelper.deleteProjectOfCompleteCalculationDatabase("_oozz");
+                      await DifferentiatedCalculationDatabaseHelper.deleteProjectOfDifferentiatedCalculationDatabase("_oozz");
                     }
                     projectData.projectNameList.clear();
                     projectData.setProjectName('_oozz');
@@ -170,7 +170,7 @@ class _SwipeDetectorState extends State<SwipeDetector> {
                   backgroundColor: Colors.blue,
                 ),
                 child: const Text(
-                  ' Complete Calculation ',
+                  ' Differentiated Pricing ',
                   style: TextStyle(
                     fontSize: 20,
                     color: Colors.white,

@@ -85,7 +85,7 @@ class _LandInputsState extends State<LandInputs> {
   void checkBasicData()
   async {
     final projectBasicData = await
-       CompleteCalculationDatabaseHelper.getProjectBasicData(projectName1);
+       DifferentiatedCalculationDatabaseHelper.getProjectBasicData(projectName1);
     if (projectBasicData.isNotEmpty)
     {
       // Assign the retrieved data to associated variables
@@ -804,7 +804,7 @@ class _LandInputsState extends State<LandInputs> {
                                         int.tryParse(firstFloorNumberController.text) != null
                                     ) {
                 
-                                      await CompleteCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
+                                      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
                                         projectName1,
                                         double.parse(landAreaController.text),
                                         double.parse(landPricePerMeterController.text),
@@ -813,9 +813,9 @@ class _LandInputsState extends State<LandInputs> {
                                       );
                 
                                       // Save the project basic data to the database
-                                     /* await CompleteCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
+                                     /* await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
                                         ProjectBasicData(
-                                          projectBasicTableId: await CompleteCalculationDatabaseHelper.getNextProjectBasicId(),
+                                          projectBasicTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectBasicId(),
                                           projectBasicTableProjectName: projectName1,
                                           projectBasicTableLandArea: double.parse(landAreaController.text),
                                           projectBasicTableLandPricePerMeter: double.parse(landPricePerMeterController.text),
@@ -834,7 +834,7 @@ class _LandInputsState extends State<LandInputs> {
                                         int differenceStartingFloor = givenStartingFloor1 - int.parse(firstFloorNumberController.text.replaceAll(',', ''));
                 
                                         // Update the starting floor for the rows with the matching project name
-                                        await CompleteCalculationDatabaseHelper.updateStartingFloorForInTableStartingSimilar(
+                                        await DifferentiatedCalculationDatabaseHelper.updateStartingFloorForInTableStartingSimilar(
                                             startingFloorProjectName, differenceStartingFloor);
                                       }*/
                 
@@ -908,7 +908,7 @@ class _LandInputsState extends State<LandInputs> {
                 
                                                   TextSpan(
                                                     text: '\nSimilar to the Simple Calculation part of the app, this part called '
-                                                        'Complete Calculation is a financial calculator specifically designed '
+                                                        'Differentiated Pricing is a financial calculator specifically designed '
                                                         'for feasibility studies and analyzing the cost benefits of constructing a building. '
                                                         '\n\nUnlike the simple calculation, this tool has a differentiated pricing model '
                                                         'that allows you to input varying construction cost, '
