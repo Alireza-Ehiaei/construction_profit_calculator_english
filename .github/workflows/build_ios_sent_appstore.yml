@@ -6,8 +6,6 @@ jobs:
     runs-on: macos-15
     env:
       MD_APPLE_SDK_ROOT: /Applications/Xcode.app
-      CODE_SIGNING_ALLOWED: YES
-      CODE_SIGN_STYLE: Manual
       DEVELOPMENT_TEAM: AHVM2Z8TDL
     steps:
       - name: Checkout repository
@@ -68,23 +66,14 @@ jobs:
         with:
           xcode-version: '16'
 
-      - name: Verify Xcode and iOS SDK
+      - name: Verify Xcode and SDK
         run: |
           sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
           xcodebuild -version > xcode_info.txt
-          xcodebuild -showsdks > xcode_info.txt
+          xcodebuild -showsdks >> xcode_info.txt
           xcrun simctl runtime list >> xcode_info.txt
-          echo "Available SDKs before download attempt:"
-          xcodebuild -showsdks
-          for i in {1..3}; do
-            echo "Attempt $i to download iOS SDK"
-            sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 && break
-            cat sdk_install_log.txt
-            sleep 5
-          done
-          echo "Available SDKs after download attempt:"
+          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
           xcodebuild -showsdks >> sdk_install_log.txt
-          xcodebuild -showsdks | grep -E 'iphoneos18\.[0-9]+' || echo "No iOS 18.x SDK found, proceeding with latest available SDK"
         env:
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
@@ -111,14 +100,24 @@ jobs:
 
       - name: Generate Flutter iOS config
         run: |
-          flutter build ios --config-only --no-codesign > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
+          flutter build ios --config-only --no-codesign --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
           ls -l ios/Flutter/
 
-      - name: Clean DerivedData and Pods cache
+      - name: Clean DerivedData
+        run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
+
+      - name: Update iOS deployment target
         run: |
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
-          rm -rf ios/Pods
-          rm -f ios/Podfile.lock
+          echo "Updating iOS deployment target to 15.0"
+          sed -i '' 's/platform :ios, '\''18.0'\''/platform :ios, '\''15.0'\''/' ios/Podfile
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 18.0/IPHONEOS_DEPLOYMENT_TARGET = 15.0/' ios/Runner.xcodeproj/project.pbxproj
+          plutil -replace MinimumOSVersion -string "15.0" ios/Runner/Info.plist
+          echo "Podfile content:"
+          cat ios/Podfile
+          echo "project.pbxproj IPHONEOS_DEPLOYMENT_TARGET:"
+          grep IPHONEOS_DEPLOYMENT_TARGET ios/Runner.xcodeproj/project.pbxproj
+          echo "Info.plist MinimumOSVersion:"
+          plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
 
       - name: Install CocoaPods dependencies
         run: |
@@ -126,19 +125,26 @@ jobs:
           pod install --repo-update > pod_install_log.txt 2>&1 || { cat pod_install_log.txt; exit 1; }
           cd ..
 
-      - name: Validate bundle identifier
+      - name: Clean Xcode project
         run: |
           cd ios
-          echo "=== Debugging PRODUCT_BUNDLE_IDENTIFIER in project.pbxproj ==="
-          grep -C 2 "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj > bundle_id_debug.txt
-          cat bundle_id_debug.txt
-          BUNDLE_ID=$(grep "PRODUCT_BUNDLE_IDENTIFIER = com.tech4dev.constructionprofitcalculator;" Runner.xcodeproj/project.pbxproj | head -n 1 | sed 's/.*PRODUCT_BUNDLE_IDENTIFIER = \([^;]*\);/\1/' | tr -d ' \t')
-          echo "Bundle ID from project.pbxproj: $BUNDLE_ID"
-          if [ "$BUNDLE_ID" != "com.tech4dev.constructionprofitcalculator" ]; then
-            echo "Error: Bundle ID in project.pbxproj ($BUNDLE_ID) does not match expected com.tech4dev.constructionprofitcalculator"
-            exit 1
-          fi
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
           cd ..
+
+      - name: Force Xcode to use available iOS SDK
+        run: |
+          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+          sudo xcodebuild -runFirstLaunch
+          defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
+
+      - name: Create temporary keychain
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
 
       - name: Import Apple certificate
         env:
@@ -146,13 +152,10 @@ jobs:
           CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-          security find-identity -v -p codesigning build.keychain | grep "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)" || { echo "Error: Certificate not found"; exit 1; }
+          security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
 
       - name: Install provisioning profile
         env:
@@ -161,10 +164,6 @@ jobs:
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
-          if [ ! -f ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision ]; then
-            echo "Error: Provisioning profile installation failed"
-            exit 1
-          fi
           echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
@@ -198,6 +197,20 @@ jobs:
           EOL
           cd ..
 
+      - name: Validate bundle identifier
+        run: |
+          cd ios
+          echo "=== Debugging PRODUCT_BUNDLE_IDENTIFIER in project.pbxproj ==="
+          grep -C 2 "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj > bundle_id_debug.txt
+          cat bundle_id_debug.txt
+          BUNDLE_ID=$(grep "PRODUCT_BUNDLE_IDENTIFIER = com.tech4dev.constructionprofitcalculator;" Runner.xcodeproj/project.pbxproj | head -n 1 | sed 's/.*PRODUCT_BUNDLE_IDENTIFIER = \([^;]*\);/\1/' | tr -d ' \t')
+          echo "Bundle ID from project.pbxproj: $BUNDLE_ID"
+          if [ "$BUNDLE_ID" != "com.tech4dev.constructionprofitcalculator" ]; then
+            echo "Error: Bundle ID in project.pbxproj ($BUNDLE_ID) does not match expected com.tech4dev.constructionprofitcalculator"
+            exit 1
+          fi
+          cd ..
+
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
@@ -205,8 +218,10 @@ jobs:
           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
+            --release \
             --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+            --no-tree-shake-icons \
+            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
@@ -266,9 +281,12 @@ jobs:
             xcode_info.txt
             sdk_install_log.txt
             pod_install_log.txt
+            xcode_clean_log.txt
             build_log.txt
             bundle_id_debug.txt
+            profile_info.plist
             fastlane_log.txt
+            fastlane/report.xml
             flutter_config_log.txt
             app-ipa/*.ipa
 
