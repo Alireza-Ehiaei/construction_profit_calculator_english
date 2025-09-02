@@ -1,4 +1,4 @@
-```yaml
+
 name: Build and Upload iOS IPA to App Store Connect
 
 on:
@@ -243,4 +243,4 @@ jobs:
             fastlane_log.txt
             fastlane/report.xml
             app-ipa/*.ipa
-```
+
