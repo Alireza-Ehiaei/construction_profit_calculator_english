@@ -1,14 +1,16 @@
-name: Build and Upload iOS IPA to App Store Connect
+name: Test Flutter iOS IAP Logic
+
 on:
   workflow_dispatch:
+
 jobs:
-  build-and-upload:
+  test-iap:
     runs-on: macos-15
     env:
       MD_APPLE_SDK_ROOT: /Applications/Xcode.app
-      DEVELOPMENT_TEAM: AHVM2Z8TDL
+
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Ensure SceneDelegate.swift exists
@@ -17,7 +19,6 @@ jobs:
           cat > ios/Runner/SceneDelegate.swift << EOL
           import UIKit
           import Flutter
-
           class SceneDelegate: FlutterSceneDelegate {
             override func scene(
               _ scene: UIScene,
@@ -38,7 +39,6 @@ jobs:
           cat > ios/Runner/AppDelegate.swift << EOL
           import UIKit
           import Flutter
-
           @UIApplicationMain
           @objc class AppDelegate: FlutterAppDelegate {
             override func application(
@@ -48,7 +48,6 @@ jobs:
               GeneratedPluginRegistrant.register(with: self)
               return super.application(application, didFinishLaunchingWithOptions: launchOptions)
             }
-
             override func application(
               _ application: UIApplication,
               configurationForConnecting connectingSceneSession: UISceneSession,
@@ -61,63 +60,60 @@ jobs:
           }
           EOL
 
-      - name: Set up Xcode 16
+      - name: Ensure Entitlements File
+        run: |
+          mkdir -p ios/Runner
+          cat > ios/Runner/Runner.entitlements << EOL
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>com.apple.developer.in-app-payments</key>
+            <array>
+              <string>com.tech4dev.constructionprofitcalculator</string>
+            </array>
+          </dict>
+          </plist>
+          EOL
+
+      - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16'
+          xcode-version: '16.0'
 
-      - name: Verify Xcode and SDK
+      - name: Ensure iOS 18.0 SDK
         run: |
-          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-          xcodebuild -version > xcode_info.txt
-          xcodebuild -showsdks >> xcode_info.txt
-          xcrun simctl runtime list >> xcode_info.txt
-          sudo xcodebuild -downloadPlatform ios > sdk_install_log.txt 2>&1 || { cat sdk_install_log.txt; exit 1; }
-          xcodebuild -showsdks >> sdk_install_log.txt
+          for i in {1..3}; do
+            echo "Attempt $i to download iOS 18.0 SDK"
+            sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 && break
+            cat sdk_install_log.txt
+            sleep 5
+          done
+          xcodebuild -showsdks | grep iphoneos18.0 || { echo "iOS 18.0 SDK not found"; xcrun simctl list; cat sdk_install_log.txt; exit 1; }
         env:
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2.12.0
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'
+          flutter-version: '3.24.0'
           channel: 'stable'
-          architecture: arm64
           cache: true
-        env:
-          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
-
-      - name: Verify Flutter version
-        run: |
-          echo "Verifying Flutter version 3.29.3"
-          flutter --version > flutter_version_log.txt 2>&1 || { cat flutter_version_log.txt; exit 1; }
+          cache-key: flutter-3.24.0
+          cache-path: /Users/runner/hostedtoolcache/flutter
 
       - name: Install dependencies
-        run: flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
+        run: |
+          flutter pub get > pub_get_log.txt 2>&1 || { cat pub_get_log.txt; exit 1; }
 
-      - name: Flutter clean
-        run: flutter clean
+      - name: Generate mocks
+        run: |
+          flutter pub run build_runner build --delete-conflicting-outputs > mock_gen_log.txt 2>&1 || { cat mock_gen_log.txt; exit 1; }
 
       - name: Generate Flutter iOS config
         run: |
-          flutter build ios --config-only --no-codesign > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
+          flutter build ios --config-only --no-codesign --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
           ls -l ios/Flutter/
-
-      - name: Clean DerivedData
-        run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
-
-      - name: Update iOS deployment target
-        run: |
-          echo "Ensuring iOS deployment target is 15.0"
-          sed -i '' 's/platform :ios, '\''18.0'\''/platform :ios, '\''15.0'\''/' ios/Podfile
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 18.0/IPHONEOS_DEPLOYMENT_TARGET = 15.0/' ios/Runner.xcodeproj/project.pbxproj
-          plutil -replace MinimumOSVersion -string "15.0" ios/Runner/Info.plist
-          echo "Podfile content:"
-          cat ios/Podfile
-          echo "project.pbxproj IPHONEOS_DEPLOYMENT_TARGET:"
-          grep IPHONEOS_DEPLOYMENT_TARGET ios/Runner.xcodeproj/project.pbxproj
-          echo "Info.plist MinimumOSVersion:"
-          plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
 
       - name: Install CocoaPods dependencies
         run: |
@@ -128,14 +124,8 @@ jobs:
       - name: Clean Xcode project
         run: |
           cd ios
-          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; exit 1; }
+          xcodebuild clean -workspace Runner.xcworkspace -scheme Runner > xcode_clean_log.txt 2>&1 || { cat xcode_clean_log.txt; echo "Clean failed, proceeding anyway"; }
           cd ..
-
-      - name: Force Xcode to use available iOS SDK
-        run: |
-          sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-          sudo xcodebuild -runFirstLaunch
-          defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
 
       - name: Create temporary keychain
         env:
@@ -148,127 +138,65 @@ jobs:
 
       - name: Import Apple certificate
         env:
-          IOS_DISTRIBUTION_P12_V2: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
-          CERTIFICATE_PASSWORD_V2: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
+          SIGNING_CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_P12_V2 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD_V2 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          echo "$IOS_DISTRIBUTION_P12_V2" | base64 --decode > certificate.p12
-          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD_V2" -T /usr/bin/codesign
+          echo "$SIGNING_CERTIFICATE_P12" | base64 --decode > certificate.p12
+          if [ ! -s certificate.p12 ]; then
+            echo "Error: certificate.p12 is empty or invalid"
+            exit 1
+          fi
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
 
       - name: Install provisioning profile
         env:
-          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+          PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
-          echo "Provisioning profile installed successfully"
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-
-      - name: Generate ExportOptions.plist
-        run: |
-          cd ios
-          cat > ExportOptions.plist << EOL
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>signingCertificate</key>
-            <string>iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.tech4dev.constructionprofitcalculator</key>
-              <string>ConstructionProfitCalculatorProvisionProfile</string>
-            </dict>
-            <key>teamID</key>
-            <string>AHVM2Z8TDL</string>
-            <key>stripSwiftSymbols</key>
-            <true/>
-            <key>thinning</key>
-            <string>none</string>
-          </dict>
-          </plist>
-          EOL
-          cd ..
-
-      - name: Validate bundle identifier
-        run: |
-          cd ios
-          echo "=== Debugging PRODUCT_BUNDLE_IDENTIFIER in project.pbxproj ==="
-          grep -C 2 "PRODUCT_BUNDLE_IDENTIFIER" Runner.xcodeproj/project.pbxproj > bundle_id_debug.txt
-          cat bundle_id_debug.txt
-          BUNDLE_ID=$(grep "PRODUCT_BUNDLE_IDENTIFIER = com.tech4dev.constructionprofitcalculator;" Runner.xcodeproj/project.pbxproj | head -n 1 | sed 's/.*PRODUCT_BUNDLE_IDENTIFIER = \([^;]*\);/\1/' | tr -d ' \t')
-          echo "Bundle ID from project.pbxproj: $BUNDLE_ID"
-          if [ "$BUNDLE_ID" != "com.tech4dev.constructionprofitcalculator" ]; then
-            echo "Error: Bundle ID in project.pbxproj ($BUNDLE_ID) does not match expected com.tech4dev.constructionprofitcalculator"
+          echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          if [ ! -s profile.mobileprovision ]; then
+            echo "Error: profile.mobileprovision is empty or invalid"
             exit 1
           fi
-          cd ..
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorProvisionProfile.mobileprovision
+          echo "Provisioning profile installed successfully"
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || { echo "Failed to list provisioning profiles"; exit 1; }
 
-      - name: Build IPA
+      - name: Debug Code Signing Setup
         run: |
-          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
-          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
-          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
-          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
-          security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
-          flutter build ipa \
-            --release \
-            --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+          security find-identity -v -p codesigning build.keychain
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No provisioning profiles found"
+
+
+      - name: Build iOS IPA
+        env:
+          FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
+          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
+          FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
+        run: |
+          security list-keychains -d user -s build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-        env:
-          DEVELOPMENT_TEAM: AHVM2Z8TDL
-          PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
-          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
-      - name: Set up Ruby for Fastlane
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-
-      - name: Install Fastlane
-        run: gem install fastlane
-
-      - name: Set up Fastlane configuration
+      - name: Run IAP Unit Tests
         run: |
-          mkdir -p ./fastlane
-          cat > ./fastlane/Fastfile << 'EOL'
-          default_platform(:ios)
-          platform :ios do
-            lane :upload_to_app_store_connect do
-              app_store_connect_api_key(
-                key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-                issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-                key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
-                is_key_content_base64: true
-              )
-              deliver(
-                ipa: "./app-ipa/construction_profit_calculator_english.ipa",
-                skip_screenshots: true,
-                skip_metadata: true,
-                skip_app_version_update: true,
-                force: true,
-                precheck_include_in_app_purchases: false
-              )
-            end
-          end
-          EOL
+          flutter test test/iap_test.dart --verbose > test_log.txt 2>&1 || { cat test_log.txt; exit 1; }
 
-      - name: Run Fastlane to upload IPA
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
-        run: fastlane ios upload_to_app_store_connect > fastlane_log.txt 2>&1 || { cat fastlane_log.txt | grep -i "error:"; exit 1; }
+      - name: Run IAP Simulator Tests
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=18.0' test > xcode_test_log.txt 2>&1 || { cat xcode_test_log.txt; exit 1; }
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
 
       - name: Upload build log and IPA
         if: always()
@@ -276,21 +204,13 @@ jobs:
         with:
           name: build-log-and-ipa
           path: |
-            flutter_version_log.txt
             pub_get_log.txt
-            xcode_info.txt
-            sdk_install_log.txt
+            mock_gen_log.txt
+            flutter_config_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
+            sdk_install_log.txt
             build_log.txt
-            bundle_id_debug.txt
-            profile_info.plist
-            fastlane_log.txt
-            fastlane/report.xml
-            flutter_config_log.txt
+            test_log.txt
+            xcode_test_log.txt
             app-ipa/*.ipa
-
-      - name: Clean up keychain
-        if: always()
-        run: |
-          security delete-keychain build.keychain || true
