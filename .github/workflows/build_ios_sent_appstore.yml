@@ -177,7 +177,6 @@ jobs:
           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
-            --no-codesign \
             --export-options-plist=ios/ExportOptions.plist \
             --no-tree-shake-icons \
             --xcargs="CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=AHVM2Z8TDL" > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
