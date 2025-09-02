@@ -170,6 +170,17 @@ jobs:
           EOL
           cd ..
 
+      - name: Install provisioning profile
+        env:
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+        run: |
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          PROFILE_UUID=$(plutil -extract UUID xml1 -o - profile.mobileprovision | xmllint --xpath '//string/text()' -)
+          echo "Installing provisioning profile with UUID: $PROFILE_UUID"
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+      
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
