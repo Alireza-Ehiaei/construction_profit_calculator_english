@@ -176,9 +176,12 @@ jobs:
         run: |
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          PROFILE_UUID=$(plutil -extract UUID xml1 -o - profile.mobileprovision | xmllint --xpath '//string/text()' -)
-          echo "Installing provisioning profile with UUID: $PROFILE_UUID"
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+          if [ ! -f ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision ]; then
+            echo "Error: Provisioning profile installation failed"
+            exit 1
+          fi
+          echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
       
       - name: Build IPA
