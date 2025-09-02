@@ -178,8 +178,7 @@ jobs:
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           flutter build ipa \
             --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons \
-            --xcargs="CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=AHVM2Z8TDL" > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+            --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
