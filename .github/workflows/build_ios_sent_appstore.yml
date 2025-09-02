@@ -1,4 +1,3 @@
-
 name: Build and Upload iOS IPA to App Store Connect
 
 on:
@@ -33,6 +32,7 @@ jobs:
             }
           }
           EOL
+          ls -l ios/Runner/SceneDelegate.swift
 
       - name: Ensure AppDelegate.swift exists
         run: |
@@ -60,6 +60,7 @@ jobs:
             }
           }
           EOL
+          ls -l ios/Runner/AppDelegate.swift
 
       - name: Ensure Entitlements File
         run: |
@@ -76,6 +77,7 @@ jobs:
           </dict>
           </plist>
           EOL
+          ls -l ios/Runner/Runner.entitlements
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -178,7 +180,7 @@ jobs:
           security list-keychains -d user -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --no-tree-shake-icons --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
 
@@ -194,7 +196,7 @@ jobs:
       - name: Set up Fastlane configuration
         run: |
           mkdir -p ./fastlane
-          cat > ./fastlane/Fastfile << 'EOL'
+          cat > ./fastlane/Fastfile << EOL
           default_platform(:ios)
           platform :ios do
             lane :upload_to_app_store_connect do
@@ -243,4 +245,3 @@ jobs:
             fastlane_log.txt
             fastlane/report.xml
             app-ipa/*.ipa
-
