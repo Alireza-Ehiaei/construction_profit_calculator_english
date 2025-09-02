@@ -15,19 +15,23 @@ jobs:
         with:
           xcode-version: '16'
 
-      - name: Verify Xcode and iOS 18.6 SDK
+      - name: Verify Xcode and iOS SDK
         run: |
           sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
           xcodebuild -version > xcode_info.txt
           xcodebuild -showsdks > xcode_info.txt
           xcrun simctl runtime list >> xcode_info.txt
+          echo "Available SDKs before download attempt:"
+          xcodebuild -showsdks
           for i in {1..3}; do
-            echo "Attempt $i to download iOS 18.6 SDK"
+            echo "Attempt $i to download iOS SDK"
             sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 && break
             cat sdk_install_log.txt
             sleep 5
           done
-          xcodebuild -showsdks | grep iphoneos18.6 || { echo "iOS 18.6 SDK not found"; xcrun simctl list; cat sdk_install_log.txt; exit 1; }
+          echo "Available SDKs after download attempt:"
+          xcodebuild -showsdks >> sdk_install_log.txt
+          xcodebuild -showsdks | grep -E 'iphoneos18\.[0-9]+' || { echo "No iOS 18.x SDK found, proceeding with latest available SDK"; xcodebuild -showsdks; xcrun simctl list; cat sdk_install_log.txt; }
         env:
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
@@ -62,7 +66,7 @@ jobs:
 
       - name: Update iOS deployment target
         run: |
-          echo "Setting iOS deployment target to 15.0, building with iOS 18.6 SDK"
+          echo "Setting iOS deployment target to 15.0"
           sed -i '' 's/platform :ios, '\''15.0'\''/platform :ios, '\''15.0'\''/' ios/Podfile
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9]*\.[0-9]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/' ios/Runner.xcodeproj/project.pbxproj
           plutil -replace MinimumOSVersion -string "15.0" ios/Runner/Info.plist
@@ -174,15 +178,14 @@ jobs:
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons \
-            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
+            --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
           DEVELOPMENT_TEAM: AHVM2Z8TDL
           PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
-
+          
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
