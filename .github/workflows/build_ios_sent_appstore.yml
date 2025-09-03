@@ -79,13 +79,15 @@ jobs:
           EOL
           ls -l ios/Runner/Runner.entitlements
 
+      - name: Install xcodeproj gem
+        run: gem install xcodeproj
+
       - name: Add Files to Xcode Project
         run: |
-          cd ios
           echo "Adding SceneDelegate.swift and AppDelegate.swift to Xcode project"
           ruby -e "$(curl -fsSL https://raw.githubusercontent.com/CocoaPods/Xcodeproj/master/bin/xcodeproj)" <<RUBY
           require 'xcodeproj'
-          project_path = Dir.glob("*.xcodeproj").first
+          project_path = 'ios/Runner.xcodeproj'
           project = Xcodeproj::Project.open(project_path)
           target = project.targets.find { |t| t.name == 'Runner' }
           unless target
@@ -95,13 +97,12 @@ jobs:
           files = ['SceneDelegate.swift', 'AppDelegate.swift']
           files.each do |file|
             unless project.files.find { |f| f.path == file }
-              file_ref = project.new_file(file)
+              file_ref = project.new_file("Runner/#{file}")
               target.add_file_references([file_ref])
             end
           end
           project.save
           RUBY
-          cd ..
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -200,7 +201,6 @@ jobs:
           FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
           FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           security list-keychains -d user -s build.keychain
           security default-keychain -s build.keychain
