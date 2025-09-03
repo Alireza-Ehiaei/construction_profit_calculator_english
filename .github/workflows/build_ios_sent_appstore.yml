@@ -83,12 +83,24 @@ jobs:
         run: |
           cd ios
           echo "Adding SceneDelegate.swift and AppDelegate.swift to Xcode project"
-          xcodeproj=$(find . -name "*.xcodeproj" | head -n 1)
-          /usr/libexec/PlistBuddy -c "Add :objects:PBXSourcesBuildPhase:files array" "$xcodeproj/project.pbxproj"
-          /usr/libexec/PlistBuddy -c "Add :objects:PBXSourcesBuildPhase:files:0 dict" "$xcodeproj/project.pbxproj"
-          /usr/libexec/PlistBuddy -c "Set :objects:PBXSourcesBuildPhase:files:0:fileRef string SceneDelegate.swift" "$xcodeproj/project.pbxproj"
-          /usr/libexec/PlistBuddy -c "Add :objects:PBXSourcesBuildPhase:files:1 dict" "$xcodeproj/project.pbxproj"
-          /usr/libexec/PlistBuddy -c "Set :objects:PBXSourcesBuildPhase:files:1:fileRef string AppDelegate.swift" "$xcodeproj/project.pbxproj"
+          ruby -e "$(curl -fsSL https://raw.githubusercontent.com/CocoaPods/Xcodeproj/master/bin/xcodeproj)" <<RUBY
+          require 'xcodeproj'
+          project_path = Dir.glob("*.xcodeproj").first
+          project = Xcodeproj::Project.open(project_path)
+          target = project.targets.find { |t| t.name == 'Runner' }
+          unless target
+            puts "Error: Runner target not found"
+            exit 1
+          end
+          files = ['SceneDelegate.swift', 'AppDelegate.swift']
+          files.each do |file|
+            unless project.files.find { |f| f.path == file }
+              file_ref = project.new_file(file)
+              target.add_file_references([file_ref])
+            end
+          end
+          project.save
+          RUBY
           cd ..
 
       - name: Setup Xcode
