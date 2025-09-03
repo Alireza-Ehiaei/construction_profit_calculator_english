@@ -116,13 +116,50 @@ jobs:
           
           ruby add_files_to_xcode.rb
 
-      - name: Verify files in Xcode project
+      - name: Verify files were properly added to Xcode project
         run: |
-          xcodebuild -project ios/Runner.xcodeproj -list | grep -E "(SceneDelegate|AppDelegate)"
-            - name: Setup Xcode
-              uses: maxim-lobanov/setup-xcode@v1
-              with:
-                xcode-version: '16.0'
+          cat > verify_xcode_files.rb << 'RUBY'
+          #!/usr/bin/env ruby
+          
+          require 'xcodeproj'
+          
+          project_path = 'ios/Runner.xcodeproj'
+          project = Xcodeproj::Project.open(project_path)
+          target = project.targets.find { |t| t.name == 'Runner' }
+          
+          unless target
+            puts "Error: Runner target not found"
+            exit 1
+          end
+          
+          files_to_check = ['SceneDelegate.swift', 'AppDelegate.swift']
+          all_good = true
+          
+          files_to_check.each do |file|
+            # Check if file exists in project
+            file_ref = project.files.find { |f| f.path == file }
+            
+            if file_ref
+              puts "✓ #{file} found in project"
+              
+              # Check if file is linked to the target
+              in_target = target.source_build_phase.files_references.include?(file_ref)
+              if in_target
+                puts "✓ #{file} is linked to Runner target"
+              else
+                puts "✗ #{file} is NOT linked to Runner target"
+                all_good = false
+              end
+            else
+              puts "✗ #{file} NOT found in project"
+              all_good = false
+            end
+          end
+          
+          exit all_good ? 0 : 1
+          RUBY
+          
+          ruby verify_xcode_files.rb
       
       - name: Ensure iOS 18.0 SDK
         run: |
