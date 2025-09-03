@@ -259,12 +259,33 @@ jobs:
           FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
           FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
         run: |
+          # Proper keychain setup for GitHub Actions
+          security list-keychains -d user
           security list-keychains -d user -s build.keychain
+          security list-keychains -d user
+          
+          # Set default keychain and unlock it
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
+          
+          # Verify the keychain is properly set up
+          echo "Current default keychain:"
+          security default-keychain
+          echo "Keychain list:"
+          security list-keychains -d user
+          
+          # Verify code signing identity is available
+          echo "Available code signing identities:"
+          security find-identity -v -p codesigning build.keychain
+          
+          # Build the IPA
+          echo "Building IPA..."
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
+          
+          # Copy the IPA
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
+          echo "IPA built successfully"
 
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
