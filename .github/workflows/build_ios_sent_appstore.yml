@@ -91,11 +91,13 @@ jobs:
             exit 1
           end
           files = ['SceneDelegate.swift', 'AppDelegate.swift']
+          group = project.main_group['Runner'] || project.main_group.new_group('Runner', 'Runner')
           files.each do |file|
             unless project.files.find { |f| f.path == file }
-              file_ref = project.new_file("Runner/#{file}")
+              file_ref = group.new_file(file)
               target.add_file_references([file_ref])
-              target.add_file_to_build_phase(file_ref, target.source_build_phase)
+              build_phase = target.source_build_phase
+              build_phase.add_file_reference(file_ref)
               puts "Added #{file} to project and build phase"
             else
               puts "#{file} already exists in project"
