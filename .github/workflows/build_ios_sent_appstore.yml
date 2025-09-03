@@ -200,6 +200,7 @@ jobs:
           FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
           FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           security list-keychains -d user -s build.keychain
           security default-keychain -s build.keychain
