@@ -116,18 +116,64 @@ jobs:
           
           ruby add_files_to_xcode.rb
 
- 
-      - name: Ensure iOS 18.0 SDK
+      - name: Verify files were added to Xcode project
         run: |
-          for i in {1..3}; do
-            echo "Attempt $i to download iOS 18.0 SDK"
-            sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 && break
-            cat sdk_install_log.txt
-            sleep 5
-          done
-          xcodebuild -showsdks | grep iphoneos18.0 || { echo "iOS 18.0 SDK not found"; xcrun simctl list; cat sdk_install_log.txt; exit 1; }
-        env:
-          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
+          echo "Checking if files were properly added..."
+          
+          # Check physical existence
+          if [ -f "ios/Runner/SceneDelegate.swift" ] && [ -f "ios/Runner/AppDelegate.swift" ]; then
+            echo "✓ Both Swift files exist physically"
+          else
+            echo "✗ Swift files missing physically"
+            exit 1
+          fi
+          
+          # Check project file references
+          if grep -q "SceneDelegate.swift" ios/Runner.xcodeproj/project.pbxproj && \
+             grep -q "AppDelegate.swift" ios/Runner.xcodeproj/project.pbxproj; then
+            echo "✓ Both Swift files referenced in Xcode project"
+          else
+            echo "✗ Swift files missing from Xcode project"
+            exit 1
+          fi
+
+      - name: Set up Xcode 16
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
+
+      - name: Verify Xcode setup
+        run: |
+          echo "Xcode version: $(xcodebuild -version)"
+          echo "Available SDKs:"
+          xcodebuild -showsdks | grep -E "(iphoneos|ios-simulator)"
+
+      - name: Update iOS deployment target in Podfile
+        run: |
+          echo "Ensuring Podfile has iOS 18.0 deployment target"
+          
+          # Check if Podfile already has the correct platform
+          if ! grep -q "platform :ios, '18.0'" ios/Podfile; then
+            echo "Updating Podfile platform to 18.0"
+            sed -i '' "s/platform :ios, '15.0'/platform :ios, '18.0'/" ios/Podfile
+          fi
+          
+          # Check if post_install block needs updating
+          if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'" ios/Podfile; then
+            echo "Updating post_install IPHONEOS_DEPLOYMENT_TARGET to 18.0"
+            sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'/IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'/" ios/Podfile
+          fi
+          
+          echo "Podfile verification:"
+          grep -n "platform :ios" ios/Podfile
+          grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile
+
+      - name: Update Info.plist MinimumOSVersion
+        run: |
+          echo "Updating Info.plist MinimumOSVersion to 18.0"
+          plutil -replace MinimumOSVersion -string "18.0" ios/Runner/Info.plist
+          echo "Info.plist MinimumOSVersion:"
+          plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -138,6 +184,9 @@ jobs:
           cache: true
           cache-key: flutter-3.29.3
           cache-path: /Users/runner/hostedtoolcache/flutter
+
+      - name: Clean DerivedData
+        run: rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
       - name: Install dependencies
         run: |
@@ -273,7 +322,6 @@ jobs:
             flutter_config_log.txt
             pod_install_log.txt
             xcode_clean_log.txt
-            sdk_install_log.txt
             build_log.txt
             fastlane_log.txt
             fastlane/report.xml
