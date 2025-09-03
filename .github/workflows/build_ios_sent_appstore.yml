@@ -233,73 +233,74 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           security find-identity -v -p codesigning build.keychain | grep "AHVM2Z8TDL" || { echo "Certificate import failed"; exit 1; }
 
+    # Keep your existing steps up to the provisioning profile installation...
+
       - name: Install provisioning profile
         env:
-          PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
+          IOS_PROVISIONING_PROFILE_V2: ${{ secrets.IOS_PROVISIONING_PROFILE_V2 }}
         run: |
-          echo "$PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
-          if [ ! -s profile.mobileprovision ]; then
-            echo "Error: profile.mobileprovision is empty or invalid"
-            exit 1
-          fi
+          echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/ConstructionProfitCalculatorProvisionProfile.mobileprovision
+          
+          # Extract the UUID from the provisioning profile (CRITICAL STEP)
+          PROFILE_UUID=$(grep -a -A1 -E "UUID" profile.mobileprovision | grep -oE "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+          
+          if [ -z "$PROFILE_UUID" ]; then
+            echo "Error: Could not extract UUID from provisioning profile"
+            # Fallback to the known UUID filename if extraction fails
+            cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
+            echo "Used fallback UUID filename"
+          else
+            cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+            echo "Using extracted UUID: $PROFILE_UUID"
+          fi
+          
           echo "Provisioning profile installed successfully"
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || { echo "Failed to list provisioning profiles"; exit 1; }
-
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+      
       - name: Debug Code Signing Setup
         run: |
+          echo "=== Code Signing Debug ==="
           security find-identity -v -p codesigning build.keychain
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No provisioning profiles found"
-
-      - name: Build iOS IPA
-        env:
-          FLUTTER_XCODE_CODE_SIGN_STYLE: "Manual"
-          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
-          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "ConstructionProfitCalculatorProvisionProfile"
-          FLUTTER_XCODE_DEVELOPMENT_TEAM: "AHVM2Z8TDL"
+          echo "Provisioning profiles:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+          echo "Xcode version:"
+          xcodebuild -version
+      
+      - name: Build IPA
         run: |
-          # Proper keychain setup for GitHub Actions
-          security list-keychains -d user
-          security list-keychains -d user -s build.keychain
-          security list-keychains -d user
+          export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
+          export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
+          export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
+          export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
           
-          # Set default keychain and unlock it
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          flutter build ipa \
+            --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --no-tree-shake-icons \
+            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
           
-          # Verify the keychain is properly set up
-          echo "Current default keychain:"
-          security default-keychain
-          echo "Keychain list:"
-          security list-keychains -d user
-          
-          # Verify code signing identity is available
-          echo "Available code signing identities:"
-          security find-identity -v -p codesigning build.keychain
-          
-          # Build the IPA
-          echo "Building IPA..."
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
-          
-          # Copy the IPA
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
-          echo "IPA built successfully"
-
+        env:
+          DEVELOPMENT_TEAM: AHVM2Z8TDL
+          PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
+          MD_APPLE_SDK_ROOT: /Applications/Xcode.app
+      
+      # Continue with the rest of your successful workflow...
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
-
+      
       - name: Install Fastlane
         run: gem install fastlane
-
+      
       - name: Set up Fastlane configuration
         run: |
           mkdir -p ./fastlane
-          cat > ./fastlane/Fastfile << EOL
+          cat > ./fastlane/Fastfile << 'EOL'
           default_platform(:ios)
           platform :ios do
             lane :upload_to_app_store_connect do
@@ -320,19 +321,14 @@ jobs:
             end
           end
           EOL
-
+      
       - name: Run Fastlane to upload IPA
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
         run: fastlane ios upload_to_app_store_connect > fastlane_log.txt 2>&1 || { cat fastlane_log.txt | grep -i "error:"; exit 1; }
-
-      - name: Clean up keychain
-        if: always()
-        run: |
-          security delete-keychain build.keychain || true
-
+      
       - name: Upload build log and IPA
         if: always()
         uses: actions/upload-artifact@v4
@@ -347,3 +343,8 @@ jobs:
             fastlane_log.txt
             fastlane/report.xml
             app-ipa/*.ipa
+      
+      - name: Clean up keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
