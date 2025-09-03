@@ -85,30 +85,45 @@ jobs:
       - name: Add Files to Xcode Project
         run: |
           echo "Adding SceneDelegate.swift and AppDelegate.swift to Xcode project"
-          ruby -e "$(curl -fsSL https://raw.githubusercontent.com/CocoaPods/Xcodeproj/master/bin/xcodeproj)" <<RUBY
+          cat > add_files_to_xcode.rb << 'RUBY'
+          #!/usr/bin/env ruby
+          
           require 'xcodeproj'
+          
           project_path = 'ios/Runner.xcodeproj'
           project = Xcodeproj::Project.open(project_path)
           target = project.targets.find { |t| t.name == 'Runner' }
+          
           unless target
             puts "Error: Runner target not found"
             exit 1
           end
+          
           files = ['SceneDelegate.swift', 'AppDelegate.swift']
           files.each do |file|
             unless project.files.find { |f| f.path == file }
               file_ref = project.new_file("Runner/#{file}")
               target.add_file_references([file_ref])
+              puts "Added #{file} to project"
+            else
+              puts "#{file} already exists in project"
             end
           end
+          
           project.save
+          puts "Project saved successfully"
           RUBY
+          
+          ruby add_files_to_xcode.rb
 
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '16.0'
-
+      - name: Verify files in Xcode project
+        run: |
+          xcodebuild -project ios/Runner.xcodeproj -list | grep -E "(SceneDelegate|AppDelegate)"
+            - name: Setup Xcode
+              uses: maxim-lobanov/setup-xcode@v1
+              with:
+                xcode-version: '16.0'
+      
       - name: Ensure iOS 18.0 SDK
         run: |
           for i in {1..3}; do
