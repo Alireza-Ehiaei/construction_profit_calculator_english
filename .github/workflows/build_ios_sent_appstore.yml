@@ -19,15 +19,18 @@ jobs:
           cat > ios/Runner/SceneDelegate.swift << EOL
           import UIKit
           import Flutter
-          class SceneDelegate: FlutterSceneDelegate {
-            override func scene(
-              _ scene: UIScene,
-              willConnectTo session: UISceneSession,
-              options connectionOptions: UIScene.ConnectionOptions
-            ) {
+
+          class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+            var window: UIWindow?
+
+            func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
               guard let windowScene = scene as? UIWindowScene else { return }
               let window = UIWindow(windowScene: windowScene)
               self.window = window
+              let flutterEngine = FlutterEngine(name: "my flutter engine")
+              flutterEngine.run()
+              let controller = FlutterViewController(engine: flutterEngine, nibName: nil, bundle: nil)
+              window.rootViewController = controller
               window.makeKeyAndVisible()
             }
           }
@@ -40,6 +43,7 @@ jobs:
           cat > ios/Runner/AppDelegate.swift << EOL
           import UIKit
           import Flutter
+
           @UIApplicationMain
           @objc class AppDelegate: FlutterAppDelegate {
             override func application(
@@ -49,18 +53,25 @@ jobs:
               GeneratedPluginRegistrant.register(with: self)
               return super.application(application, didFinishLaunchingWithOptions: launchOptions)
             }
-            override func application(
-              _ application: UIApplication,
-              configurationForConnecting connectingSceneSession: UISceneSession,
-              options: UIScene.ConnectionOptions
-            ) -> UISceneConfiguration {
-              let config = UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-              config.delegateClass = SceneDelegate.self
-              return config
-            }
           }
           EOL
           ls -l ios/Runner/AppDelegate.swift
+
+      - name: Update Info.plist for Scene Configuration
+        run: |
+          plutil -insert UISceneConfigurations -xml \
+          '<dict>
+             <key>UIWindowSceneSessionRoleApplication</key>
+             <array>
+               <dict>
+                 <key>UISceneConfigurationName</key>
+                 <string>Default Configuration</string>
+                 <key>UISceneDelegateClassName</key>
+                 <string>SceneDelegate</string>
+               </dict>
+             </array>
+          </dict>' ios/Runner/Info.plist
+          plutil -p ios/Runner/Info.plist
 
       - name: Ensure Entitlements File
         run: |
@@ -87,48 +98,39 @@ jobs:
           echo "Adding SceneDelegate.swift and AppDelegate.swift to Xcode project"
           cat > add_files_to_xcode.rb << 'RUBY'
           #!/usr/bin/env ruby
-          
           require 'xcodeproj'
-          
           project_path = 'ios/Runner.xcodeproj'
           project = Xcodeproj::Project.open(project_path)
           target = project.targets.find { |t| t.name == 'Runner' }
-          
           unless target
             puts "Error: Runner target not found"
             exit 1
           end
-          
           files = ['SceneDelegate.swift', 'AppDelegate.swift']
           files.each do |file|
             unless project.files.find { |f| f.path == file }
               file_ref = project.new_file("Runner/#{file}")
               target.add_file_references([file_ref])
-              puts "Added #{file} to project"
+              target.add_file_to_build_phase(file_ref, target.source_build_phase)
+              puts "Added #{file} to project and build phase"
             else
               puts "#{file} already exists in project"
             end
           end
-          
           project.save
           puts "Project saved successfully"
           RUBY
-          
           ruby add_files_to_xcode.rb
 
       - name: Verify files were added to Xcode project
         run: |
           echo "Checking if files were properly added..."
-          
-          # Check physical existence
           if [ -f "ios/Runner/SceneDelegate.swift" ] && [ -f "ios/Runner/AppDelegate.swift" ]; then
             echo "✓ Both Swift files exist physically"
           else
             echo "✗ Swift files missing physically"
             exit 1
           fi
-          
-          # Check project file references
           if grep -q "SceneDelegate.swift" ios/Runner.xcodeproj/project.pbxproj && \
              grep -q "AppDelegate.swift" ios/Runner.xcodeproj/project.pbxproj; then
             echo "✓ Both Swift files referenced in Xcode project"
@@ -141,29 +143,19 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '16.0'
-      
+
       - name: Initialize Xcode and Download iOS SDK
         run: |
-          # Switch to Xcode 16
           sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-          
-          # Run first launch tasks
           sudo xcodebuild -runFirstLaunch
-          
-          # Download iOS platform (this is the critical step you're missing)
           echo "Downloading iOS platform..."
           sudo xcodebuild -downloadPlatform ios -allowProvisioningUpdates > sdk_install_log.txt 2>&1 || { 
             echo "SDK download may have failed, but continuing..."
             cat sdk_install_log.txt
           }
-          
-          # Verify available SDKs
           echo "Available SDKs:"
           xcodebuild -showsdks
-          
-          # Set Xcode to skip plugin validation
           defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
-          
           echo "Xcode setup completed"
 
       - name: Verify Xcode setup
@@ -174,29 +166,28 @@ jobs:
 
       - name: Update iOS deployment target in Podfile
         run: |
-          echo "Ensuring Podfile has iOS 18.0 deployment target"
-          
-          # Check if Podfile already has the correct platform
-          if ! grep -q "platform :ios, '18.0'" ios/Podfile; then
-            echo "Updating Podfile platform to 18.0"
-            sed -i '' "s/platform :ios, '15.0'/platform :ios, '18.0'/" ios/Podfile
+          echo "Ensuring Podfile has iOS 13.0 deployment target"
+          if ! grep -q "platform :ios, '13.0'" ios/Podfile; then
+            echo "Updating Podfile platform to 13.0"
+            sed -i '' "s/platform :ios, '.*'/platform :ios, '13.0'/" ios/Podfile
           fi
-          
-          # Check if post_install block needs updating
-          if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'" ios/Podfile; then
-            echo "Updating post_install IPHONEOS_DEPLOYMENT_TARGET to 18.0"
-            sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'/IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'/" ios/Podfile
+          if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" ios/Podfile; then
+            echo "Adding post_install block for IPHONEOS_DEPLOYMENT_TARGET"
+            echo "post_install do |installer|
+              installer.pods_project.targets.each do |target|
+                target.build_configurations.each do |config|
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+                end
+              end
+            end" >> ios/Podfile
           fi
-          
-          echo "Podfile verification:"
           grep -n "platform :ios" ios/Podfile
           grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile
 
       - name: Update Info.plist MinimumOSVersion
         run: |
-          echo "Updating Info.plist MinimumOSVersion to 18.0"
-          plutil -replace MinimumOSVersion -string "18.0" ios/Runner/Info.plist
-          echo "Info.plist MinimumOSVersion:"
+          echo "Updating Info.plist MinimumOSVersion to 13.0"
+          plutil -replace MinimumOSVersion -string "13.0" ios/Runner/Info.plist
           plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
 
       - name: Setup Flutter
@@ -218,7 +209,7 @@ jobs:
 
       - name: Generate Flutter iOS config
         run: |
-          flutter build ios --config-only --no-codesign --verbose > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
+          flutter build ios --config-only --no-codesign > flutter_config_log.txt 2>&1 || { cat flutter_config_log.txt; exit 1; }
           ls -l ios/Flutter/
 
       - name: Install CocoaPods dependencies
@@ -263,14 +254,10 @@ jobs:
         run: |
           echo "$IOS_PROVISIONING_PROFILE_V2" | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          
-          # Use the exact UUID that worked before
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/f3f032ee-4fa9-4a39-8d91-f1d689df2e2c.mobileprovision
-          
           echo "Provisioning profile installed successfully"
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
-          
-            
+
       - name: Debug Code Signing Setup
         run: |
           echo "=== Code Signing Debug ==="
@@ -279,37 +266,33 @@ jobs:
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
           echo "Xcode version:"
           xcodebuild -version
-            
+
       - name: Build IPA
         run: |
           export FLUTTER_XCODE_CODE_SIGN_STYLE="Manual"
           export FLUTTER_XCODE_CODE_SIGN_IDENTITY="iPhone Distribution: Alireza Ehiaei (AHVM2Z8TDL)"
           export FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER="ConstructionProfitCalculatorProvisionProfile"
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="AHVM2Z8TDL"
-          
           flutter build ipa \
             --release \
             --export-options-plist=ios/ExportOptions.plist \
-            --no-tree-shake-icons \
-            --verbose > build_log.txt 2>&1 || { cat build_log.txt; exit 1; }
-          
+            --no-tree-shake-icons > build_log.txt 2>&1 || { cat build_log.txt | grep -i "error:"; exit 1; }
           mkdir -p app-ipa
           cp build/ios/ipa/*.ipa app-ipa/construction_profit_calculator_english.ipa
         env:
           DEVELOPMENT_TEAM: AHVM2Z8TDL
           PROFILE_NAME: ConstructionProfitCalculatorProvisionProfile
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
-      
-      # Continue with the rest of your successful workflow...
+
       - name: Set up Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
-      
+
       - name: Install Fastlane
         run: gem install fastlane
-      
+
       - name: Set up Fastlane configuration
         run: |
           mkdir -p ./fastlane
@@ -334,14 +317,14 @@ jobs:
             end
           end
           EOL
-      
+
       - name: Run Fastlane to upload IPA
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
         run: fastlane ios upload_to_app_store_connect > fastlane_log.txt 2>&1 || { cat fastlane_log.txt | grep -i "error:"; exit 1; }
-      
+
       - name: Upload build log and IPA
         if: always()
         uses: actions/upload-artifact@v4
@@ -356,7 +339,7 @@ jobs:
             fastlane_log.txt
             fastlane/report.xml
             app-ipa/*.ipa
-      
+
       - name: Clean up keychain
         if: always()
         run: |
