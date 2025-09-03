@@ -157,14 +157,14 @@ jobs:
             echo "Updating Podfile platform to 13.0"
             sed -i '' "s/platform :ios, '.*'/platform :ios, '13.0'/" ios/Podfile
           fi
-          if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" ios/Podfile; then
-            echo "Merging IPHONEOS_DEPLOYMENT_TARGET into existing post_install block"
+          if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET.*13.0" ios/Podfile; then
+            echo "Inserting IPHONEOS_DEPLOYMENT_TARGET into existing post_install block"
             sed -i '' "/post_install do |installer|/a\\
-              installer.pods_project.targets.each do |target|\\
-                target.build_configurations.each do |config|\\
-                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'\\
-                end\\
-              end" ios/Podfile
+              \ \ installer.pods_project.targets.each do |target|\\
+              \ \ \ \ target.build_configurations.each do |config|\\
+              \ \ \ \ \ \ config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'\\
+              \ \ \ \ end\\
+              \ \ end" ios/Podfile
           fi
           grep -n "platform :ios" ios/Podfile
           grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile
