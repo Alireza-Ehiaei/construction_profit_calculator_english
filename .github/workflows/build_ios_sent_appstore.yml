@@ -150,29 +150,27 @@ jobs:
           echo "Available SDKs:"
           xcodebuild -showsdks | grep -E "(iphoneos|ios-simulator)"
 
-      - name: Update iOS deployment target in Podfile
+      - name: Update iOS deployment target to modern version
         run: |
-          echo "Ensuring Podfile has iOS 13.0 deployment target"
-          if ! grep -q "platform :ios, '13.0'" ios/Podfile; then
-            echo "Updating Podfile platform to 13.0"
-            sed -i '' "s/platform :ios, '.*'/platform :ios, '13.0'/" ios/Podfile
-          fi
-          if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET.*13.0" ios/Podfile; then
-            echo "Inserting IPHONEOS_DEPLOYMENT_TARGET into existing post_install block"
+          DEPLOYMENT_TARGET="16.0"
+          echo "Updating Podfile platform to $DEPLOYMENT_TARGET"
+          sed -i '' "s/platform :ios, '.*'/platform :ios, '$DEPLOYMENT_TARGET'/" ios/Podfile
+          echo "Updating IPHONEOS_DEPLOYMENT_TARGET in Podfile"
+          if grep -q "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile; then
+            sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET.*=/IPHONEOS_DEPLOYMENT_TARGET = '$DEPLOYMENT_TARGET'/" ios/Podfile
+          else
+            echo "Adding IPHONEOS_DEPLOYMENT_TARGET to post_install block"
             sed -i '' "/post_install do |installer|/a\\
               \ \ installer.pods_project.targets.each do |target|\\
               \ \ \ \ target.build_configurations.each do |config|\\
-              \ \ \ \ \ \ config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'\\
+              \ \ \ \ \ \ config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '$DEPLOYMENT_TARGET'\\
               \ \ \ \ end\\
               \ \ end" ios/Podfile
           fi
+          echo "Updating Info.plist MinimumOSVersion to $DEPLOYMENT_TARGET"
+          plutil -replace MinimumOSVersion -string "$DEPLOYMENT_TARGET" ios/Runner/Info.plist
           grep -n "platform :ios" ios/Podfile
           grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile
-
-      - name: Update Info.plist MinimumOSVersion
-        run: |
-          echo "Updating Info.plist MinimumOSVersion to 13.0"
-          plutil -replace MinimumOSVersion -string "13.0" ios/Runner/Info.plist
           plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
 
       - name: Setup Flutter
