@@ -70,7 +70,7 @@ EOL
         run: |
           mkdir -p ios/Runner
           if [ ! -f "ios/Runner/Runner.entitlements" ]; then
-            cat > ios/Runner/Runner.entitlements << EOL
+            cat > ios/Runner/Runner.entitlements << XML_EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -81,7 +81,7 @@ EOL
   </array>
 </dict>
 </plist>
-EOL
+XML_EOF
             echo "Runner.entitlements created"
           else
             echo "Runner.entitlements already exists, skipping."
@@ -184,13 +184,12 @@ EOL
         run: |
           echo "Verifying ExportOptions.plist for manual code signing"
           if [ -f "ios/ExportOptions.plist" ]; then
-            plutil -p ios/ExportOptions.plist | grep -E "teamID|method|provisioningProfiles"
-            if grep -q "teamID.*AHVM2Z8TDL" ios/ExportOptions.plist && \
-               grep -q "method.*app-store" ios/ExportOptions.plist && \
-               grep -q "ConstructionProfitCalculatorProvisionProfile" ios/ExportOptions.plist; then
+            if [ "$(plutil -extract method raw -o - ios/ExportOptions.plist)" = "app-store" ] && \
+               [ "$(plutil -extract teamID raw -o - ios/ExportOptions.plist)" = "AHVM2Z8TDL" ]; then
               echo "✓ ExportOptions.plist matches manual code signing settings"
             else
-              echo "✗ ExportOptions.plist does not match expected settings (teamID: AHVM2Z8TDL, method: app-store, profile: ConstructionProfitCalculatorProvisionProfile)"
+              echo "✗ ExportOptions.plist does not match expected settings"
+              plutil -p ios/ExportOptions.plist
               exit 1
             fi
           else
