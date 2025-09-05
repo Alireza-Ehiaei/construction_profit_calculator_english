@@ -17,24 +17,24 @@ jobs:
         run: |
           mkdir -p ios/Runner
           if [ ! -f "ios/Runner/SceneDelegate.swift" ]; then
-            cat > ios/Runner/SceneDelegate.swift << 'EOL'
-            import UIKit
-            import Flutter
+            cat > ios/Runner/SceneDelegate.swift << EOL
+import UIKit
+import Flutter
 
-            class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-                var window: UIWindow?
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
 
-                func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-                    guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
-                    guard let windowScene = (scene as? UIWindowScene) else { return }
-                    
-                    let window = UIWindow(windowScene: windowScene)
-                    window.rootViewController = appDelegate.window?.rootViewController
-                    self.window = window
-                    window.makeKeyAndVisible()
-                }
-            }
-            EOL
+    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+        
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = appDelegate.window?.rootViewController
+        self.window = window
+        window.makeKeyAndVisible()
+    }
+}
+EOL
             echo "SceneDelegate.swift created"
           else
             echo "SceneDelegate.swift already exists, skipping."
@@ -45,21 +45,21 @@ jobs:
         run: |
           mkdir -p ios/Runner
           if [ ! -f "ios/Runner/AppDelegate.swift" ]; then
-            cat > ios/Runner/AppDelegate.swift << 'EOL'
-            import UIKit
-            import Flutter
+            cat > ios/Runner/AppDelegate.swift << EOL
+import UIKit
+import Flutter
 
-            @UIApplicationMain
-            @objc class AppDelegate: FlutterAppDelegate {
-              override func application(
-                _ application: UIApplication,
-                didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-              ) -> Bool {
-                GeneratedPluginRegistrant.register(with: self)
-                return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-              }
-            }
-            EOL
+@UIApplicationMain
+@objc class AppDelegate: FlutterAppDelegate {
+  override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
+    GeneratedPluginRegistrant.register(with: self)
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+}
+EOL
             echo "AppDelegate.swift created"
           else
             echo "AppDelegate.swift already exists, skipping."
@@ -70,18 +70,18 @@ jobs:
         run: |
           mkdir -p ios/Runner
           if [ ! -f "ios/Runner/Runner.entitlements" ]; then
-            cat > ios/Runner/Runner.entitlements << 'EOL'
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-            <dict>
-              <key>com.apple.developer.in-app-payments</key>
-              <array>
-                <string>com.tech4dev.constructionprofitcalculator</string>
-              </array>
-            </dict>
-            </plist>
-            EOL
+            cat > ios/Runner/Runner.entitlements << EOL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>com.apple.developer.in-app-payments</key>
+  <array>
+    <string>com.tech4dev.constructionprofitcalculator</string>
+  </array>
+</dict>
+</plist>
+EOL
             echo "Runner.entitlements created"
           else
             echo "Runner.entitlements already exists, skipping."
