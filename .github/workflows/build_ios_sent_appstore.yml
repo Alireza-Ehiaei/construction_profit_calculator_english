@@ -172,9 +172,11 @@ jobs:
 
       - name: Add required keys to Info.plist
         run: |
-          echo "Adding io.flutter.embedded_views_preview to Info.plist"
-          plutil -insert io.flutter.embedded_views_preview -bool true ios/Runner/Info.plist
-          plutil -p ios/Runner/Info.plist | grep io.flutter.embedded_views_preview
+          echo "Ensuring io.flutter.embedded_views_preview is set to true"
+          # This command will insert OR replace the key with the correct boolean value
+          plutil -replace io.flutter.embedded_views_preview -bool yes ios/Runner/Info.plist
+          echo "✓ Successfully set io.flutter.embedded_views_preview = true"
+          
 
       - name: Verify ExportOptions.plist
         run: |
