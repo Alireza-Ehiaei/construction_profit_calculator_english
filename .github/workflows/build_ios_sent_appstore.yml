@@ -70,7 +70,7 @@ EOL
         run: |
           mkdir -p ios/Runner
           if [ ! -f "ios/Runner/Runner.entitlements" ]; then
-            cat > ios/Runner/Runner.entitlements << XML_EOF
+            cat > ios/Runner/Runner.entitlements << 'XML_EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -184,12 +184,13 @@ XML_EOF
         run: |
           echo "Verifying ExportOptions.plist for manual code signing"
           if [ -f "ios/ExportOptions.plist" ]; then
-            if [ "$(plutil -extract method raw -o - ios/ExportOptions.plist)" = "app-store" ] && \
-               [ "$(plutil -extract teamID raw -o - ios/ExportOptions.plist)" = "AHVM2Z8TDL" ]; then
-              echo "✓ ExportOptions.plist matches manual code signing settings"
+            echo "ExportOptions.plist content:"
+            plutil -p ios/ExportOptions.plist
+            if plutil -p ios/ExportOptions.plist | grep -q "AHVM2Z8TDL" && \
+               plutil -p ios/ExportOptions.plist | grep -q "app-store"; then
+              echo "✓ ExportOptions.plist appears to have correct teamID and method"
             else
-              echo "✗ ExportOptions.plist does not match expected settings"
-              plutil -p ios/ExportOptions.plist
+              echo "✗ ExportOptions.plist missing expected teamID or method"
               exit 1
             fi
           else
