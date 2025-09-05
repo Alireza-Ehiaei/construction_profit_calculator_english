@@ -170,12 +170,6 @@ jobs:
           grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile
           plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
 
-      - name: Add required keys to Info.plist
-        run: |
-          echo "Adding io.flutter.embedded_views_preview to Info.plist"
-          plutil -insert io.flutter.embedded_views_preview -bool true ios/Runner/Info.plist
-          plutil -p ios/Runner/Info.plist | grep io.flutter.embedded_views_preview
-
       - name: Verify ExportOptions.plist
         run: |
           echo "Verifying ExportOptions.plist for manual code signing"
