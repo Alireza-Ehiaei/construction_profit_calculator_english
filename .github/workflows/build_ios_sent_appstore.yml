@@ -16,62 +16,76 @@ jobs:
       - name: Ensure SceneDelegate.swift exists
         run: |
           mkdir -p ios/Runner
-          cat > ios/Runner/SceneDelegate.swift << EOL
-          import UIKit
-          import Flutter
+          if [ ! -f "ios/Runner/SceneDelegate.swift" ]; then
+            cat > ios/Runner/SceneDelegate.swift << 'EOL'
+            import UIKit
+            import Flutter
 
-          class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-            var window: UIWindow?
+            class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+                var window: UIWindow?
 
-            func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-              guard let windowScene = scene as? UIWindowScene else { return }
-              let window = UIWindow(windowScene: windowScene)
-              self.window = window
-              let flutterEngine = FlutterEngine(name: "my flutter engine")
-              flutterEngine.run()
-              let controller = FlutterViewController(engine: flutterEngine, nibName: nil, bundle: nil)
-              window.rootViewController = controller
-              window.makeKeyAndVisible()
+                func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+                    guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+                    guard let windowScene = (scene as? UIWindowScene) else { return }
+                    
+                    let window = UIWindow(windowScene: windowScene)
+                    window.rootViewController = appDelegate.window?.rootViewController
+                    self.window = window
+                    window.makeKeyAndVisible()
+                }
             }
-          }
-          EOL
+            EOL
+            echo "SceneDelegate.swift created"
+          else
+            echo "SceneDelegate.swift already exists, skipping."
+          fi
           ls -l ios/Runner/SceneDelegate.swift
 
       - name: Ensure AppDelegate.swift exists
         run: |
           mkdir -p ios/Runner
-          cat > ios/Runner/AppDelegate.swift << EOL
-          import UIKit
-          import Flutter
+          if [ ! -f "ios/Runner/AppDelegate.swift" ]; then
+            cat > ios/Runner/AppDelegate.swift << 'EOL'
+            import UIKit
+            import Flutter
 
-          @UIApplicationMain
-          @objc class AppDelegate: FlutterAppDelegate {
-            override func application(
-              _ application: UIApplication,
-              didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-            ) -> Bool {
-              GeneratedPluginRegistrant.register(with: self)
-              return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+            @UIApplicationMain
+            @objc class AppDelegate: FlutterAppDelegate {
+              override func application(
+                _ application: UIApplication,
+                didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+              ) -> Bool {
+                GeneratedPluginRegistrant.register(with: self)
+                return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+              }
             }
-          }
-          EOL
+            EOL
+            echo "AppDelegate.swift created"
+          else
+            echo "AppDelegate.swift already exists, skipping."
+          fi
           ls -l ios/Runner/AppDelegate.swift
 
       - name: Ensure Entitlements File
         run: |
           mkdir -p ios/Runner
-          cat > ios/Runner/Runner.entitlements << EOL
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>com.apple.developer.in-app-payments</key>
-            <array>
-              <string>com.tech4dev.constructionprofitcalculator</string>
-            </array>
-          </dict>
-          </plist>
-          EOL
+          if [ ! -f "ios/Runner/Runner.entitlements" ]; then
+            cat > ios/Runner/Runner.entitlements << 'EOL'
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+              <key>com.apple.developer.in-app-payments</key>
+              <array>
+                <string>com.tech4dev.constructionprofitcalculator</string>
+              </array>
+            </dict>
+            </plist>
+            EOL
+            echo "Runner.entitlements created"
+          else
+            echo "Runner.entitlements already exists, skipping."
+          fi
           ls -l ios/Runner/Runner.entitlements
 
       - name: Install xcodeproj gem
@@ -150,28 +164,39 @@ jobs:
           echo "Available SDKs:"
           xcodebuild -showsdks | grep -E "(iphoneos|ios-simulator)"
 
-      - name: Update iOS deployment target to modern version
+      - name: Update iOS deployment target
         run: |
           DEPLOYMENT_TARGET="16.0"
-          echo "Updating Podfile platform to $DEPLOYMENT_TARGET"
-          sed -i '' "s/platform :ios, '.*'/platform :ios, '$DEPLOYMENT_TARGET'/" ios/Podfile
-          echo "Updating IPHONEOS_DEPLOYMENT_TARGET in Podfile"
-          if grep -q "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile; then
-            sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET.*=/IPHONEOS_DEPLOYMENT_TARGET = '$DEPLOYMENT_TARGET'/" ios/Podfile
-          else
-            echo "Adding IPHONEOS_DEPLOYMENT_TARGET to post_install block"
-            sed -i '' "/post_install do |installer|/a\\
-              \ \ installer.pods_project.targets.each do |target|\\
-              \ \ \ \ target.build_configurations.each do |config|\\
-              \ \ \ \ \ \ config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '$DEPLOYMENT_TARGET'\\
-              \ \ \ \ end\\
-              \ \ end" ios/Podfile
-          fi
           echo "Updating Info.plist MinimumOSVersion to $DEPLOYMENT_TARGET"
           plutil -replace MinimumOSVersion -string "$DEPLOYMENT_TARGET" ios/Runner/Info.plist
-          grep -n "platform :ios" ios/Podfile
-          grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile
           plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
+          echo "Updating IPHONEOS_DEPLOYMENT_TARGET in project.pbxproj to $DEPLOYMENT_TARGET"
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9]*\.[0-9]/IPHONEOS_DEPLOYMENT_TARGET = $DEPLOYMENT_TARGET/" ios/Runner.xcodeproj/project.pbxproj
+          grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Runner.xcodeproj/project.pbxproj
+
+      - name: Add required keys to Info.plist
+        run: |
+          echo "Adding io.flutter.embedded_views_preview to Info.plist"
+          plutil -insert io.flutter.embedded_views_preview -bool true ios/Runner/Info.plist
+          plutil -p ios/Runner/Info.plist | grep io.flutter.embedded_views_preview
+
+      - name: Verify ExportOptions.plist
+        run: |
+          echo "Verifying ExportOptions.plist for manual code signing"
+          if [ -f "ios/ExportOptions.plist" ]; then
+            plutil -p ios/ExportOptions.plist | grep -E "teamID|method|provisioningProfiles"
+            if grep -q "teamID.*AHVM2Z8TDL" ios/ExportOptions.plist && \
+               grep -q "method.*app-store" ios/ExportOptions.plist && \
+               grep -q "ConstructionProfitCalculatorProvisionProfile" ios/ExportOptions.plist; then
+              echo "✓ ExportOptions.plist matches manual code signing settings"
+            else
+              echo "✗ ExportOptions.plist does not match expected settings (teamID: AHVM2Z8TDL, method: app-store, profile: ConstructionProfitCalculatorProvisionProfile)"
+              exit 1
+            fi
+          else
+            echo "✗ ExportOptions.plist not found in ios/ directory"
+            exit 1
+          fi
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
