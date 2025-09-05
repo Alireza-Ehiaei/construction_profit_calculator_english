@@ -16,76 +16,59 @@ jobs:
       - name: Ensure SceneDelegate.swift exists
         run: |
           mkdir -p ios/Runner
-          if [ ! -f "ios/Runner/SceneDelegate.swift" ]; then
-            cat > ios/Runner/SceneDelegate.swift << EOL
-import UIKit
-import Flutter
-
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-    var window: UIWindow?
-
-    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
-        guard let windowScene = (scene as? UIWindowScene) else { return }
-        
-        let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = appDelegate.window?.rootViewController
-        self.window = window
-        window.makeKeyAndVisible()
-    }
-}
-EOL
-            echo "SceneDelegate.swift created"
-          else
-            echo "SceneDelegate.swift already exists, skipping."
-          fi
+          cat > ios/Runner/SceneDelegate.swift << EOL
+          import UIKit
+          import Flutter
+          class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+            var window: UIWindow?
+            func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+              guard let windowScene = scene as? UIWindowScene else { return }
+              let window = UIWindow(windowScene: windowScene)
+              self.window = window
+              let flutterEngine = FlutterEngine(name: "my flutter engine")
+              flutterEngine.run()
+              let controller = FlutterViewController(engine: flutterEngine, nibName: nil, bundle: nil)
+              window.rootViewController = controller
+              window.makeKeyAndVisible()
+            }
+          }
+          EOL
           ls -l ios/Runner/SceneDelegate.swift
 
       - name: Ensure AppDelegate.swift exists
         run: |
           mkdir -p ios/Runner
-          if [ ! -f "ios/Runner/AppDelegate.swift" ]; then
-            cat > ios/Runner/AppDelegate.swift << EOL
-import UIKit
-import Flutter
-
-@UIApplicationMain
-@objc class AppDelegate: FlutterAppDelegate {
-  override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-  ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
-}
-EOL
-            echo "AppDelegate.swift created"
-          else
-            echo "AppDelegate.swift already exists, skipping."
-          fi
+          cat > ios/Runner/AppDelegate.swift << EOL
+          import UIKit
+          import Flutter
+          @UIApplicationMain
+          @objc class AppDelegate: FlutterAppDelegate {
+            override func application(
+              _ application: UIApplication,
+              didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+            ) -> Bool {
+              GeneratedPluginRegistrant.register(with: self)
+              return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+            }
+          }
+          EOL
           ls -l ios/Runner/AppDelegate.swift
 
       - name: Ensure Entitlements File
         run: |
           mkdir -p ios/Runner
-          if [ ! -f "ios/Runner/Runner.entitlements" ]; then
-            cat > ios/Runner/Runner.entitlements << 'XML_EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>com.apple.developer.in-app-payments</key>
-  <array>
-    <string>com.tech4dev.constructionprofitcalculator</string>
-  </array>
-</dict>
-</plist>
-XML_EOF
-            echo "Runner.entitlements created"
-          else
-            echo "Runner.entitlements already exists, skipping."
-          fi
+          cat > ios/Runner/Runner.entitlements << EOL
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>com.apple.developer.in-app-payments</key>
+            <array>
+              <string>com.tech4dev.constructionprofitcalculator</string>
+            </array>
+          </dict>
+          </plist>
+          EOL
           ls -l ios/Runner/Runner.entitlements
 
       - name: Install xcodeproj gem
@@ -94,32 +77,32 @@ XML_EOF
       - name: Add Files to Xcode Project
         run: |
           echo "Adding SceneDelegate.swift and AppDelegate.swift to Xcode project"
-          cat > add_files_to_xcode.rb << 'RUBY'
-#!/usr/bin/env ruby
-require 'xcodeproj'
-project_path = 'ios/Runner.xcodeproj'
-project = Xcodeproj::Project.open(project_path)
-target = project.targets.find { |t| t.name == 'Runner' }
-unless target
-  puts "Error: Runner target not found"
-  exit 1
-end
-files = ['SceneDelegate.swift', 'AppDelegate.swift']
-group = project.main_group['Runner'] || project.main_group.new_group('Runner', 'Runner')
-files.each do |file|
-  unless project.files.find { |f| f.path == file }
-    file_ref = group.new_file(file)
-    target.add_file_references([file_ref])
-    build_phase = target.source_build_phase
-    build_phase.add_file_reference(file_ref)
-    puts "Added #{file} to project and build phase"
-  else
-    puts "#{file} already exists in project"
-  end
-end
-project.save
-puts "Project saved successfully"
-RUBY
+          cat > add_files_to_xcode.rb << EOL
+          #!/usr/bin/env ruby
+          require 'xcodeproj'
+          project_path = 'ios/Runner.xcodeproj'
+          project = Xcodeproj::Project.open(project_path)
+          target = project.targets.find { |t| t.name == 'Runner' }
+          unless target
+            puts "Error: Runner target not found"
+            exit 1
+          end
+          files = ['SceneDelegate.swift', 'AppDelegate.swift']
+          group = project.main_group['Runner'] || project.main_group.new_group('Runner', 'Runner')
+          files.each do |file|
+            unless project.files.find { |f| f.path == file }
+              file_ref = group.new_file(file)
+              target.add_file_references([file_ref])
+              build_phase = target.source_build_phase
+              build_phase.add_file_reference(file_ref)
+              puts "Added #{file} to project and build phase"
+            else
+              puts "#{file} already exists in project"
+            end
+          end
+          project.save
+          puts "Project saved successfully"
+          EOL
           ruby add_files_to_xcode.rb
 
       - name: Verify files were added to Xcode project
@@ -164,41 +147,28 @@ RUBY
           echo "Available SDKs:"
           xcodebuild -showsdks | grep -E "(iphoneos|ios-simulator)"
 
-      - name: Update iOS deployment target
+      - name: Update iOS deployment target to modern version
         run: |
           DEPLOYMENT_TARGET="16.0"
+          echo "Updating Podfile platform to $DEPLOYMENT_TARGET"
+          sed -i '' "s/platform :ios, '.*'/platform :ios, '$DEPLOYMENT_TARGET'/" ios/Podfile
+          echo "Updating IPHONEOS_DEPLOYMENT_TARGET in Podfile"
+          if grep -q "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile; then
+            sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET.*=/IPHONEOS_DEPLOYMENT_TARGET = '$DEPLOYMENT_TARGET'/" ios/Podfile
+          else
+            echo "Adding IPHONEOS_DEPLOYMENT_TARGET to post_install block"
+            sed -i '' "/post_install do |installer|/a\\
+              \ \ installer.pods_project.targets.each do |target|\\
+              \ \ \ \ target.build_configurations.each do |config|\\
+              \ \ \ \ \ \ config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '$DEPLOYMENT_TARGET'\\
+              \ \ \ \ end\\
+              \ \ end" ios/Podfile
+          fi
           echo "Updating Info.plist MinimumOSVersion to $DEPLOYMENT_TARGET"
           plutil -replace MinimumOSVersion -string "$DEPLOYMENT_TARGET" ios/Runner/Info.plist
+          grep -n "platform :ios" ios/Podfile
+          grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Podfile
           plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
-          echo "Updating IPHONEOS_DEPLOYMENT_TARGET in project.pbxproj to $DEPLOYMENT_TARGET"
-          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9]*\.[0-9]/IPHONEOS_DEPLOYMENT_TARGET = $DEPLOYMENT_TARGET/" ios/Runner.xcodeproj/project.pbxproj
-          grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Runner.xcodeproj/project.pbxproj
-
-      - name: Update iOS deployment target in Podfile (CRITICAL)
-        run: |
-          DEPLOYMENT_TARGET="16.0"
-          echo "Ensuring all pods target iOS $DEPLOYMENT_TARGET"
-          
-          # Add or update post_install block to set deployment target for all pods
-          if grep -q "post_install" ios/Podfile; then
-            echo "Updating existing post_install block"
-            sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET'] = '.*'/IPHONEOS_DEPLOYMENT_TARGET'] = '$DEPLOYMENT_TARGET'/" ios/Podfile
-          else
-            echo "Adding post_install block to Podfile"
-            cat << EOF >> ios/Podfile
-
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '$DEPLOYMENT_TARGET'
-    end
-  end
-end
-EOF
-          fi
-          
-          echo "Updated Podfile post_install block:"
-          grep -A 10 "post_install" ios/Podfile
 
       - name: Add required keys to Info.plist
         run: |
@@ -330,27 +300,27 @@ EOF
       - name: Set up Fastlane configuration
         run: |
           mkdir -p ./fastlane
-          cat > ./fastlane/Fastfile << 'EOL'
-default_platform(:ios)
-platform :ios do
-  lane :upload_to_app_store_connect do
-    app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
-      is_key_content_base64: true
-    )
-    deliver(
-      ipa: "./app-ipa/construction_profit_calculator_english.ipa",
-      skip_screenshots: true,
-      skip_metadata: true,
-      skip_app_version_update: true,
-      force: true,
-      precheck_include_in_app_purchases: false
-    )
-  end
-end
-EOL
+          cat > ./fastlane/Fastfile << EOL
+          default_platform(:ios)
+          platform :ios do
+            lane :upload_to_app_store_connect do
+              app_store_connect_api_key(
+                key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+                issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+                key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
+                is_key_content_base64: true
+              )
+              deliver(
+                ipa: "./app-ipa/construction_profit_calculator_english.ipa",
+                skip_screenshots: true,
+                skip_metadata: true,
+                skip_app_version_update: true,
+                force: true,
+                precheck_include_in_app_purchases: false
+              )
+            end
+          end
+          EOL
 
       - name: Run Fastlane to upload IPA
         env:
