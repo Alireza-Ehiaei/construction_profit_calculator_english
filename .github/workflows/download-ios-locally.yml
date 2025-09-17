@@ -255,71 +255,25 @@ jobs:
           MD_APPLE_SDK_ROOT: /Applications/Xcode.app
 
      
-      - name: Install Fastlane
-        run: |
-          gem install fastlane
-      
-      - name: Set up Fastlane configuration
-        run: |
-          mkdir -p ./fastlane
-          cat > ./fastlane/Fastfile << 'EOL'
-          default_platform(:ios)
-          platform :ios do
-            lane :upload_to_app_store_connect do
-              app_store_connect_api_key(
-                key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-                issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-                key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
-                is_key_content_base64: true
-              )
-              deliver(
-                ipa: "./app-ipa/construction_profit_calculator_english.ipa",
-                skip_screenshots: true,
-                skip_metadata: true,
-                skip_app_version_update: true,
-                force: true,
-                precheck_include_in_app_purchases: false,
-                submit_for_review: false
-              )
-            end
-          end
-          EOL
-        
-      
-      - name: Run Fastlane to upload IPA
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
-        run: |
-          for attempt in {1..3}; do
-            echo "Attempt $attempt: Uploading IPA to App Store Connect"
-            fastlane ios upload_to_app_store_connect > fastlane_log.txt 2>&1 && exit 0
-            echo "Upload failed. Errors logged to fastlane_log.txt"
-            grep -i "error:" fastlane_log.txt || cat fastlane_log.txt
-            if [ $attempt -lt 3 ]; then
-              echo "Retrying in 10 seconds..."
-              sleep 10
-            fi
-          done
-          echo "All upload attempts failed"
-          exit 1
-      
       - name: Upload build log and IPA
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log-and-ipa
           path: |
-            flutter_clean_log.txt
+            flutter_version_log.txt
             pub_get_log.txt
+            xcode_info.txt
+            sdk_install_log.txt
             pod_install_log.txt
-            flutter_config_log.txt
+            xcode_clean_log.txt
             build_log.txt
+            bundle_id_debug.txt
+            profile_info.plist
             fastlane_log.txt
             fastlane/report.xml
+            flutter_config_log.txt
             app-ipa/*.ipa
-      
       - name: Clean up keychain
         if: always()
         run: |
