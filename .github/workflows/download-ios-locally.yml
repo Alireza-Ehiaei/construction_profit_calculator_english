@@ -57,16 +57,71 @@ jobs:
 
       - name: Update iOS deployment target
         run: |
-          echo "Updating iOS deployment target to 18.0"
-          sed -i '' 's/platform :ios, '\''15.0'\''/platform :ios, '\''18.0'\''/' ios/Podfile
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 15.0/IPHONEOS_DEPLOYMENT_TARGET = 18.0/' ios/Runner.xcodeproj/project.pbxproj
-          plutil -replace MinimumOSVersion -string "18.0" ios/Runner/Info.plist
+          set -e
+          echo "Updating iOS deployment target to 16.0"
+          if [ ! -f "ios/Podfile" ]; then
+            echo "❌ Podfile missing, creating default Flutter Podfile"
+            echo "platform :ios, '16.0'" > ios/Podfile
+            echo "install! 'cocoapods', :deterministic_uuids => false" >> ios/Podfile
+            echo "target 'Runner' do" >> ios/Podfile
+            echo "  use_frameworks!" >> ios/Podfile
+            echo "  use_modular_headers!" >> ios/Podfile
+            echo "  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))" >> ios/Podfile
+            echo "end" >> ios/Podfile
+            echo "post_install do |installer|" >> ios/Podfile
+            echo "  installer.pods_project.targets.each do |target|" >> ios/Podfile
+            echo "    flutter_additional_ios_build_settings(target)" >> ios/Podfile
+            echo "    target.build_configurations.each do |config|" >> ios/Podfile
+            echo "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'" >> ios/Podfile
+            echo "      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''" >> ios/Podfile
+            echo "      config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'" >> ios/Podfile
+            echo "      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'" >> ios/Podfile
+            echo "    end" >> ios/Podfile
+            echo "  end" >> ios/Podfile
+            echo "end" >> ios/Podfile
+          else
+            sed -i '' "s/platform :ios, '.*'/platform :ios, '16.0'/" ios/Podfile
+            if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET.*=.*'16.0'" ios/Podfile; then
+              echo "Adding or updating IPHONEOS_DEPLOYMENT_TARGET in post_install block"
+              if grep -q "post_install do |installer|" ios/Podfile; then
+                sed -i '' "/flutter_additional_ios_build_settings(target)/a\\
+                target.build_configurations.each do |config|\\
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'\\
+                  config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''\\
+                  config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'\\
+                  config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'\\
+                end" ios/Podfile
+              else
+                echo "post_install do |installer|" >> ios/Podfile
+                echo "  installer.pods_project.targets.each do |target|" >> ios/Podfile
+                echo "    flutter_additional_ios_build_settings(target)" >> ios/Podfile
+                echo "    target.build_configurations.each do |config|" >> ios/Podfile
+                echo "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'" >> ios/Podfile
+                echo "      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''" >> ios/Podfile
+                echo "      config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'" >> ios/Podfile
+                echo "      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'" >> ios/Podfile
+                echo "    end" >> ios/Podfile
+                echo "  end" >> ios/Podfile
+                echo "end" >> ios/Podfile
+              fi
+            fi
+          fi
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9][0-9]*\.[0-9][0-9]*/IPHONEOS_DEPLOYMENT_TARGET = 16.0/' ios/Runner.xcodeproj/project.pbxproj
+          plutil -replace MinimumOSVersion -string "16.0" ios/Runner/Info.plist
+          if /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" ios/Runner/Info.plist >/dev/null 2>&1; then
+            echo "✅ CFBundleIconName exists in Info.plist"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleIconName AppIcon" ios/Runner/Info.plist
+          else
+            echo "Adding CFBundleIconName to Info.plist"
+            /usr/libexec/PlistBuddy -c "Add :CFBundleIconName string AppIcon" ios/Runner/Info.plist
+          fi
           echo "Podfile content:"
           cat ios/Podfile
           echo "project.pbxproj IPHONEOS_DEPLOYMENT_TARGET:"
           grep IPHONEOS_DEPLOYMENT_TARGET ios/Runner.xcodeproj/project.pbxproj
-          echo "Info.plist MinimumOSVersion:"
-          plutil -p ios/Runner/Info.plist | grep MinimumOSVersion
+          echo "Info.plist MinimumOSVersion and CFBundleIconName:"
+          plutil -p ios/Runner/Info.plist | grep -E "MinimumOSVersion|CFBundleIconName"
+          
 
       - name: Validate bundle identifier
         run: |
