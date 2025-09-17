@@ -122,7 +122,38 @@ jobs:
           echo "Info.plist MinimumOSVersion and CFBundleIconName:"
           plutil -p ios/Runner/Info.plist | grep -E "MinimumOSVersion|CFBundleIconName"
           
-
+      - name: Configure Xcode manual signing
+        run: |
+          set -e
+          gem install xcodeproj
+          echo "require 'xcodeproj'" > fix_signing.rb
+          echo "project = Xcodeproj::Project.open('ios/Runner.xcodeproj')" >> fix_signing.rb
+          echo "project.targets.each do |target|" >> fix_signing.rb
+          echo "  target.build_configurations.each do |config|" >> fix_signing.rb
+          echo "    config.build_settings['CODE_SIGN_STYLE'] = 'Manual'" >> fix_signing.rb
+          echo "    config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = 'ConstructionProfitCalculatorProvisionProfile'" >> fix_signing.rb
+          echo "    config.build_settings['DEVELOPMENT_TEAM'] = 'AHVM2Z8TDL'" >> fix_signing.rb
+          echo "    config.build_settings['CODE_SIGN_IDENTITY'] = 'iPhone Distribution'" >> fix_signing.rb
+          echo "    config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.tech4dev.constructionprofitcalculator'" >> fix_signing.rb
+          echo "  end" >> fix_signing.rb
+          echo "end" >> fix_signing.rb
+          echo "pods_project_path = 'ios/Pods/Pods.xcodeproj'" >> fix_signing.rb
+          echo "if File.exist?(pods_project_path)" >> fix_signing.rb
+          echo "  pods_project = Xcodeproj::Project.open(pods_project_path)" >> fix_signing.rb
+          echo "  pods_project.targets.each do |target|" >> fix_signing.rb
+          echo "    target.build_configurations.each do |config|" >> fix_signing.rb
+          echo "      config.build_settings['CODE_SIGN_STYLE'] = 'Manual'" >> fix_signing.rb
+          echo "      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'" >> fix_signing.rb
+          echo "      config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'" >> fix_signing.rb
+          echo "      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''" >> fix_signing.rb
+          echo "    end" >> fix_signing.rb
+          echo "  end" >> fix_signing.rb
+          echo "  pods_project.save" >> fix_signing.rb
+          echo "end" >> fix_signing.rb
+          echo "project.save" >> fix_signing.rb
+          ruby fix_signing.rb
+          echo "Updated project and Pods signing settings"
+          
       - name: Validate bundle identifier
         run: |
           cd ios
