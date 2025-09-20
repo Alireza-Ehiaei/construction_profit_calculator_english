@@ -12,7 +12,7 @@ class SubscriptionsProvider with ChangeNotifier {
   // Your product IDs
   static const String uniformPricingProductId = 'constructionProfitCalc.uniformPricing.3mo';
   static const String differentiatedPricingProductId = 'constructionProfitCalc.differentiatedPricing.3mo.v1';
-  static const String differentiatedPlusUniformPricingProductId = 'constructionProfitCalc.fullAccess.6mo';
+  static const String differentiatedPlusUniformPricingProductId = 'constructionprofitcalc.fullaccess.6mo';
 
   // Product and purchase lists
   final List<ProductDetails> _products = [];
@@ -90,32 +90,30 @@ class SubscriptionsProvider with ChangeNotifier {
   // Query available subscription products on the store
   Future<void> querySubscriptionProducts() async {
     try {
-      final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(
-        {
-          uniformPricingProductId,
-          differentiatedPricingProductId,
-          differentiatedPlusUniformPricingProductId,
-        },
-      );
-
+      final response = await _inAppPurchase.queryProductDetails({
+        uniformPricingProductId,
+        differentiatedPricingProductId,
+        differentiatedPlusUniformPricingProductId,
+      });
+      print("Queried products: ${response.productDetails.map((p) => p.id).toList()}");
       if (response.error != null) {
-        throw Exception('Failed to query product details: ${response.error?.message ?? "Unknown error"}');
+        print("Query error: ${response.error!.message}");
+        throw Exception('Failed to load products: ${response.error!.message}');
       }
-
-      if (response.productDetails.isEmpty) {
-        print('No available products found.');
+      if (response.notFoundIDs.isNotEmpty) {
+        print("Not found: ${response.notFoundIDs}");
         _products.clear();
         notifyListeners();
         return;
       }
-
       _products
         ..clear()
         ..addAll(response.productDetails);
       notifyListeners();
     } catch (e) {
-      print("Error querying subscription products: $e");
-      rethrow;
+      print("Query error: $e");
+      _products.clear();
+      notifyListeners();
     }
   }
 
@@ -194,47 +192,36 @@ class SubscriptionsProvider with ChangeNotifier {
 
   // Handle incoming purchase updates
   void _handlePurchaseUpdates(List<PurchaseDetails> purchasesList) {
-    bool updated = false;
-
     for (var purchase in purchasesList) {
-      if (purchase.status == PurchaseStatus.pending) {
-        debugPrint("Purchase is pending: ${purchase.productID}");
-      } else if (purchase.status == PurchaseStatus.purchased || purchase.status == PurchaseStatus.restored) {
-        debugPrint("Purchase successful or restored: ${purchase.productID}");
-
+      print("Purchase update: ID=${purchase.productID}, Status=${purchase.status}, Error=${purchase.error?.message}");
+      if (purchase.status == PurchaseStatus.purchased || purchase.status == PurchaseStatus.restored) {
         if (purchase.pendingCompletePurchase) {
+          print("Completing purchase: ${purchase.productID}");
           _inAppPurchase.completePurchase(purchase);
         }
-
         if (!_purchases.any((p) => p.purchaseID == purchase.purchaseID)) {
           _purchases.add(purchase);
-          updated = true;
         }
-      } else if (purchase.status == PurchaseStatus.error) {
-        debugPrint("Error purchasing: ${purchase.error?.message}");
-      } else if (purchase.status == PurchaseStatus.canceled) {
-        debugPrint("Purchase was canceled: ${purchase.productID}");
       }
     }
-
-    if (updated) {
-      _updateSubscriptionStatus();
-    }
+    _updateSubscriptionStatus();
   }
 
 
   // Method to initiate a subscription purchase
   Future<bool> buySubscription(ProductDetails productDetails) async {
-    final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
-
+    final purchaseParam = PurchaseParam(productDetails: productDetails);
     try {
-      await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
-
-      // No need to explicitly restore purchases here; purchaseStream updates will arrive.
-
-      return true;
+      print("Initiating purchase: ${productDetails.id}");
+      return await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print("Purchase timed out: ${productDetails.id}");
+          return false;
+        },
+      );
     } catch (e) {
-      print("Error purchasing subscription: $e");
+      print("Purchase error: ${productDetails.id}, $e");
       return false;
     }
   }
@@ -403,7 +390,7 @@ class SubscriptionsProvider with ChangeNotifier {
     required String description,
     required bool enabled,
     String? disabledMessage,
-  }) {
+  }){
     return Column(
       children: [
         ElevatedButton(
@@ -413,32 +400,38 @@ class SubscriptionsProvider with ChangeNotifier {
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-      onPressed: enabled ? () async {
-          try {
-            // 1. Safely find the product without throwing an error
-            final product = response.productDetails.firstWhereOrNull(
-              (p) => p.id == productId,
-            );
+          onPressed: enabled ? () async {
+            try {
+              // 1. Safely find the product without throwing an error
+              final product = response.productDetails.firstWhereOrNull(
+                    (p) => p.id == productId,
+              );
 
-            // 2. Handle the "not found" case gracefully
-            if (product == null) {
-              // Show a user-friendly message
-              if (context.mounted) _showErrorDialog(context, 'Product unavailable. Please try again later.');
-              return;
-            }
+              // 2. Handle the "not found" case gracefully
+              if (product == null) {
+                // Show a user-friendly message
+                if (context.mounted) _showErrorDialog(context, 'Product unavailable. Please try again later.');
+                return;
+              }
 
-            // 3. Proceed with purchase
-            final success = await provider.buySubscription(product);
-            if (success && context.mounted) {
-              Navigator.of(context).pop();
+              // 3. Proceed with purchase
+              final success = await provider.buySubscription(product);
+              if (success && context.mounted) {
+                Navigator.of(context).pop();
+              }
+            } catch (e) {
+              // 4. Catch any other unexpected errors (e.g., network issues)
+              if (context.mounted) {
+                _showErrorDialog(context, 'Failed to complete the purchase. Please check your connection.');
+              }
             }
-          } catch (e) {
-            // 4. Catch any other unexpected errors (e.g., network issues)
-            if (context.mounted) {
-              _showErrorDialog(context, 'Failed to complete the purchase. Please check your connection.');
-            }
-          }
-        } : null,
+          } : null,
+          child: Text( // <- Moved inside ElevatedButton as child property
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
           child: Text(
@@ -665,32 +658,51 @@ class SubscriptionsProvider with ChangeNotifier {
   Future<void> showUniformSubscriptionUI(BuildContext context) async {
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
 
-    // Check store availability first - consistent with practice button approach
-    final bool isStoreAvailable = await InAppPurchase.instance.isAvailable();
-    if (!isStoreAvailable) {
-      _showStoreUnavailableDialog(context);
-      return;
-    }
-
+    // Check store availability
     try {
+      print("Checking store availability...");
+      final bool isStoreAvailable = await InAppPurchase.instance.isAvailable().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          print("Store availability check timed out.");
+          return false;
+        },
+      );
+      if (!isStoreAvailable) {
+        print("Store unavailable.");
+        if (context.mounted) _showStoreUnavailableDialog(context);
+        return;
+      }
+
       const String uniformPricingProductId = 'constructionProfitCalc.uniformPricing.3mo';
-      const String differentiatedPlusUniformPricingProductId = 'constructionProfitCalc.fullAccess.6mo';
+      const String differentiatedPlusUniformPricingProductId = 'constructionprofitcalc.fullaccess.6mo';
 
       // Fetch subscription data from StoreKit
+      print("Querying products: $uniformPricingProductId, $differentiatedPlusUniformPricingProductId");
       final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails({
         uniformPricingProductId,
         differentiatedPlusUniformPricingProductId,
-      });
+      }).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print("Product query timed out.");
+          if (context.mounted) _showErrorDialog(context, 'Unable to load subscriptions due to network issue.');
+          return ProductDetailsResponse(productDetails: [], notFoundIDs: [], error: null);
+        },
+      );
 
       if (response.error != null) {
-        _showErrorDialog(context, response.error!.message);
+        print("Query error: ${response.error!.message}");
+        if (context.mounted) _showErrorDialog(context, 'Failed to load subscriptions: ${response.error!.message}');
         return;
       }
 
-      if (response.productDetails.isEmpty) {
-        _showNoSubscriptionDialog(context);
+      if (response.productDetails.isEmpty || response.notFoundIDs.contains(differentiatedPlusUniformPricingProductId)) {
+        print("No products found or Full Access unavailable: ${response.notFoundIDs}");
+        if (context.mounted) _showNoSubscriptionDialog(context);
         return;
       }
+      print("Products found: ${response.productDetails.map((p) => p.id).toList()}");
 
       // Check active subscriptions
       final bool hasFullAccess = subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
@@ -712,27 +724,28 @@ class SubscriptionsProvider with ChangeNotifier {
               ),
               elevation: 0,
             ),
-       onPressed: hasFullAccess ? null : () async {
+            onPressed: hasFullAccess
+                ? null
+                : () async {
               try {
-                // Safely find the product using firstWhereOrNull
                 final product = response.productDetails.firstWhereOrNull(
-                  (product) => product.id == uniformPricingProductId,
+                      (product) => product.id == uniformPricingProductId,
                 );
-
-                // Handle case where product is not found
                 if (product == null) {
+                  print("Uniform Pricing product not found.");
                   if (context.mounted) {
-                    _showErrorDialog(context, 'Subscription product is currently unavailable.');
+                    _showErrorDialog(context, 'Uniform Pricing subscription unavailable.');
                   }
                   return;
                 }
-
-                // Proceed with purchase if product is found
+                print("Initiating purchase: ${product.id}");
                 final success = await subscriptionsProvider.buySubscription(product);
                 if (success && context.mounted) {
+                  print("Purchase successful: ${product.id}");
                   Navigator.of(context).pop();
                 }
               } catch (e) {
+                print("Purchase error: $e");
                 if (context.mounted) {
                   _showErrorDialog(context, 'Failed to purchase: $e');
                 }
@@ -760,31 +773,31 @@ class SubscriptionsProvider with ChangeNotifier {
               ),
               elevation: 0,
             ),
-         onPressed: () async {
-            try {
-              // Safely find the product, returns null if not found
-              final product = response.productDetails.firstWhereOrNull(
-                (product) => product.id == differentiatedPlusUniformPricingProductId,
-              );
-
-              // Check if the product was actually found
-              if (product == null) {
-                if (context.mounted) {
-                  _showErrorDialog(context, 'Subscription product is currently unavailable.');
+            onPressed: () async {
+              try {
+                final product = response.productDetails.firstWhereOrNull(
+                      (product) => product.id == differentiatedPlusUniformPricingProductId,
+                );
+                if (product == null) {
+                  print("Full Access product not found.");
+                  if (context.mounted) {
+                    _showErrorDialog(context, 'Full Access subscription unavailable.');
+                  }
+                  return;
                 }
-                return;
+                print("Initiating purchase: ${product.id}");
+                final success = await subscriptionsProvider.buySubscription(product);
+                if (success && context.mounted) {
+                  print("Purchase successful: ${product.id}");
+                  Navigator.of(context).pop();
+                }
+              } catch (e) {
+                print("Purchase error: $e");
+                if (context.mounted) {
+                  _showErrorDialog(context, 'Failed to purchase: $e');
+                }
               }
-
-              final success = await subscriptionsProvider.buySubscription(product);
-              if (success && context.mounted) {
-                Navigator.of(context).pop();
-              }
-            } catch (e) {
-              if (context.mounted) {
-                _showErrorDialog(context, 'Failed to purchase: $e');
-              }
-            }
-          },
+            },
             child: Text(
               'Full Access\n\$${_getPriceForProduct(response.productDetails, differentiatedPlusUniformPricingProductId)} / 6 months',
               textAlign: TextAlign.center,
@@ -821,235 +834,7 @@ class SubscriptionsProvider with ChangeNotifier {
             ),
             onPressed: () => _showSubscriptionInfoDialog(context, hasSimpleActive, hasFullAccess),
             child: Text(
-              hasSimpleActive || hasFullAccess
-                  ? 'Learn More\nCancel Subscription'
-                  : 'Learn More',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Restore Purchases button
-        SizedBox(
-          width: 300,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: Colors.black),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () => _handleRestorePurchases(context, subscriptionsProvider),
-            child: const Text(
-              'Restore Purchases',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // Privacy Policy and Terms of Use links
-        _buildPrivacyTermsLinks( context),
-        const SizedBox(height: 20),
-      ];
-
-      if (context.mounted) {
-        await showDialog(
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: const Text(
-              'Choose a Subscription',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: subscriptionTiles,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel', style: TextStyle(fontSize: 16)),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        _showErrorDialog(context, 'Failed to load subscriptions: $e');
-      }
-    }
-  }
-
-
-  Future<void> showDifferentiatedSubscriptionUI(BuildContext context) async {
-    final subscriptionsProvider = context.read<SubscriptionsProvider>();
-
-    // Check store availability first
-    final bool isStoreAvailable = await InAppPurchase.instance.isAvailable();
-    if (!isStoreAvailable) {
-      _showStoreUnavailableDialog(context);
-      return;
-    }
-
-    try {
-      const String differentiatedPricingProductId = 'constructionProfitCalc.differentiatedPricing.3mo.v1';
-      const String differentiatedPlusUniformPricingProductId = 'constructionProfitCalc.fullAccess.6mo';
-
-      // Fetch subscription data from StoreKit
-      final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails({
-        differentiatedPricingProductId,
-        differentiatedPlusUniformPricingProductId,
-      });
-
-      if (response.error != null) {
-        _showErrorDialog(context, response.error!.message);
-        return;
-      }
-
-      if (response.productDetails.isEmpty) {
-        _showNoSubscriptionDialog(context);
-        return;
-      }
-
-      // Check active subscriptions
-      final bool hasFullAccess = subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
-      final bool hasDifferentiatedActive = subscriptionsProvider.hasDifferentiatedActiveSubscription;
-
-      List<Widget> subscriptionTiles = [
-        const SizedBox(height: 20),
-
-        // Differentiated Pricing subscription
-        SizedBox(
-          width: 300,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: hasFullAccess ? Colors.grey : Colors.green.shade700,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
-      onPressed: hasFullAccess ? null : () async {
-                try {
-                  // Safely find the product using firstWhereOrNull
-                  final product = response.productDetails.firstWhereOrNull(
-                    (product) => product.id == differentiatedPricingProductId,
-                  );
-
-                  // Handle case where product is not found
-                  if (product == null) {
-                    if (context.mounted) {
-                      _showErrorDialog(context, 'Subscription product is currently unavailable.');
-                    }
-                    return;
-                  }
-
-                  // Proceed with purchase if product is found
-                  final success = await subscriptionsProvider.buySubscription(product);
-                  if (success && context.mounted) {
-                    Navigator.of(context).pop();
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    _showErrorDialog(context, 'Failed to purchase: $e');
-                  }
-                }
-              },
-            child: Text(
-              'Differentiated Pricing\n\$${_getPriceForProduct(response.productDetails, differentiatedPricingProductId)} / 3 months',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Full Access subscription
-        SizedBox(
-          width: 300,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade800,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
-         onPressed: () async {
-              try {
-                // Safely find the product using firstWhereOrNull
-                final product = response.productDetails.firstWhereOrNull(
-                  (product) => product.id == differentiatedPlusUniformPricingProductId,
-                );
-
-                // Handle case where product is not found
-                if (product == null) {
-                  if (context.mounted) {
-                    _showErrorDialog(context, 'Subscription product is currently unavailable.');
-                  }
-                  return;
-                }
-
-                // Proceed with purchase if product is found
-                final success = await subscriptionsProvider.buySubscription(product);
-                if (success && context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  _showErrorDialog(context, 'Failed to purchase: $e');
-                }
-              }
-            },
-            child: Text(
-              'Full Access\n\$${_getPriceForProduct(response.productDetails, differentiatedPlusUniformPricingProductId)} / 6 months',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        const Text(
-          'Save 50% by subscribing to Full Access!',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.green,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-
-        // Learn More / Cancel Subscription button
-        SizedBox(
-          width: 300,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: Colors.black),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () => _showDifferentiatedInfoDialog(context, hasDifferentiatedActive, hasFullAccess),
-            child: Text(
-              hasDifferentiatedActive || hasFullAccess
-                  ? 'Learn More\nCancel Subscription'
-                  : 'Learn More',
+              hasSimpleActive || hasFullAccess ? 'Learn More\nCancel Subscription' : 'Learn More',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
@@ -1092,7 +877,7 @@ class SubscriptionsProvider with ChangeNotifier {
             title: const Text(
               'Choose a Subscription',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
             ),
             content: SingleChildScrollView(
               child: Column(
@@ -1110,6 +895,251 @@ class SubscriptionsProvider with ChangeNotifier {
         );
       }
     } catch (e) {
+      print("Error in showUniformSubscriptionUI: $e");
+      if (context.mounted) {
+        _showErrorDialog(context, 'Failed to load subscriptions: $e');
+      }
+    }
+  }
+
+
+  Future<void> showDifferentiatedSubscriptionUI(BuildContext context) async {
+    final subscriptionsProvider = context.read<SubscriptionsProvider>();
+
+    // Check store availability
+    try {
+      print("Checking store availability...");
+      final bool isStoreAvailable = await InAppPurchase.instance.isAvailable().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          print("Store availability check timed out.");
+          return false;
+        },
+      );
+      if (!isStoreAvailable) {
+        print("Store unavailable.");
+        if (context.mounted) _showStoreUnavailableDialog(context);
+        return;
+      }
+
+      const String differentiatedPricingProductId = 'constructionProfitCalc.differentiatedPricing.3mo.v1';
+      const String differentiatedPlusUniformPricingProductId = 'constructionprofitcalc.fullaccess.6mo';
+
+      // Fetch subscription data from StoreKit
+      print("Querying products: $differentiatedPricingProductId, $differentiatedPlusUniformPricingProductId");
+      final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails({
+        differentiatedPricingProductId,
+        differentiatedPlusUniformPricingProductId,
+      }).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print("Product query timed out.");
+          if (context.mounted) _showErrorDialog(context, 'Unable to load subscriptions due to network issue.');
+          return ProductDetailsResponse(productDetails: [], notFoundIDs: [], error: null);
+        },
+      );
+
+      if (response.error != null) {
+        print("Query error: ${response.error!.message}");
+        if (context.mounted) _showErrorDialog(context, 'Failed to load subscriptions: ${response.error!.message}');
+        return;
+      }
+
+      if (response.productDetails.isEmpty || response.notFoundIDs.contains(differentiatedPlusUniformPricingProductId)) {
+        print("No products found or Full Access unavailable: ${response.notFoundIDs}");
+        if (context.mounted) _showNoSubscriptionDialog(context);
+        return;
+      }
+      print("Products found: ${response.productDetails.map((p) => p.id).toList()}");
+
+      // Check active subscriptions
+      final bool hasFullAccess = subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
+      final bool hasDifferentiatedActive = subscriptionsProvider.hasDifferentiatedActiveSubscription;
+
+      List<Widget> subscriptionTiles = [
+        const SizedBox(height: 20),
+
+        // Differentiated Pricing subscription
+        SizedBox(
+          width: 300,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: hasFullAccess ? Colors.grey : Colors.green.shade700,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            onPressed: hasFullAccess
+                ? null
+                : () async {
+              try {
+                final product = response.productDetails.firstWhereOrNull(
+                      (product) => product.id == differentiatedPricingProductId,
+                );
+                if (product == null) {
+                  print("Differentiated Pricing product not found.");
+                  if (context.mounted) {
+                    _showErrorDialog(context, 'Differentiated Pricing subscription unavailable.');
+                  }
+                  return;
+                }
+                print("Initiating purchase: ${product.id}");
+                final success = await subscriptionsProvider.buySubscription(product);
+                if (success && context.mounted) {
+                  print("Purchase successful: ${product.id}");
+                  Navigator.of(context).pop();
+                }
+              } catch (e) {
+                print("Purchase error: $e");
+                if (context.mounted) {
+                  _showErrorDialog(context, 'Failed to purchase: $e');
+                }
+              }
+            },
+            child: Text(
+              'Differentiated Pricing\n\$${_getPriceForProduct(response.productDetails, differentiatedPricingProductId)} / 3 months',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Full Access subscription
+        SizedBox(
+          width: 300,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green.shade800,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            onPressed: () async {
+              try {
+                final product = response.productDetails.firstWhereOrNull(
+                      (product) => product.id == differentiatedPlusUniformPricingProductId,
+                );
+                if (product == null) {
+                  print("Full Access product not found.");
+                  if (context.mounted) {
+                    _showErrorDialog(context, 'Full Access subscription unavailable.');
+                  }
+                  return;
+                }
+                print("Initiating purchase: ${product.id}");
+                final success = await subscriptionsProvider.buySubscription(product);
+                if (success && context.mounted) {
+                  print("Purchase successful: ${product.id}");
+                  Navigator.of(context).pop();
+                }
+              } catch (e) {
+                print("Purchase error: $e");
+                if (context.mounted) {
+                  _showErrorDialog(context, 'Failed to purchase: $e');
+                }
+              }
+            },
+            child: Text(
+              'Full Access\n\$${_getPriceForProduct(response.productDetails, differentiatedPlusUniformPricingProductId)} / 6 months',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        const Text(
+          'Save 50% by subscribing to Full Access!',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.green,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+
+        // Learn More / Cancel Subscription button
+        SizedBox(
+          width: 300,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: Colors.black),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => _showDifferentiatedInfoDialog(context, hasDifferentiatedActive, hasFullAccess),
+            child: Text(
+              hasDifferentiatedActive || hasFullAccess ? 'Learn More\nCancel Subscription' : 'Learn More',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Restore Purchases button
+        SizedBox(
+          width: 300,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: Colors.black),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => _handleRestorePurchases(context, subscriptionsProvider),
+            child: const Text(
+              'Restore Purchases',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Privacy Policy and Terms of Use links
+        _buildPrivacyTermsLinks(context),
+        const SizedBox(height: 20),
+      ];
+
+      if (context.mounted) {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text(
+              'Choose a Subscription',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: subscriptionTiles,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error in showDifferentiatedSubscriptionUI: $e");
       if (context.mounted) {
         _showErrorDialog(context, 'Failed to load subscriptions: $e');
       }
