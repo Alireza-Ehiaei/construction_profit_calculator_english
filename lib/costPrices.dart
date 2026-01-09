@@ -9,7 +9,7 @@ import 'main.dart';
 import 'navigation_service.dart';
 import 'permit_fees.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
-
+// ⇓
 
 class CostPrices extends StatefulWidget {
   final String givenProjectName;
@@ -68,6 +68,7 @@ class _CostPricesState extends State<CostPrices> {
   final _sellPricePercentageController = TextEditingController();
   final _sellPricePerMeterController = TextEditingController();
   bool isReadOnly = false;
+  int numberOfFloorsDifferences = 0;
 
   @override
   void initState() {
@@ -111,13 +112,13 @@ class _CostPricesState extends State<CostPrices> {
     });
     if (hasData) { // by pressing edit project if the given project name isn't _oozz comes up
        isReadOnly = true;
-      _onNextCPP(widget.givenProjectName, 1);
+      _onNewCPPDataRetrieving(widget.givenProjectName, 1);
     }
   }
 
-  Future<void> _updatePercentageData(BuildContext context, int segmentNumber1, int similarFloor, int startingFloor,
+  Future<void> _onPercentageUpdateData(BuildContext context, int segmentNumber1, int similarFloor, int startingFloor,
       int numberOfSegments,  double costPercent, double costPerMeter,   double sellPercent, double sellPerMeter)
-  async {
+  async { // print('costPercent_onPer $costPercent - sellPercent_onPer $sellPercent');
   await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
     (ProjectStartingSimilarTableData(
       startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
@@ -133,13 +134,17 @@ class _CostPricesState extends State<CostPrices> {
       startingSimilarTableSellPricePercentage: sellPercent,
       startingSimilarTableSellPricePerMeter: sellPerMeter,
     ));
-  ProjectStartingSimilarTableData? data =
+//  to test they are saved:
+/*
+ ProjectStartingSimilarTableData? StartingSimilarTabledata =
   await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
       projectName1, cppValue, segmentNumber1);
-  }
 
+  print('costPercentt=t ${StartingSimilarTabledata?.startingSimilarTableCostPercentage} - sellPercent ${StartingSimilarTabledata?.startingSimilarTableSellPricePercentage}');
+*/
+}
 
-  void _costSellDataGenerating(
+  void _onCostSellDataGenerating(
       BuildContext context,
       String projectName1,
       int ccpValue,
@@ -234,92 +239,12 @@ class _CostPricesState extends State<CostPrices> {
         }
       }
     }
-
+    numberOfSegmentsSaved = dataSimilarStarting!.startingSimilarTableSegmentNumber;
+    numberOfSimilarFloorsSaved = dataSimilarStarting.startingSimilarTableSimilarFloor;
     setState(() {});
   }
 
-
-/*
-void _costSellDataGenerating(BuildContext context, String projectName1, int ccpValue, int segmentNumber,
-      Set<int> nonSalableSegments,
-      double costPercentage, double costPerMeter, double sellPercent, double sellPerMeter)
-  async {
-    // Retrieve the data from the StartingSimilar table in the database
-    ProjectStartingSimilarTableData? dataSimilarStarting = await
-    DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
-        projectName1, ccpValue, segmentNumber);
-
-    // Loop through the data and update the segmentCost values for the other floors
-    // with the same segmentNumber, so we don't need to pass segment number as argument here
-    List<ProjectTableData> projectDataByCpp = await
-    DifferentiatedCalculationDatabaseHelper.getCostPricingDataByCpp(projectName1, ccpValue);
-
-    int? startingFloor = dataSimilarStarting?.startingSimilarTableStartingFloor;
-    int startingFloorIndex = 0;
-    late double startingFloorSegmentCost;
-    late double startingFloorSegmentPrice;
-    late double updatedSegmentCost;
-    late double updatedSegmentPrice;
-
-    for (int i = 0; i < projectDataByCpp.length; i++) {
-      if (projectDataByCpp[i].costPricingTableSegmentNumber == segmentNumber &&
-          projectDataByCpp[i].costPricingTableFloorNumber == startingFloor) {
-        startingFloorIndex = i;
-        break;
-      }
-    }
-
-    int j = 0;
-    int k = 0;
-
-    // For floors other than the starting floor, data of constant price is generated here
-    for (int i = 0; i < projectDataByCpp.length; i++) {
-      if (projectDataByCpp[i].costPricingTableSegmentNumber == segmentNumber &&
-          projectDataByCpp[i].costPricingTableFloorNumber !=
-              projectDataByCpp[startingFloorIndex].costPricingTableFloorNumber) {
-
-        // Reset segment cost and price to ensure they don't retain previous values
-        projectDataByCpp[i].costPricingTableSegmentCostPerMeter = 0;
-        priceTableData[i].textField3Controller.text = '';
-        projectDataByCpp[i].costPricingTableSegmentSellPricePerMeter = 0;
-        priceTableData[i].textField4Controller.text = '';
-
-        startingFloorSegmentCost = projectDataByCpp[startingFloorIndex].costPricingTableSegmentCostPerMeter;
-        startingFloorSegmentPrice = projectDataByCpp[startingFloorIndex].costPricingTableSegmentSellPricePerMeter;
-        //  -4321 is sentinel value
-        if (costPercentage != -4321) {
-          updatedSegmentCost = startingFloorSegmentCost * pow(1 + costPercentage / 100, j + 1);
-        }
-        else if (costPerMeter != -4321) {
-          updatedSegmentCost = startingFloorSegmentCost + costPerMeter * (j + 1);
-        }
-        else  {
-          updatedSegmentCost = startingFloorSegmentCost;
-        }
-
-        String updatedSegmentCostString = updatedSegmentCost.toStringAsFixed(2);
-        projectDataByCpp[i].costPricingTableSegmentCostPerMeter = double.parse(updatedSegmentCostString);
-        j++;
-
-        priceTableData[i].textField3Controller.text = updatedSegmentCost.toStringAsFixed(2);
-
-        if (sellPercent != -4321) {
-          updatedSegmentPrice = startingFloorSegmentPrice * pow(1 + sellPercent / 100, k + 1);
-        } else if (sellPerMeter != -4321) {
-          updatedSegmentPrice = startingFloorSegmentPrice + sellPerMeter * (k + 1);
-        } else  {
-          updatedSegmentPrice = startingFloorSegmentPrice;
-        }
-
-        String updatedSegmentSellString = updatedSegmentPrice.toStringAsFixed(2);
-        projectDataByCpp[i].costPricingTableSegmentSellPricePerMeter = double.parse(updatedSegmentSellString);
-        k++;
-        priceTableData[i].textField4Controller.text = updatedSegmentPrice.toStringAsFixed(2);
-      }
-    }
-
-    setState(() {});
-  }*/
+  
 
   // Each project has a starting similar table that equal to the number of cost-price
   // plans multiplied number of segments of starting floor in that cost-price plan,
@@ -331,7 +256,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
 
 
-  // save CurrentSegmentOfStartingFloor is called once setting icon is pressed, otherwise data generated using icon will not be save and shown in price table
+  // save CurrentSegmentOfStartingFloor is called once setting icon is pressed,
+  // otherwise data generated using icon will not be save and shown in price table
   void saveCurrentSegmentOfStartingFloor(int segmentNumber2) async
   {
     // Retrieve existing data
@@ -424,113 +350,22 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
     }
   }
 
-/*  void saveCurrentSegmentOfStartingFloor(int segmentNumber2)
-  async {
-    // saving data with same segment numbers
-    // Saving data for starting similar data table
-    ProjectStartingSimilarTableData? data =
-       await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
-        projectName1, cppValue, segmentNumber2);
-
-    // If StartingSimilar data is not null, set the text of the corresponding text fields and toggle buttons
-    if (data != null) {
-      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
-          ProjectStartingSimilarTableData(
-            startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
-            startingSimilarTableProjectName: projectName1,
-            startingSimilarTableCpp: cppValue,
-            startingSimilarTableStartingFloor: startingFloor,
-            startingSimilarTableSegmentNumber: int.parse(priceTableData[segmentNumber2 - 1].name.split(' ')[3]),
-            startingSimilarTableSegmentSalable: nonSalableSegments.contains(segmentNumber2) ? 0 : 1,            startingSimilarTableSimilarFloor: numberOfSimilarFloorsSaved,
-            startingSimilarTableNumberOfSegments: numberOfSegmentsSaved,
-            startingSimilarTableCostPercentage: _costPercentageSelected && _costPercentageController.text.isNotEmpty ?
-            double.parse(_costPercentageController.text) : data.startingSimilarTableCostPercentage,
-            startingSimilarTableCostPerMeter: _costPerMeterSelected && _costPerMeterController.text.isNotEmpty
-                ? double.parse(_costPerMeterController.text) : data.startingSimilarTableCostPerMeter,
-            startingSimilarTableSellPricePercentage: _sellPricePercentageSelected && _sellPricePercentageController.text.isNotEmpty
-                ? double.parse(_sellPricePercentageController.text) : data.startingSimilarTableSellPricePercentage,
-            startingSimilarTableSellPricePerMeter: _sellPricePerMeterSelected && _sellPricePerMeterController.text.isNotEmpty
-                ? double.parse(_sellPricePerMeterController.text) : data.startingSimilarTableSellPricePerMeter,
-          ));
-
-    }
-    else {
-      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
-          ProjectStartingSimilarTableData(
-            startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
-            startingSimilarTableProjectName: projectName1,
-            startingSimilarTableCpp: cppValue,
-            startingSimilarTableStartingFloor: startingFloor,
-           // startingSimilarTableFloorNumber: int.parse(priceTableData[segmentNumber2 - 1].name.split(' ')[1]),
-            startingSimilarTableSegmentNumber: int.parse(priceTableData[segmentNumber2 - 1].name.split(' ')[3]),
-            startingSimilarTableSegmentSalable: nonSalableSegments.contains(segmentNumber2) ? 0 : 1,
-            startingSimilarTableSimilarFloor: numberOfSimilarFloorsSaved,
-            startingSimilarTableNumberOfSegments: numberOfSegmentsSaved,
-            startingSimilarTableCostPercentage: _costPercentageSelected
-                && _costPercentageController.text.isNotEmpty ?
-            double.parse(_costPercentageController.text) : -4321,
-            startingSimilarTableCostPerMeter: _costPerMeterSelected
-                && _costPerMeterController.text.isNotEmpty ?
-            double.parse(_costPerMeterController.text) : -4321,
-            startingSimilarTableSellPricePercentage: _sellPricePercentageSelected
-                && _sellPricePercentageController.text.isNotEmpty ?
-            double.parse(_sellPricePercentageController.text) : -4321,
-            startingSimilarTableSellPricePerMeter: _sellPricePerMeterSelected
-                && _sellPricePerMeterController.text.isNotEmpty ?
-            double.parse(_sellPricePerMeterController.text) : -4321,
-          ));
-    }
 
 
-    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
-    for (int i = 0; i < priceTableData.length; i++) {
-      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
-        costPricingTableProjectId: nextId++,
-        costPricingTableProjectName: projectName1,
-        costPricingTableCpp: cppValue,
-        costPricingTableFloorNumber: int.parse(priceTableData[i].name.split(' ')[1]),
-        costPricingTableSegmentNumber: int.parse(priceTableData[i].name.split(' ')[3]),
-        costPricingTableSegmentArea: priceTableData[i].textField2Controller.text.isNotEmpty
-            ? double.parse(priceTableData[i].textField2Controller.text)
-            : 0,
-        costPricingTableSegmentCostPerMeter: priceTableData[i].textField3Controller.text.isNotEmpty
-            ? double.parse(priceTableData[i].textField3Controller.text)
-            : 0,
-        costPricingTableSegmentSellPricePerMeter: priceTableData[i].textField4Controller.text.isNotEmpty
-            ? double.parse(priceTableData[i].textField4Controller.text)
-            : 0,
-        costPricingTableCostOfSegment: (priceTableData[i].textField3Controller.text.isNotEmpty &&
-            priceTableData[i].textField2Controller.text.isNotEmpty) ?
-        double.parse(priceTableData[i].textField3Controller.text) *
-            double.parse(priceTableData[i].textField2Controller.text)
-            : 0,
-        costPricingTableIncomeOfSegment: (priceTableData[i].textField4Controller.text.isNotEmpty &&
-            priceTableData[i].textField2Controller.text.isNotEmpty) ?
-        double.parse(priceTableData[i].textField4Controller.text) *
-            double.parse(priceTableData[i].textField2Controller.text)
-            : 0,
-        costPricingTableProfitOfSegment: (priceTableData[i].textField2Controller.text.isNotEmpty &&
-            priceTableData[i].textField3Controller.text.isNotEmpty &&
-            priceTableData[i].textField4Controller.text.isNotEmpty) ?
-        (double.parse(priceTableData[i].textField4Controller.text) -
-            double.parse(priceTableData[i].textField3Controller.text)) *
-            double.parse(priceTableData[i].textField2Controller.text)
-            : 0,
-        costPricingTableIndex3: 0,
-      ));
-    }
-  }*/
 
   Future<void> profitCalculationForEachSegment() async {
     int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
     for (int i = 0; i < priceTableData.length; i++) {
-      double segmentArea = priceTableData[i].textField2Controller.text.isNotEmpty
+      double segmentArea = priceTableData[i].textField2Controller.text
+          .isNotEmpty
           ? double.parse(priceTableData[i].textField2Controller.text)
           : -4321;
-      double segmentCost = priceTableData[i].textField3Controller.text.isNotEmpty
+      double segmentCost = priceTableData[i].textField3Controller.text
+          .isNotEmpty
           ? double.parse(priceTableData[i].textField3Controller.text)
           : -4321;
-      double segmentPrice = priceTableData[i].textField4Controller.text.isNotEmpty
+      double segmentPrice = priceTableData[i].textField4Controller.text
+          .isNotEmpty
           ? double.parse(priceTableData[i].textField4Controller.text)
           : -4321;
       double costOfSegment = (segmentCost != -1 && segmentArea != -1)
@@ -539,46 +374,47 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
       double incomeOfSegment = (segmentPrice != -1 && segmentArea != -1)
           ? segmentPrice * segmentArea
           : -4321;
-      double profitOfSegment = (segmentPrice != -1 && segmentCost != -1 && segmentArea != -1)
+      double profitOfSegment = (segmentPrice != -1 && segmentCost != -1 &&
+          segmentArea != -1)
           ? (segmentPrice - segmentCost) * segmentArea
           : -4321;
 
       int floor = int.parse(priceTableData[i].name.split(' ')[1]);
       int segment = int.parse(priceTableData[i].name.split(' ')[3]);
 
-  /*    // --- Handle non-salable segments ---
-      if (nonSalableSegments.contains(segment)) {
-        segmentPrice = 0;
-        incomeOfSegment = 0;
-        profitOfSegment = 0;
-      }*/
 
-      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
-        costPricingTableProjectId: nextId++,
-        costPricingTableProjectName: projectName1,
-        costPricingTableCpp: cppValue,
-        costPricingTableFloorNumber: floor,
-        costPricingTableSegmentNumber: segment,
-        costPricingTableSegmentArea: segmentArea,
-        costPricingTableSegmentCostPerMeter: segmentCost,
-        costPricingTableSegmentSellPricePerMeter: segmentPrice,
-        costPricingTableCostOfSegment: costOfSegment,
-        costPricingTableIncomeOfSegment: incomeOfSegment,
-        costPricingTableProfitOfSegment: profitOfSegment,
-        costPricingTableIndex3: -1,
-      ));
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(
+          ProjectTableData(
+            costPricingTableProjectId: nextId++,
+            costPricingTableProjectName: projectName1,
+            costPricingTableCpp: cppValue,
+            costPricingTableFloorNumber: floor,
+            costPricingTableSegmentNumber: segment,
+            costPricingTableSegmentArea: segmentArea,
+            costPricingTableSegmentCostPerMeter: segmentCost,
+            costPricingTableSegmentSellPricePerMeter: segmentPrice,
+            costPricingTableCostOfSegment: costOfSegment,
+            costPricingTableIncomeOfSegment: incomeOfSegment,
+            costPricingTableProfitOfSegment: profitOfSegment,
+            costPricingTableIndex3: -1,
+          ));
 
-      // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
+      // The following fetch method should not be deleted because if you directly call insert
+      // method it will replace percentage data being saved with -4321, and
+      // also if both fetch and insert methods are deleted then If data is generated
+      // without pressing setting icon they won't be saved into the database
 
       List<Map<String, dynamic>> data = await DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
-          projectName1, cppValue, startingFloor);
+          projectName1, cppValue,);
+    //  for (int i = 1; i <= numberOfSegmentsSaved; i++) {
       bool isDataFound = false;
       for (int j = 0; j < data.length; j++) {
-        if (data[j]['floor'] == startingFloor && data[j]['segmentNnnumber'] == segment) {
-          isDataFound = true;
+        if (data[j]['startingSimilarTableSegmentNumber'] == segment) {
+          isDataFound = true; // Data regarding percentage and incremental of the segment have been saved by pressing the setting icon
           break;
         }
-      }
+      }// print('segment $i salable? ${nonSalableSegments.contains(segment)}');
+
       if (!isDataFound) {
         await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
           ProjectStartingSimilarTableData(
@@ -609,103 +445,24 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
           ),
         );
       }
-    }
-  }
+    }}
 
 
-/*  Future<void> profitCalculationForEachSegment() async {
-    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
-    for (int i = 0; i < priceTableData.length; i++) {
-      double segmentArea = priceTableData[i].textField2Controller.text.isNotEmpty
-          ? double.parse(priceTableData[i].textField2Controller.text)
-          : -4321;
-      double segmentCost = priceTableData[i].textField3Controller.text.isNotEmpty
-          ? double.parse(priceTableData[i].textField3Controller.text)
-          : -4321;
-      double segmentPrice = priceTableData[i].textField4Controller.text.isNotEmpty
-          ? double.parse(priceTableData[i].textField4Controller.text)
-          : -4321;
-      double costOfSegment = (segmentCost != -1 && segmentArea != -1)
-          ? segmentCost * segmentArea
-          : -4321;
-      double incomeOfSegment = (segmentPrice != -1 && segmentArea != -1)
-          ? segmentPrice * segmentArea
-          : -4321;
-      double profitOfSegment = (segmentPrice != -1 && segmentCost != -1 && segmentArea != -1)
-          ? (segmentPrice - segmentCost) * segmentArea
-          : -4321;
-      //  print('Segment $i: segmentArea=$segmentArea, segmentCost=$segmentCost, 
-      //  segmentPrice=$segmentPrice, costOfSegment=$costOfSegment, incomeOfSegment=$incomeOfSegment, profitOfSegment=$profitOfSegment');
 
-      int floor = int.parse(priceTableData[i].name.split(' ')[1]);
-      int segment = int.parse(priceTableData[i].name.split(' ')[3]);
-      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
-        costPricingTableProjectId: nextId++,
-        costPricingTableProjectName: projectName1,
-        costPricingTableCpp: cppValue,
-        costPricingTableFloorNumber: floor,
-        costPricingTableSegmentNumber: segment,
-        costPricingTableSegmentArea: segmentArea,
-        costPricingTableSegmentCostPerMeter: segmentCost,
-        costPricingTableSegmentSellPricePerMeter: segmentPrice,
-        costPricingTableCostOfSegment: costOfSegment,
-        costPricingTableIncomeOfSegment: incomeOfSegment,
-        costPricingTableProfitOfSegment: profitOfSegment,
-        costPricingTableIndex3: -1,
-      )
-      );
-
-      // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
-
-      List<Map<String, dynamic>> data = await DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
-          projectName1,cppValue, startingFloor);
-      bool isDataFound = false;
-      for (int j = 0; j < data.length; j++) {
-        if (data[j]['floor'] == startingFloor && data[j]['segmentNnnumber'] == segment) {
-
-          isDataFound = true;
-          break;
-        }
-      }
-      if (!isDataFound) {
-        await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
-          (ProjectStartingSimilarTableData(
-          startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
-          startingSimilarTableProjectName: projectName1,
-          startingSimilarTableCpp: cppValue,
-          startingSimilarTableStartingFloor: startingFloor,
-      //    startingSimilarTableFloorNumber: floor,
-          startingSimilarTableSegmentNumber: segment,
-          startingSimilarTableSimilarFloor: numberOfSimilarFloorsSaved,
-          startingSimilarTableNumberOfSegments: numberOfSegmentsSaved,
-          startingSimilarTableCostPercentage: _costPercentageSelected && _costPercentageController.text.isNotEmpty ?
-          double.parse(_costPercentageController.text) : -4321,
-          startingSimilarTableCostPerMeter: _costPerMeterSelected && _costPerMeterController.text.isNotEmpty ?
-          double.parse(_costPerMeterController.text) : -4321,
-          startingSimilarTableSellPricePercentage: _sellPricePercentageSelected &&
-              _sellPricePercentageController.text.isNotEmpty ?
-          double.parse(_sellPricePercentageController.text) : -4321,
-          startingSimilarTableSellPricePerMeter: _sellPricePerMeterSelected &&
-              _sellPricePerMeterController.text.isNotEmpty ?
-          double.parse(_sellPricePerMeterController.text) : -4321,
-        ));
-      }
-    }
-  }*/
 
   // icon in popup of CostPrices
   void myIconButtonFunction
       (BuildContext context,  int segmentNumber1,
       int similarFloor, int startingFloor, int numberOfSegments, Set<int> nonSalableSegmentsInMyIcon)
-     {
+     { // print('similarFloor $similarFloor - startingFloor $startingFloor - numberOfSegments $numberOfSegments');
     showDialog(
       context: context,
       builder: (BuildContext context)
       {
         return PriceTypeDialog(
-            onPercentageUpdate:  _updatePercentageData,
+            onPercentageUpdate:  _onPercentageUpdateData,
+          onCostSellDataGenerating: _onCostSellDataGenerating,
             costPercentageSelected: _costPercentageSelected,
-            onCostSellDataGenerating: _costSellDataGenerating,
             costPerMeterSelected: _costPerMeterSelected,
             costPricingFixedSelected: _costPricingFixedSelected,
             onCostPercentageSelectedChanged: (bool value) {
@@ -804,7 +561,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
   }
 
 
-  void showErrorDialog1(BuildContext context) {
+  void showEmptyErrorDialog1(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     const ipadBreakpoint = 850.0;
     final bool isIpad = screenWidth > ipadBreakpoint;
@@ -826,7 +583,10 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
               "Please fill all required fields. Inputs should be a valid number "
               "(digits and optional decimal point only, like: 123, 123.5, 0.66) "
               "not including letters (e.g., a, b, c) or symbols (e.g., \$, %, &)."
-                  " Also starting or trailing decimal point (e.g., .1 or 1.) is not allowed.",
+                  " Also starting or trailing decimal point (e.g., .1 or 1.) is not allowed."
+                  "\n\nAfter pressing 'Set Price' button if you change again the the salable"
+          " switch for any of segments in the top table you need to press "
+          "again the set price button and again enter the prices.",
               style: TextStyle(fontSize: textFontSize )),
           actions: [
             TextButton(
@@ -848,7 +608,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
     );
   }
 
-  Future<bool> _onNextCPP(String projectName, int cppValue)
+  Future<bool> _onNewCPPDataRetrieving(String projectName, int cppValue)
   async {
 
     // Retrieve the data associated with project name and cost-price plan value
@@ -882,7 +642,6 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
         if (!entry.value) entry.key
     };
 
-
     // --- Update area table data ---
     areaTableData.clear();
 
@@ -910,7 +669,6 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
         isSalableInArea: isSalable,
       ));
     }
-
 
     // --- Update price table data ---
     priceTableData.clear();
@@ -940,7 +698,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
       // Extract segment and floor numbers from your data model
       final segmentNum = retrievedPriceTableData[i].costPricingTableSegmentNumber;
-      final floorNum = retrievedPriceTableData[i].costPricingTableFloorNumber; // <-- adjust as per your data model
+      final floorNum = retrievedPriceTableData[i].costPricingTableFloorNumber;
 
       bool isSalable = segmentSalableMap[segmentNum] ?? true;
 
@@ -1015,141 +773,110 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
   }
 
 
-/*  Future<bool> _onNextCPP(String projectName, int cppValue)
-       async {
-
-    // Retrieve the data associated with project name and cost-price plan value
-    List<ProjectTableData> retrievedPriceTableData = await DifferentiatedCalculationDatabaseHelper.
-      getCostPricingDataByCpp(projectName, cppValue);
-
-    int segmentNumber = retrievedPriceTableData[0].costPricingTableSegmentNumber;
-
-    final ProjectStartingSimilarTableData? projectStartingSimilarData = await DifferentiatedCalculationDatabaseHelper.
-            getStartingSimilarTableSegmentData(projectName, cppValue, segmentNumber);
-    numberOfSegmentsController.text = projectStartingSimilarData!.startingSimilarTableNumberOfSegments.toString();
-    numberOfSegmentsSaved = projectStartingSimilarData.startingSimilarTableNumberOfSegments;
-    // Update the area table data
-    areaTableData.clear();
-    for (int i = 0; i < projectStartingSimilarData.startingSimilarTableNumberOfSegments; i++) {
-      String rowName = 'Floor ${projectStartingSimilarData.startingSimilarTableStartingFloor.toString()} segment ${i + 1}';
-      TextEditingController textField1Controller = TextEditingController(text: retrievedPriceTableData[i].
-               costPricingTableSegmentArea.toString());
-      areaTableData.add(AreaTableRowData(name: rowName,
-        textField1Controller: textField1Controller));
-    }
-
-    // Update the price table data
-    priceTableData.clear();
-    List<String> segmentNumbers = [];
-    for (int i = 0; i < projectStartingSimilarData.startingSimilarTableSimilarFloor + 1; i++){
-      for (int j = 0; j < projectStartingSimilarData.startingSimilarTableNumberOfSegments; j++) {
-        segmentNumbers.add('Floor ${(projectStartingSimilarData.startingSimilarTableStartingFloor + i).
-        toString()} segment ${j + 1}');
-      }}
-
-    for (int i = 0; i < retrievedPriceTableData.length; i++) {
-      String segmentNumber = segmentNumbers[i];
-      TextEditingController textField2Controller = TextEditingController(text: retrievedPriceTableData[i].costPricingTableSegmentArea.toString());
-      TextEditingController textField3Controller = TextEditingController(text: retrievedPriceTableData[i].costPricingTableSegmentCostPerMeter.toString());
-      TextEditingController textField4Controller = TextEditingController(text: retrievedPriceTableData[i].costPricingTableSegmentSellPricePerMeter.toString());
-      similarFloorController.text = projectStartingSimilarData.startingSimilarTableSimilarFloor.toString();
-      numberOfSimilarFloorsSaved =projectStartingSimilarData.startingSimilarTableSimilarFloor;
-      startingFloor = projectStartingSimilarData.startingSimilarTableStartingFloor;
-
-      priceTableData.add(PriceTableRowData(
-        name: segmentNumber,
-        textField2Controller: textField2Controller,
-        textField3Controller: textField3Controller,
-        textField4Controller: textField4Controller,
-      ));
-    }
-
-    // Update the visibility of the area and price tables
-    areaTableVisible = true;
-    priceTableVisible = true;
-
-    // Update the UI
-    setState(() {});
-
-    // Prevent the default back button behavior
-    return false;
-  }*/
-
-
   Future<void> _onBackButtonPressedCallback(BuildContext context)
-       async {
-         if (priceTableVisible)
-         {
-           bool allFieldsAreNotEmpty = true;
+  async {
+    if (priceTableVisible)
+    {
+      bool allFieldsAreNotEmpty = true;
 
-           for (int i = 0; i < priceTableData.length; i++) {
-             // final sellPriceText = priceTableData[i].textField4Controller.text;
+      for (int i = 0; i < priceTableData.length; i++) {
+        // final sellPriceText = priceTableData[i].textField4Controller.text;
 
-             if (priceTableData[i].textField2Controller.text.isEmpty ||
-                 !isValidNumber(priceTableData[i].textField2Controller.text) ||
-                 priceTableData[i].textField3Controller.text.isEmpty ||
-                 !isValidNumber(priceTableData[i].textField3Controller.text) ||
-                 priceTableData[i].textField4Controller.text.isEmpty ||
-                 !isValidNumber(priceTableData[i].textField4Controller.text)) {
-               allFieldsAreNotEmpty =
-               false; // Set to false if any field is empty or invalid
-               break; // Exit the loop if any field is empty or invalid
-             }
-           }
-
-
-    if ((allFieldsAreNotEmpty &&
-        numberOfSegmentsController.text.isNotEmpty &&
-        similarFloorController.text.isNotEmpty)) {
-
-      await profitCalculationForEachSegment();
-      cppValue--;
-
-      if (cppValue > 0) {
-        // If checkmaxfeeSegmentNumber is true, execute this code block
-        _onNextCPP(projectName1, cppValue);
-        setState(() {});
-      } else {
-        if (cppValue == 0) { // The project had been saved before
-          NavigationService().navigateToScreen(
-            LandInputs(
-              givenProjectName: projectName1,
-            ),
-          );
+        if (priceTableData[i].textField2Controller.text.isEmpty ||
+            !isValidNumber(priceTableData[i].textField2Controller.text) ||
+            priceTableData[i].textField3Controller.text.isEmpty ||
+            !isValidNumber(priceTableData[i].textField3Controller.text) ||
+            priceTableData[i].textField4Controller.text.isEmpty ||
+            !isValidNumber(priceTableData[i].textField4Controller.text)) {
+          allFieldsAreNotEmpty =
+          false; // Set to false if any field is empty or invalid
+          break; // Exit the loop if any field is empty or invalid
         }
       }
-    }}
-         else if (!priceTableVisible) {
-// no need to profitCalculationForEachSegment
-      cppValue--;
 
+      if ((allFieldsAreNotEmpty &&
+          numberOfSegmentsController.text.isNotEmpty &&
+          similarFloorController.text.isNotEmpty))
+      {
+
+        await profitCalculationForEachSegment();
+        cppValue--;
+        if (cppValue > 0) {
+          // If checkmaxfeeSegmentNumber is true, execute this code block
+          _onNewCPPDataRetrieving(projectName1, cppValue);
+          setState(() {});
+        } else {
+          if (cppValue == 0) { // The project had been saved before
+            NavigationService().navigateToScreen(
+              LandInputs(
+                givenProjectName: projectName1,
+              ),
+            );
+          }
+        }
+      } else {
+        // Show error dialog if any fields are empty or invalid
+        showEmptyErrorDialog1(context);
+      }}
+    else  {
+      // no need to profitCalculationForEachSegment
+      cppValue--;
       if (cppValue > 0) {
         areaTableData.clear();
         numberOfSegmentsController.clear();
         similarFloorController.clear();
-         numberOfSegmentsSaved = 0;
-         numberOfSimilarFloorsSaved = 0;
+        numberOfSegmentsSaved = 0;
+        numberOfSimilarFloorsSaved = 0;
         setState(() {
           areaTableVisible = false;
           similarFloorVisible = false;
           priceTableVisible = false;
         });
-        _onNextCPP(projectName1, cppValue);
+        _onNewCPPDataRetrieving(projectName1, cppValue);
         setState(() {});
       } else {
-
         NavigationService().navigateToScreen(
           LandInputs(
             givenProjectName: projectName1,
           ),
         );
       }
-    } else {
-      // Show error dialog if any fields are empty or invalid
-      showErrorDialog1(context);
     }
   }
 
+
+  void showEmptyRow(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Blank fields',  style: TextStyle(
+            color: Colors.red,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),),
+          content: const Text('Please make sure to fill in the values for construction cost and sell price of this segment. '
+              'Also don\'t change other data before you entered like number Of segments.',  style: TextStyle(
+            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK',  style: TextStyle(
+                color: Colors.red,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   bool isValidNumber(String input) {
     // Trim any leading or trailing whitespace
@@ -1214,6 +941,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
         final iconSizeSmall = isIpad ? iconSizeSmallPad : iconSizeSmallPhone;
         final double spacingHeight = isIpad ? 16.0 : 10.0;
 
+        double uniqueConstructionCostPerMeter = projectData.uniqueConstructionCostPerMeter;
+        print('Retrieved cost: $uniqueConstructionCostPerMeter');
 
         return Scaffold(
           body: Container(
@@ -1245,7 +974,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                         child: Text(
                                           projectData.projectName == "***" ? " Cost Price Data"
                                               : projectData.projectName == "_oozz" ? " Cost Price Data"
-                                              : '${projectData.projectName} Cost Price Data',
+                                              : 'Cost-Price Data - ${projectData.projectName}',
                                           style: TextStyle(color: Colors.white, fontSize: textFontSize),
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -1297,32 +1026,28 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                 context: context,
                                                 builder: (BuildContext context) {
                                                   return SimpleDialog(
-                                                    title:  Text('Delete the cost-price plan?'
-                                                        ,style: TextStyle(fontSize: textFontSize)),
+                                                    title:  Text('By Deleting this cost price plan number of floors in upper'
+                                                        ' plans will be deducted equal to the number of '
+                                                        'floors removed here.\n\n Delete the cost-price plan?'
+                                                        ,style: TextStyle( fontSize: titleFontSize,
+                                                          fontWeight: FontWeight.bold,)),
                                                     children: [
                                                       SimpleDialogOption(
-                                                        child: Container(
-                                                          color: Colors.red, // Set your desired background color here
-                                                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                                                          child:  Text(
+                                                        child: Text(
                                                             'Yes',
-                                                            style: TextStyle(fontSize: textFontSize, color: Colors.blue,),
+                                                            style: TextStyle(fontSize: textFontSize, color: Colors.red,),
                                                             textAlign: TextAlign.center,
-                                                          ),
+
                                                         ),
                                                         onPressed: () {
                                                           Navigator.pop(context, true);
                                                         },
                                                       ),
                                                       SimpleDialogOption(
-                                                        child: Container(
-                                                          color: Colors.green, // Set your desired background color here
-                                                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                                                          child:  Text(
+                                                        child:   Text(
                                                             'No',
                                                             style: TextStyle(fontSize: textFontSize,color: Colors.blue,),
                                                             textAlign: TextAlign.center,
-                                                          ),
                                                         ),
                                                         onPressed: () {
                                                           Navigator.pop(context, false);
@@ -1337,36 +1062,20 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                               if (shouldDelete == true) {
                                                 await DifferentiatedCalculationDatabaseHelper.deleteCpp(
                                                     projectName1, cppValue);
-
-                                          //      cppValue--;
-                                               /* if (cppValue>0) {
-                                                  // If checkmaxfeeSegmentNumber is true, execute this code block
-                                               //   _onN extCPP(projectName1, cppValue);
-                                                  _onBackButtonPressedCallback(context);
-                                                  setState(() {});
-                                                  // if (maxfloor + permitFeeSimilarFloor > totalFloor)
-                                                }
-                                                else*/
-                                                {
-                                                  setState(() {});
-                                                  NavigationService().navigateToScreen(
-                                                  LandInputs(givenProjectName: projectName1, ),
-                                                  arguments: projectName1,
-                                                );}
-                                              }
-                                              else
-                                              {
+                                                Navigator.of(context).pop();
                                                 NavigationService().navigateToScreen(
-                                                  LandInputs(
+                                                  CostPrices(
                                                     givenProjectName: projectName1,
+                                                    givenCppValue: 1,
                                                   ),
                                                 );
                                               }
+
                                             },
                                             icon: Icon(Icons.delete,size: iconSizeSmall, color: Colors.white,),
                                           ),
-                                           SizedBox(width: spacingHeight),
-              
+
+                                          SizedBox(width: spacingHeight),
               
                                           IconButton(
                                             onPressed: () {
@@ -1377,7 +1086,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                   return AlertDialog(
                                                     title:  Text('Examples',
                                                       style: TextStyle(
-                                                        color: Colors.red, 
+                                                        color: Colors.teal,
                                                         fontSize: titleFontSize,      
                                                         fontWeight: FontWeight.bold, 
                                                       ),),
@@ -1396,13 +1105,13 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                   children: [
                                                                      TextSpan(
                                                                       text: 'In this section, you will find examples to help you better'
-                                                                          ' understand how to define the cost-price segments and plans of your construction '
-                                                                          'project. It may be beneficial to read each example thoroughly and write '
-                                                                          'numbers of examples on paper before implementing them in the app. '
+                                                                          ' understand how to define the cost-price segments and cost-price plans of your construction '
+                                                                          'project. For most examples, differentiated construction costs per unit area have been applied. It may be beneficial to read each example thoroughly and write '
+                                                                          'numbers and steps of examples on paper before implementing them in the app. '
                                                                           'If you haven\'t read the guidance section yet, please '
                                                                           'click ',
                                                                       style: TextStyle(
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                         color: Colors.black,
                                                                       ),
                                                                     ),
@@ -1414,25 +1123,25 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: ' icon at the bottom of the page and review it carefully before returning '
+                                                                      text: ' icon at the bottom of the page and study it carefully before returning '
                                                                           'here to see these examples: \n\n',
                                                                       style: TextStyle(
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                         color: Colors.black,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "Example 1. Single-Floor Villa\n\n"
-                                                                          "Example 2. Duplex Villa\n\n"
-                                                                          "Example 3. Two-Floor Apartments\n\n"
+                                                                          "Example 2. Two-Floor Apartments\n\n"
+                                                                          "Example 3. Duplex Villa\n\n"
                                                                           "Example 4. Five-Floor Apartments With Parking\n\n"
                                                                           "Example 5. Seven-Floor Apartments With Parking and Terrace\n\n"
                                                                           "Example 6. Tower with 100 Properties\n\n"
-                                                                          "Example 7, Repairment-Renovation Cost-Benefit Analysis\n\n",
+                                                                          "Example 7. Repairment-Renovation Cost-Benefit Analysis\n\n",
               
                                                                       style: TextStyle(
                                                                         color: Colors.teal, fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -1441,25 +1150,25 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.pink,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: '\nAssume you want to find the return on investment (ROI) for '
-                                                                          'a project involving the construction of a villa on a 3,000 '
-                                                                          'ft² plot of land with a single floor of 1,700 ft² built-up '
-                                                                          'area that totally is salable. To do this, after opening the app,'
-                                                                          'adding a new Differentiated Pricing project and entering '
-                                                                          'the basic project data, such as land information, then in the next '
-                                                                          'page, you need to define the cost-price segments for the built-up '
-                                                                          'area of the project in this page.'
+                                                                      text: '\nSuppose you want to calculate the Return on Investment (ROI) for a construction project. For example:\n'
+                                                                          '• Land purchase: 3,000 square feet (ft²)\n'
+                                                                          '• Villa construction: Single-floor villa with 1,700 ft² of salable built-up area\n\n'
+                                                                          'To calculate this using the app:'
+                                                                          'add a new Differentiated Pricing project and enter '
+                                                                          'basic data, such as land data in the first page of Differentiated Pricing calculator, then in the '
+                                                                          'current page, you need to define the cost-price segments for the built-up '
+                                                                          'area.'
                                                                           '\n\n■ Since the project includes only one floor with a fully '
                                                                           'salable area, you can define the project as a single cost-price '
-                                                                          'segment in cost-price plan 1. Follow these steps:\n\n',
+                                                                          'segment in a single cost-price plan. Follow these steps:\n\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -1467,9 +1176,9 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                      TextSpan(
                                                                       text: "1. Set Number of Cost-Price Segments of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -1478,48 +1187,63 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           " .\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▶ Press the Set Areas button.'
-                                                                          "\n▶ In the displayed table, for Floor 0 - Segment 1, enter 1,700, "
-                                                                          "Keep the switch ON since the segment is salable.",
+                                                                          "\n▶ In the displayed table, for Floor 0 - Segment 1, enter 1,700. "
+                                                                          "\n▶ Keep the saleable switch on ",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
-                                                                     TextSpan(
-                                                                      text: "\n\n3. Enter Number of Similar Floors:\n",
+                                                                    WidgetSpan(
+                                                                      child: Icon(
+                                                                        Icons.toggle_on,
+                                                                        size: isIpad ? iconSizeLargePad : iconSizeLargePhone,
+                                                                        color: Colors.blue,
+                                                                      ),
+                                                                      alignment: PlaceholderAlignment.middle,
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: " since the segment is fully saleable. ",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        color: Colors.black, // Main text color
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: "▶ Input 0 in front of the number of similar floors "
+                                                                      text: "\n\n3. Enter number of similar floors:\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.blue, 
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+                                                                     TextSpan(
+                                                                      text: "▶ Enter 0 in the front of the Number of Similar Floors "
                                                                           "because there is no other floor in the project.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "4. Set Cost and Sell prices:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -1531,22 +1255,22 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "is considered price per ft²).\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "▶ Click ",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -1557,22 +1281,22 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: " icon to go to the next section "
+                                                                      text: " icon to go to the next step "
                                                                           "to define the permit cost for the 1700 ft² area. Then after passing step 3, you will get"
                                                                           " the results, which includes total costs, "
                                                                           "income, profit, and other related metrics.",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\nA Numerical Example:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.teal, // Title color
+                                                                        color: Colors.teal, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -1593,7 +1317,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '▶ Profit Percentage = (Profit / Total Cost) × 100 = (\$556,000 / \$1,144,000) × 100 = 48.6%\n\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -1601,31 +1325,238 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "■ Please remember that data regarding the purchase of the land "
                                                                           " should be entered on the first part, and permit fees will "
                                                                           "be addressed in the next part. This part focuses solely on the construction cost and sell "
-                                                                          "price of segments that contribute to the salable and built-up areas. This example "
+                                                                          "price of segments that contribute to built-up areas. And These example "
                                                                           "is intended to clarify the concept of cost-price segments, assuming that we have "
                                                                           "necessary data for land and permit fees. "
                                                                           "\n\nAs some practices, go back and enter similar numbers for land area and"
                                                                           " land cost in step 1, "
                                                                           " and enter floor-related data in this part. Then in step 3, "
-                                                                          "set permit fees that in this example is 20/ft², and put 0 for other basic data "
+                                                                          "set permit fees that in this example is 20/ft², and put 0 for other costs "
                                                                           "in step 4 to see the same results.",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
-              
-                                                                     TextSpan(
-                                                                      text: "\n\nExample 2. Duplex Villa",
+
+                                                                    const WidgetSpan(
+                                                                      child: Divider(
+                                                                        color: Colors.red,
+                                                                        height: 1.0,
+                                                                        thickness: 3.0,
+                                                                      ),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: "\n\nExample 2. Two-Floor Apartments",
                                                                       style: TextStyle(
                                                                         color: Colors.pink,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: "\nAssume that, similar to Example 1, a project involves "
+                                                                          "a 3,000 ft² plot of land but with two separate floors "
+                                                                          "(Floor 0 and Floor 1), designed as individual properties not "
+                                                                          "a duplex. Each floor has a salable area of 1,500 ft², along with "
+                                                                          "an external staircase that occupies an additional 200 ft² as common area."
+
+                                                                          "\n\n■ The staircase, which is not part of the salable area "
+                                                                          "in this project, along with the properties, creates two distinct "
+                                                                          "cost-price segments in each floor, because at least they are different in sell price and income calculations. "
+                                                                          "\n\nSince the floors are the same, their cost-price segments can be defined in "
+                                                                          "one cost-price plan. "
+                                                                          '\n\nSo, after opening the app and adding a new Differentiated Pricing project and inputting'
+                                                                          ' basic data of the project, define the cost-price segments as below:\n\n',
+                                                                      style: TextStyle(
+                                                                        fontSize: textFontSize * 1.1,
+                                                                        color: Colors.black,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: "1. Set Number of Cost-Price Segments of the First Floor:\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.blue, 
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: "▶ Enter 2 as the number of segments for the first floor."
+                                                                          " We consider the property as one cost-price segment and the staircase as another.\n\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.black, // Text color
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: "2. Input Segment Area:\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.blue,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: '▶ For the Floor 0 - Segment 1 (salable area), enter 1,500 ft² and '
+                                                                          'keep its salable switch ON.\n'
+                                                                          "▶ For the Floor 0 - Segment 2 (staircase), enter 200 ft² "
+                                                                          "and turn off its switch as a non salable segment.\n ",
+                                                                      style: TextStyle(
+                                                                        color: Colors.black,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: "\n3. Enter number of similar floors:\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.blue, 
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text:
+                                                                      "▶ Enter 1 because there is just one floor (floor 1) that similar to floor 0 "
+                                                                          "has two cost-price segments with area 1,500 ft² and 200 ft².\n\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.black, // Text color
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: "4. Set construction cost and Sell Prices:\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.blue, 
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: "▶ Press the Set Prices button and in the displayed table,"
+                                                                          "\n▶ for Floor 0 - Segment 1 (salable area) input cost and sell price/ft²."
+                                                                          "\n▶ for Floor 0 - Segment 2 (staircase) input cost/ft²."
+                                                                          " Usually all segments either salable or common have equal cost/ft² but you can enter differently."
+                                                                          "\n▶ Similarly, for the next floor (Floor 1), enter the cost and sell "
+                                                                          "price/ft² manually for segment 1 (salable area) and segment 2 "
+                                                                          "(staircase). In the next example, we'll learn how to set costs and "
+                                                                          "prices for other floors based on the first floor's cost and prices "
+                                                                          "in a construction project faster than manually. \n\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.black, // Text color
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: "5. Finalize this Section:",
+                                                                      style: TextStyle(
+                                                                        color: Colors.blue, 
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: "\n▶ Since there are no additional floors, you do not "
+                                                                          "need to define a new cost-price plan. So, press the ",
+                                                                      style: TextStyle(
+                                                                        color: Colors.black,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+                                                                    WidgetSpan(
+                                                                      child: Icon(
+                                                                        Icons.done_all,
+                                                                        size: iconSizeSmall, // Adjust size as needed
+                                                                        color: Colors.red, // Match the text color
+                                                                      ),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: " icon to proceed with defining the permit costs for "
+                                                                          "the floors you have specified in this step.\n\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.black,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: "A Numerical Illustration:\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.teal, 
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: 'Let\'s calculate the return on investment for this project '
+                                                                          'given the following parameters:\n\n'
+                                                                          '■ Land Price: \$200/ft²\n'
+                                                                          '➔ Land Purchasing Cost = 3,000 ft² × \$200 = \$600,000\n\n'
+                                                                          '■ construction cost of Floor 0/ft²: \$300\n'
+                                                                          '➔ construction cost of Floor 0 = 1,700 ft² × \$300 = \$510,000\n\n'
+                                                                          '■ construction cost of Floor 1/ft²: \$400\n'
+                                                                          '➔ construction cost of Floor 1 = 1,700 ft² × \$400 = \$680,000\n\n'
+                                                                          '■ Total construction cost = \$680,000 + \$510,000 = \$1,190,000\n\n'
+
+                                                                          '■ Permit Fee: \$20/ft² (you can insert it in the next section)\n'
+                                                                          '➔ Permit Cost = 1,700 ft² × \$20 = \$34,000\n\n'
+                                                                          ' ➔ Total Permit Cost = 2 × \$34,000 = \$68,000\n\n'
+                                                                          '■ Total Cost = Land Purchasing Cost + Total construction cost + Permit Cost\n'
+                                                                          '   = \$600,000 + \$1,190,000 + \$68,000 = \$1,858,000\n\n'
+                                                                          '■ Sell Price/ft² for Floor 1 of salable area: \$800 \n'
+                                                                          '➔ sell price for Floor 1 = 1,500 ft² × \$850 = \$1,275,000\n\n'
+                                                                          '■ Sell Price/ft² for Floor 2 of salable area: \$900\n'
+                                                                          '➔ sell price for Floor 2 = 1,500 ft² × \$900 = \$1,350,000\n\n'
+                                                                          '■ Total Income = \$1,360,000 + \$1,530,000 = \$2,625,000\n\n'
+                                                                          '■ Profit = Total Income - Total Cost\n'
+                                                                          '   = \$2,625,000 - \$1,858,000 = 767,000\n\n'
+                                                                          '■ Profit Percentage = (Profit / Total Cost) × 100\n'
+                                                                          '   = (\$767,000 / \$1,858,000) × 100 = 41.2%\n\n',
+                                                                      style: TextStyle(
+                                                                        color: Colors.black,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: "□ In this example, the only difference compared to the next "
+                                                                          "one is that we are considering two different sell prices for the "
+                                                                          "floors. This is because the floors represent two distinct properties "
+                                                                          "not a duplex villa, allowing them to be sold at different "
+                                                                          "prices. This scenario illustrates the flexibility of "
+                                                                          "pricing individual properties and we can better reflect the unique value "
+                                                                          "and market demand for each property.\n\n",
+                                                                      style: TextStyle(
+                                                                        color: Colors.black,
+                                                                        fontSize: textFontSize * 1.1,
+                                                                      ),
+                                                                    ),
+                                                                    const WidgetSpan(
+                                                                      child: Divider(
+                                                                        color: Colors.red,
+                                                                        height: 1.0,
+                                                                        thickness: 3.0,
+                                                                      ),
+                                                                    ),
+
+                                                                    TextSpan(
+                                                                      text: "\n\nExample 3. A Duplex Villa",
+                                                                      style: TextStyle(
+                                                                        color: Colors.pink,
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: '\nThis project is similar to Example 1, involving a 3,000 ft² '
-                                                                          'plot of land, but with a duplex villa. The property '
+                                                                      text: '\nThis project is similar to Example 2, involving a 3,000 ft² '
+                                                                          'plot of land, and two floors but as a duplex villa. The property '
                                                                           'consists of two floors connected by an internal staircase, offering '
                                                                           'a total salable area of 3,400 ft² (1,700 ft² per floor). '
               
@@ -1634,34 +1565,34 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'to the other areas on the floor, you can consider both the '
                                                                           'staircase and other areas on each floor as one unified '
                                                                           'cost-price segment '
-                                                                          'in each floor. Because the floors are similar, both '
+                                                                          'in each floor. And since the floors are similar, both '
                                                                           'can be defined in cost-price plan 1. To do this:',
                                                                       style: TextStyle(
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                         color: Colors.black,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n\n1. Set Number of Cost-Price Segments of the First Floor:",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n▶ Enter 1 because the first floor has just one segment. ",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n\n2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -1670,15 +1601,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           " Keep the switch ON since the segment is salable.",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: "\n\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -1687,7 +1618,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           " having one segment with 1,700 ft² area.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -1695,7 +1626,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.blue,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(text: '\n▶ Press the Set Prices button.'
@@ -1703,7 +1634,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                         "and sell price/ft².",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -1719,23 +1650,23 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'did for the first floor but this is opt to you. Ultimately, the decision is yours.',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "▶ Since there is no other floors, press ",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                     WidgetSpan(
@@ -1747,18 +1678,18 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                     ),
                                                                      TextSpan(
                                                                       text: " icon at the bottom of the page and proceed through "
-                                                                          "the next part to enter permit fees and obtain the results.",
+                                                                          "the next step to enter permit fees and obtain the results.",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n\nA Numerical Example:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.teal, // Title color
+                                                                        color: Colors.teal, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -1782,7 +1713,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           ' ▶ Profit Percentage = (Profit / Total Cost) × 100 = (\$692,000 / \$1,858,000) × 100 = 37.2%\n\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -1793,209 +1724,24 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'which allows you to enter different construction costs and sell prices for'
                                                                           ' individual parts of a property if you face with such cases.\n\n',
                                                                       style: TextStyle(
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                         color: Colors.black,
                                                                       ),
                                                                     ),
-                                                                     TextSpan(
-                                                                      text: "Example 3. Two-Floor Apartments",
-                                                                      style: TextStyle(
-                                                                        color: Colors.pink,
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+
+                                                                    const WidgetSpan(
+                                                                      child: Divider(
+                                                                        color: Colors.red,
+                                                                        height: 1.0,
+                                                                        thickness: 3.0,
                                                                       ),
                                                                     ),
-                                                                     TextSpan(
-                                                                      text: "\nAssume that, similar to Example 2, a project involves "
-                                                                          "a 3,000 ft² plot of land with two separate floors "
-                                                                          "(Floor 0 and Floor 1), designed as individual properties rather "
-                                                                          "than a duplex. Each floor has a salable area of 1,500 ft², along with "
-                                                                          "an external staircase that occupies an additional 200 ft² as common area."
-              
-                                                                          "\n\n■ The staircase, which is not part of the salable area "
-                                                                          "in this project, along with the properties, creates two distinct "
-                                                                          "cost-price segments in each floor. "
-                                                                          "Since the floors are the same, their cost-price segments can be defined in "
-                                                                          "cost-price plan 1. "
-                                                                          '\n\nSo, after opening the app and adding a new Differentiated Pricing project and inputting'
-                                                                          ' basic data of the project, define the cost-price segments as below:\n\n',
-                                                                      style: TextStyle(
-                                                                        fontSize: textFontSize,
-                                                                        color: Colors.black,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text: "1. Set Number of Cost-Price Segments of the First Floor:\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.blue, // Title color
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-                                                                     TextSpan(
-                                                                      text: "▶ Enter 2 as the number of segments for the first floor."
-                                                                          " We consider the property as one cost-price segment and the staircase as another.\n\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-                                                                     TextSpan(
-                                                                      text: "2. Input Segment Area:\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.blue,
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text: '▶ For the Floor 0 - Segment 1 (salable area), enter 1,500 ft² and '
-                                                                          'keep its switch ON.\n'
-                                                                          "▶ For the Floor 0 - Segment 2 (staircase), enter 200 ft² "
-                                                                          "and turn off its switch as a non salable segment.\n ",
-                                                                      style: TextStyle(
-                                                                        color: Colors.black,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text: "\n3. Enter Number of Similar Floors:\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.blue, // Title color
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text:
-                                                                      "▶ Enter 1 because there is just one floor (floor 1) that similar to floor 0 "
-                                                                          "has two cost-price segments with area 1,500 ft² and 200 ft².\n\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text: "4. Set construction cost and Sell Prices:\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.blue, // Title color
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-                                                                     TextSpan(
-                                                                      text: "▶ Press the Set Prices button and in the displayed table,"
-                                                                          "\n▶ for Floor 0 - Segment 1 (salable area) input cost and sell price/ft²."
-                                                                          "\n▶ for Floor 0 - Segment 2 (staircase) input cost/ft² as a common area."
-                                                                          "\n▶ Similarly, for the next floor (Floor 1), enter the cost and sell "
-                                                                          "price/ft² manually for segment 1 (salable area) and segment 2 "
-                                                                          "(staircase). In the next example, we'll learn how to set costs and "
-                                                                          "prices for other floors based on the first floor's cost and prices "
-                                                                          "in a construction project.\n\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-                                                                     TextSpan(
-                                                                      text: "5. Finalize this Section:\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.blue, // Title color
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text: "\n▶ Since there are no additional floors, you do not "
-                                                                          "need to define a new cost-price plan. So, press the ",
-                                                                      style: TextStyle(
-                                                                        color: Colors.black,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-                                                                     WidgetSpan(
-                                                                      child: Icon(
-                                                                        Icons.done_all,
-                                                                        size: iconSizeSmall, // Adjust size as needed
-                                                                        color: Colors.red, // Match the text color
-                                                                      ),
-                                                                    ),
-                                                                     TextSpan(
-                                                                      text: " icon to proceed with defining the permit costs for "
-                                                                          "the floors you have specified in this section.\n\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.black,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text: "A Numerical Illustration:\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.teal, // Title color
-                                                                        fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text: 'Let\'s calculate the return on investment for this project '
-                                                                          'given the following parameters:\n\n'
-                                                                          '■ Land Price: \$200/ft²\n'
-                                                                          '➔ Land Purchasing Cost = 3,000 ft² × \$200 = \$600,000\n\n'
-                                                                          '■ construction cost of Floor 0/ft²: \$300\n'
-                                                                          '➔ construction cost of Floor 0 = 1,700 ft² × \$300 = \$510,000\n\n'
-                                                                          '■ construction cost of Floor 1/ft²: \$400\n'
-                                                                          '➔ construction cost of Floor 1 = 1,700 ft² × \$400 = \$680,000\n\n'
-                                                                          '■ Total construction cost = \$680,000 + \$510,000 = \$1,190,000\n\n'
-              
-                                                                          '■ Permit Fee: \$20/ft² (you can insert it in the next section)\n'
-                                                                          '➔ Permit Cost = 1,700 ft² × \$20 = \$34,000\n\n'
-                                                                          ' ➔ Total Permit Cost = 2 × \$34,000 = \$68,000\n\n'
-                                                                          '■ Total Cost = Land Purchasing Cost + Total construction cost + Permit Cost\n'
-                                                                          '   = \$600,000 + \$1,190,000 + \$68,000 = \$1,858,000\n\n'
-                                                                          '■ Sell Price/ft² for Floor 1 of salable area: \$800 \n'
-                                                                          '➔ sell price for Floor 1 = 1,500 ft² × \$850 = \$1,275,000\n\n'
-                                                                          '■ Sell Price/ft² for Floor 2 of salable area: \$900\n'
-                                                                          '➔ sell price for Floor 2 = 1,500 ft² × \$900 = \$1,350,000\n\n'
-                                                                          '■ Total Income = \$1,360,000 + \$1,530,000 = \$2,625,000\n\n'
-                                                                          '■ Profit = Total Income - Total Cost\n'
-                                                                          '   = \$2,625,000 - \$1,858,000 = 767,000\n\n'
-                                                                          '■ Profit Percentage = (Profit / Total Cost) × 100\n'
-                                                                          '   = (\$767,000 / \$1,858,000) × 100 = 41.2%\n\n',
-                                                                      style: TextStyle(
-                                                                        color: Colors.black,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-                                                                     TextSpan(
-                                                                      text: "□ In this example, the only difference compared to the previous "
-                                                                          "one was that we are considering two different sell prices for the "
-                                                                          "floors. This is because the floors represent two distinct properties "
-                                                                          "not a duplex villa, allowing them to be sold at different "
-                                                                          "prices. This scenario illustrates the flexibility of "
-                                                                          "pricing individual properties and we can better reflect the unique value "
-                                                                          "and market demand for each property.\n\n",
-                                                                      style: TextStyle(
-                                                                        color: Colors.black,
-                                                                        fontSize: textFontSize,
-                                                                      ),
-                                                                    ),
-              
-              
                                                                      TextSpan(
                                                                       text: "Example 4. Five-Floor Apartments With Parking",
                                                                       style: TextStyle(
                                                                         color: Colors.pink,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2033,28 +1779,28 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           ' allowing them to be considered '
                                                                           'as a one cost-price segment. Upper floors, which contain '
                                                                           'one property and a staircase, can be classified as two cost-price segments per floor '
-                                                                          'because the sell price of the staircase is zero, differing from the sell '
+                                                                          'because the sell price of the staircase will considered zero, differing from the sell '
                                                                           'price of the properties. '
                                                                           'Since all upper floors have two segments with the '
                                                                           'same area for both '
                                                                           'the staircase and the properties, they can be defined within one cost-price plan. '
-                                                                          '\n\nHowever, at this stage, there is no '
+                                                                          '\n\nNote, at this stage, there is no '
                                                                           'need to understand and calculate the number of cost-price plans. Just follow the steps '
                                                                           'below to configure the cost-price segments for the first floor that here is parking floor. Once '
                                                                           'you reach the last floor, you will find the number of '
                                                                           'cost-price plans as well as total number of floors. So, configure the cost-price segments as follows:',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\nCost-price plan 1, parking floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.purple, // Title color
+                                                                        color: Colors.purple, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2062,7 +1808,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.blue,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2071,33 +1817,33 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           " because the parking and staircase spaces have same construction cost/ft². \n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: '▶ For the Floor 0 - Segment 1 (parking + staircase), enter 3,500 ft², '
-                                                                          'Let the switch be in default mode.\n',
+                                                                          "\n▶ Turn off the saleable switch since the segment is fully non saleable.",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: "\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2106,16 +1852,16 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       "▶ Enter 0 because there is no floor similar to parking floor. \n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "4. Set construction cost:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2123,16 +1869,16 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "\n▶ for Floor 0 - Segment 1 (parking + staircase) input cost \$300.",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2141,7 +1887,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "▶ Press ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -2156,7 +1902,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "through the next cost-price plan to define the cost-price segments for the upper floors.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2164,24 +1910,24 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                      TextSpan(
                                                                       text: "cost-price plan 2, floors 1 to 4:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.purple, // Title color
+                                                                        color: Colors.purple, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "1. Set Number of Cost-Price Segments of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▶ The first floor in cost-price plan 2 is designated as Floor 1. '
-                                                                          'This floor includes a property and a staircase, each with distinct '
-                                                                          'sell prices. Therefore, enter 2 as the number of cost-price segments for this floor.'
+                                                                          'This floor includes a property and a staircase.'
+                                                                          ' Therefore, enter 2 as the number of cost-price segments for this floor.'
                                                                           '\n\n■ Usually in buildings with separate floors, there is typically at least one '
                                                                           'common area, such as a staircase, in addition to the '
                                                                           'properties available for sale. Consequently, staircase and other '
@@ -2191,78 +1937,77 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'the financial configuration of the segments.\n\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: '▶ Press Set Area button and for the Floor 1 - Segment 1, enter 2,700 '
-                                                                          'and for the Floor 1 - Segment 2, enter 300 and turn of switch for the smaller segment.\n',
+                                                                          'and for the Floor 1 - Segment 2, enter 300 and turn of switch for the segment 2.\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: "\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text:
-                                                                      "▶ In the section for the number of similar floors, "
+                                                                      "▶ In the section for the Number of Similar Floors, "
                                                                           "enter 3. This is because Floors 2, 3, and 4 share the "
                                                                           "same cost-price segment configuration as Floor 1. Each of "
                                                                           "these floors consists of 2 segments: a 300 ft² common space "
                                                                           "and a 2,700 ft² property available for sale. \n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "4. Set construction cost and Sell Prices:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▶ Press the Set Prices button.\n'
-                                                                          "\n▶ In the displayed table, there are two rows for each floor, totaly 8 "
+                                                                          "\n▶ In the displayed table, there are two rows for each floor, totally 8 "
                                                                           "rows, with each row assigned to a cost-price segment. "
                                                                           "\n\n➔ For Floor 1 - Segment 1 (property with 2,700 ft² area), "
                                                                           'manually enter the construction cost of \$400/ft² and the sell price of \$1,000/ft².'
                                                                           '\n\n➔ For the corresponding segments on the upper floors (Floors 2, 3, and 4) in '
-                                                                          'this cost-price plan (number 2), you can either manually enter the cost-price plan '
+                                                                          'this cost-price plan (number 2), you can either manually enter the '
                                                                           'costs and sell prices as prompted or use ⚙️ icon button at the end '
                                                                           'of the rows for Floor 1. In this example, we will use the icon option. '
                                                                           'By pressing ⚙️ icon, a window will appear with two sections: one for construction '
                                                                           'cost and one for sell price.'
               
-                                                                          '\n\n➔ Since the construction cost/ft² for segments 1 of '
+                                                                          '\n\n➔ Since the construction cost/ft² for segments 1 (2,700 ft²) of '
                                                                           'floors 2, 3, and 4 should increase by \$20 based on the construction cost of '
                                                                           'Floor 1 - Segment 1, set the "Incremental" switch to "On" and enter 20 in the associated text field, '
                                                                           'this makes an arithmetic progression (constant amount added) for setting costs of segment 1 of the upper floors.'
                                                                           '\n\n➔ Additionally, since the sell price of these segments should increase by 2% based on '
                                                                           'the sell price of Floor 1 - Segment 1, set the "Percentage" switch to On and enter 2. '
-                                                                          '\n\n➔ Press the OK button. The window will disappear, and you can check the results '
-                                                                          'in the table. You will see that the costs for segments 1 of floors 2, 3, and 4 '
+                                                                          '\n\n➔ Press the OK button. You will see that the costs for segments 1 of floors 2, 3, and 4 '
                                                                           'are \$420, \$440, and \$460, respectively, while their sell prices '
                                                                           'are \$1,020, \$1,040.40, and \$1,061.20. Increasing prices by 2% is a geometric progression.'
               
@@ -2270,22 +2015,21 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'manually enter the construction cost of \$300/ft².'
                                                                           '\n\n➔ For the corresponding segments on the upper floors (floors 2, 3, and 4) in '
                                                                           'this cost-price plan press ⚙️ icon button at the end '
-                                                                          'of the row for Floor 1 - Segment 2 and keep Fixed switches "On" for '
-                                                                          'both construction cost and '
+                                                                          'of the row and in the opened window for construction cost of Floor 1 - Segment 2 and keep Fixed switch "On" and '
                                                                           'just press Ok. Then you will get construction cost of '
-                                                                          'segment 2 in floors 2, 3, and 4 \$300.  ',
+                                                                          'segment 2 in floors 2, 3, and 4 \$300 same to floor 1.  ',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2295,7 +2039,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "to define a new cost-price plan. Press the ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -2307,7 +2051,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                     ),
                                                                      TextSpan(
                                                                       text: " icon to proceed with defining the permit costs for the floors you "
-                                                                          "have specified in this section.\n\n",
+                                                                          "have specified in this step.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
                                                                         fontSize: textFontSize,
@@ -2317,9 +2061,9 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                      TextSpan(
                                                                       text: "A Numerical Illustration:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.teal, // Title color
+                                                                        color: Colors.teal, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2327,11 +2071,11 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: 'Let’s determine the return on investment for this project '
                                                                           'given the following parameters:\n\n',
                                                                       style: TextStyle(  color: Colors.black,
-                                                                        fontSize: textFontSize,),
+                                                                        fontSize: textFontSize * 1.1,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Floor Information:\n',
-                                                                      style: TextStyle(color: Colors.deepPurple, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.deepPurple, fontSize: textFontSize * 1.1,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '➔ Floor 0 (Parking): Total Area: 3,500 ft², \nParking Area: 3,200 ft², '
@@ -2339,30 +2083,30 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '➔ Floors 1 to 4: Each Floor Total Area: 3,000 ft², \nProperty Area: '
                                                                           '2,700 ft², \nStaircase Area: 300 ft², \nTotal Properties Available for Sale: 4.\n\n',
                                                                       style: TextStyle(  color: Colors.black,
-                                                                        fontSize: textFontSize,),
+                                                                        fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: 'Cost and Pricing Details:\n',
-                                                                      style: TextStyle(color: Colors.deepPurple, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.deepPurple, fontSize: textFontSize * 1.1,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Land Cost:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize,fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1,fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▶ Land Price = \$400/ft²'
                                                                           '\n➔ Land Purchasing Cost = 5,000 '
                                                                           '× \$400 = \$2,000,000\n\n',
                                                                       style: TextStyle(  color: Colors.black,
-                                                                        fontSize: textFontSize,),
+                                                                        fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: 'construction cost:\n',
                                                                       style: TextStyle(
                                                                         color: Colors.purple,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                         fontWeight: FontWeight.bold,
                                                                       ),
                                                                     ),
@@ -2387,13 +2131,13 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '▶ Total construction cost: \$6,054,000\n\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: 'Permit Fee:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize,fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1,fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▶ Permit Fee = \$30/ft² of total built-up area'
@@ -2401,24 +2145,24 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'Area = 15,500 ft²'
                                                                           '\n ➔ Total Permit Cost = \$465,000\n\n',
                                                                       style: TextStyle(  color: Colors.black,
-                                                                        fontSize: textFontSize,),
+                                                                        fontSize: textFontSize * 1.1,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Total Cost:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize,fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1,fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▶ Total Cost = Land Purchasing Cost + Total construction cost + '
                                                                           'Permit Cost'
                                                                           '\n➔ Total Cost = \$8,519,000\n\n',
                                                                       style: TextStyle(  color: Colors.black,
-                                                                        fontSize: textFontSize,),
+                                                                        fontSize: textFontSize * 1.1,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Selling  Price (Income) of Segment 1 in:\n',
                                                                       style: TextStyle(
                                                                         color: Colors.purple,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                         fontWeight: FontWeight.bold,
                                                                       ),
                                                                     ),
@@ -2441,47 +2185,53 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '   ➔ Total sale price: 2,700 × \$1,061.2 = \$2,865,240\n\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: '▶ Total Income = \$11,128,347\n\n',
                                                                       style: TextStyle(  color: Colors.black,
-                                                                        fontSize: textFontSize,),
+                                                                        fontSize: textFontSize * 1.1,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Profit:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize,fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1,fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▶ Profit = Total Income - Total Cost'
                                                                           '\n➔ Profit = \$2,609,347\n\n',
                                                                       style: TextStyle(  color: Colors.black,
-                                                                        fontSize: textFontSize,),
+                                                                        fontSize: textFontSize * 1.1,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Profit Percentage:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize,fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1,fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▶ Profit Percentage = (Profit / Total Cost) × '
                                                                           '100'
                                                                           '\n➔ Profit Percentage = 30.6%\n\n',
-                                                                      style: TextStyle( color: Colors.black,fontSize: textFontSize,),
+                                                                      style: TextStyle( color: Colors.black,fontSize: textFontSize * 1.1,),
                                                                     ),
-              
-              
+
+                                                                    const WidgetSpan(
+                                                                      child: Divider(
+                                                                        color: Colors.red,
+                                                                        height: 1.0,
+                                                                        thickness: 3.0,
+                                                                      ),
+                                                                    ),
                                                                      TextSpan(
                                                                       text: "\nExample 5. Seven-Floor Apartments With Parking and Terrace",
                                                                       style: TextStyle(
                                                                         color: Colors.pink,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: '\nIn this cost-price plan project, there are five floors, including a '
+                                                                      text: '\nIn this cost-price plan project, there are seven floors, including a '
                                                                           'parking floor, built on a plot of land measuring 5,000 ft², with a '
                                                                           'purchasing price of \$400/ft². '
                                                                           'The specifications of the floors are as follows:\n\n'
@@ -2524,7 +2274,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       ,
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2533,15 +2283,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.purple,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "1. Set Number of Cost-Price Segment of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2549,15 +2299,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "floor in the cost-price plan 1 (floor 0).\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2566,31 +2316,31 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "and turn off its switch to be recognized as non sealable",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: "\n\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: "▶ Input 0 in front of the number of similar floors "
+                                                                      text: "▶ Input 0 in the front of the Number of Similar Floors "
                                                                           "because there is no other floor similar to parking.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "4. Set Cost:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2598,22 +2348,22 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "▶ Enter 300 for construction cost.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "▶ Press ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -2629,7 +2379,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "for the upper floors.",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2639,15 +2389,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.purple,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "1. Set Number of Cost-Price Segments of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2656,15 +2406,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "totally 3 cost-price segments, so enter 3.",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n\n2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2672,35 +2422,35 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "▶ Press the Set Area button."
                                                                           "\n▶ In front of Floor 0 segment 1 enter the area as 1,700 ft². "
                                                                           "\n▶ In front of Floor 0 segment 2 enter the area as 1,000 ft². "
-                                                                          "\n▶ In front of Floor 0 segment 3 enter the area as 3,00 ft². ",
+                                                                          "\n▶ In front of Floor 0 segment 3 enter the area as 3,00 ft² and turn its switch off. ",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: "\n\n3. Enter Number of Similar Floors:",
+                                                                      text: "\n\n3. Enter number of similar floors:",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: '\n▶ Enter 2 as the number of similar floors, as floors 2 and 3 '
+                                                                      text: '\n▶ Enter 2 as the Number of Similar Floors, as floors 2 and 3 '
                                                                           'are similar to floor 1. Each of these floors has 3 cost-price segments, with a '
                                                                           'corresponding segment on floor 1 for every segment on these floors.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n4. Set construction cost and Sell Prices:",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2726,16 +2476,16 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '   ➔ For construction cost, keep the "Fixed" switch ON and enter 300.\n'
                                                                           '   ➔ For sell price, keep the "Fixed" switch ON and enter 0.\n'
                                                                           '▶ Press "OK" to save the changes.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2744,7 +2494,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "▶ Press ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -2758,7 +2508,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: " icon and input data regarding the last cost-price plan.",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2767,7 +2517,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.purple,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2775,7 +2525,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.blue,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2800,16 +2550,16 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'to reduce the amount of data entry and simplify operations',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2820,32 +2570,32 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "\n▶ In front of Floor 0 segment 3 enter the area as 4,00 ft² and just for this turn switch off. ",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: "\n\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: '▶ Enter 2 as the number of similar floors, as floors 5 and 6'
+                                                                      text: '▶ Enter 2 as the Number of Similar Floors, as floors 5 and 6'
                                                                           'are similar to floor 4. Each of these floors has 3 cost-price segments, with a '
                                                                           'corresponding segment on floor 1 for every segment on these floors.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n4. Set construction cost and Sell Prices:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -2870,17 +2620,17 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "\n ➔ For the segment 3 with 400 ft²:"
                                                                           "\n ➔ Input the construction cost 300."
                                                                           '\n\n Press ⚙️ icon at the end of the row of this segment and similarly '
-                                                                          "\n - For construction cost, keep the 'Fixed' switch ON.",
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                          "\n - For construction cost, keep the 'Fixed' switch ON and withiut entering any data press ok.",
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2888,7 +2638,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "▶ Since there are no additional floors, press the ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -2899,11 +2649,11 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: " icon to proceed with defining the permit costs for the floors you "
-                                                                          "have specified in this section.\n\n",
+                                                                      text: " icon and define permit costs for the floors you "
+                                                                          "have specified in this step.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -2911,15 +2661,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                      TextSpan(
                                                                       text: "A Numerical Illustration:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.teal, // Title color
+                                                                        color: Colors.teal, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: '\nFloor Price Specifications:\n',
-                                                                      style: TextStyle(color: Colors.deepPurple, fontSize: textFontSize,
+                                                                      style: TextStyle(color: Colors.deepPurple, fontSize: textFontSize * 1.1,
                                                                         fontWeight: FontWeight.bold,),
               
                                                                     ),
@@ -2945,13 +2695,13 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'and the sell prices for the corresponding properties on Floors 5 and 6 follow '
                                                                           'an arithmetic progression, increasing by \$50/ft². For example, the sell price '
                                                                           'for the property on Floor 5 (2,500 ft²) is \$(1,500 + 50) = \$1,550/ft².\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
               
                                                                      TextSpan(
                                                                       text: 'Costs:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize, fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1, fontWeight: FontWeight.bold),
                                                                     ),
                                                                     TextSpan(
                                                                       text: '▲ construction cost of:'
@@ -2992,12 +2742,12 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '\n■ Total Costs:'
                                                                           '\n   ➔ Total Costs = Total Land Cost + Total construction costs + Total Permit Costs'
                                                                           '\n   ➔ Total Costs = \$2,000,000 + \$8,622,000 + \$630,000 = \$11,252,000\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: 'Sell Prices:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize, fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1, fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '▲ Sell Price of:\n\n'
@@ -3023,11 +2773,11 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '  = \$2,040,000 + \$1,000,000 + \$2,080,800 + \$1,020,000 + \$2,122,416 '
                                                                           '+ \$1,040,400 + \$3,750,000 + \$150,000 + \$3,875,000 + \$155,000 + \$4,000,000 + \$160,000'
                                                                           '  = \$21,393,616\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '\nProfit:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize, fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1, fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text:
@@ -3036,11 +2786,11 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '➔ Profit Percentage:\n'
                                                                           '   Profit Percentage = (Profit / Cost) × 100\n'
                                                                           '   = (5,713,800 / 11,252,000) × 100 = 90.1%\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Summary of Results:\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize, fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1, fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '➔ Total Land Cost: \$2,000,000\n'
@@ -3050,16 +2800,22 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '➔ Total Sale: \$21,393,616\n'
                                                                           '➔ Profit: \$10,141,616\n'
                                                                           '➔ Profit Percentage: 90.1%\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
-              
-              
+
+                                                                    const WidgetSpan(
+                                                                      child: Divider(
+                                                                        color: Colors.red,
+                                                                        height: 1.0,
+                                                                        thickness: 3.0,
+                                                                      ),
+                                                                    ),
                                                                      TextSpan(
-                                                                      text: "\nExample 6. Tower with 100 Properties",
+                                                                      text: "\nExample 6. A Tower with 100 Properties",
                                                                       style: TextStyle(
                                                                         color: Colors.pink,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3094,7 +2850,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'with a mix of standard apartments and luxury penthouses.\n\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3110,24 +2866,24 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'Configure the cost-price segments as follows:',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n\nCost-price plan 1, Floors -3, -2, -1:",
                                                                       style: TextStyle(
-                                                                        color: Colors.purple, // Title color
+                                                                        color: Colors.purple, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n1. Set Number of Cost-Price Segments of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3143,7 +2899,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'from those mentioned in the example.',
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3151,7 +2907,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.blue,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3160,31 +2916,31 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "\n▶ In front of Floor -3 segment 1 enter the area as 9,500 ft². Turn off its switch to be non salable.",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: "\n\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: '▶ Enter 3 as the number of similar floors, as floors -2, -1 and 0 (ground Floor) '
+                                                                      text: '▶ Enter 3 as the Number of Similar Floors, as floors -2, -1 and 0 (ground Floor) '
                                                                           'are similar to Floor -3. Each of these floors has 1 cost-price segment with 9,500 ft² area.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n4. Set construction cost and Sell Prices:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3198,16 +2954,16 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '▶ Press "OK" to save the changes.'
                                                                           '\n\nYou will see that the construction cost for all floors '
                                                                           ' are set to \$400, respectively.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3216,7 +2972,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "▶ Press ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -3230,7 +2986,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: " icon and input data regarding the cost-price plan 2.",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3240,15 +2996,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.purple,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n1. Set Number of Cost-Price Segments of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3258,15 +3014,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "totally 5 cost-price segments, so enter 5.",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n\n2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3277,32 +3033,32 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "\n▶ In front of Floor 0 segment 5 enter the area as 500 ft² With salable switch off. ",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: "\n\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: '▶ Enter 23 as the number of similar floors, as floors 2 to 24 (including Floor 2) '
+                                                                      text: '▶ Enter 23 as the Number of Similar Floors, as floors 2 to 24 (including Floor 2) '
                                                                           'are similar to Floor 1. Each of these floors has 5 cost-price segments, with a '
                                                                           'corresponding segment on Floor 1 for every segment on these floors.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n4. Set construction cost and Sell Prices:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3320,7 +3076,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '   ➔ For construction cost, turn the Incremental switch ON and enter 2 to increase cost by '
                                                                           '\$2 for each subsequent floor.\n'
                                                                           '   ➔ For sell price, turn the Percentage switch ON '
-                                                                          'and enter 2 as the rate of increase For sell prices of these segments on the upper floors.\n\n'
+                                                                          'and enter 2 as the rate of increase for sell prices of these segments on the upper floors.\n\n'
                                                                           '▶ Press "OK" to save the changes.'
                                                                           '   ➔ For segments with 500 ft²:\n'
                                                                           '     - Input construction cost as \$400/ft².\n'
@@ -3329,16 +3085,16 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '▶ Press "OK" to save the changes.'
                                                                           '\n\nYou should see that the construction cost for all floors '
                                                                           'from 2 to 24 for this segment.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3347,7 +3103,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "▶ Press ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -3361,7 +3117,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: " icon and input data regarding the cost-price plan 3.\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3370,15 +3126,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.purple,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n1. Set Number of Cost-Price Segments of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3387,15 +3143,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "totally 2 cost-price segments, so enter 2.",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n\n2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3405,32 +3161,32 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "\n▶ In front of Floor 25 segment 2 enter the area as 500 ft² and change its salable switch to off ",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Main text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: "\n\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: '▶ Enter 3 as the number of similar floors, as floors 26 to 28 '
+                                                                      text: '▶ Enter 3 as the Number of Similar Floors, as floors 26 to 28 '
                                                                           'are similar to floor 25. Each of these floors has 2 cost-price segments '
                                                                           'with 9,000 and 500 ft² areas.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n4. Set construction cost and Sell Prices:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3443,8 +3199,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '▶ Press ⚙️ icon at the end of the rows with area 3,000 ft² and 2,000 ft².'
                                                                           ' In the window that appears:\n'
                                                                           '   ➔ For construction cost, turn the Incremental switch ON and enter 50 to increase cost by '
-                                                                          '\$50 for each subsequent floors.\n'
-                                                                          '   ➔ For sell price, turn the Percentage switch ON '
+                                                                          '\$50 for each subsequent upper floors.\n'
+                                                                          '   ➔ For sell price, turn the Incremental switch ON '
                                                                           'and enter 100 as the rate of increase For sell prices of this segment on the upper floors.\n\n'
                                                                           '▶ Press "OK" to save the changes.'
                                                                           '   ➔ For segments with 500 ft²:\n'
@@ -3453,16 +3209,16 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'do not change any switches or enter any values.\n'
                                                                           '▶ Press "OK" to save the changes.'
                                                                           '\n\nYou will see that the construction cost and sell price.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Section:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3471,7 +3227,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "▶ Press ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -3485,24 +3241,24 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: " icon and input data regarding the last cost-price plan.\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\nCost-price plan 4, floor number 29:",
                                                                       style: TextStyle(
-                                                                        color: Colors.purple, // Title color
+                                                                        color: Colors.purple, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n1. Set Number of Cost-Price Segments of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
@@ -3510,14 +3266,14 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '(the maintenance floor), which is entirely assigned for '
                                                                           'equipment spaces and elevator/staircase spaces. '
                                                                           'Therefore, enter 2 as the number of cost-price segments for this floor.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "\n\n2. Input Segment Area:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3525,28 +3281,28 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                         '▶ For the second segment enter 500. Turn off salable switch of both segments.\n',
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
-                                                                     TextSpan(text: "\n3. Enter Number of Similar Floors:\n",
+                                                                     TextSpan(text: "\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(text: '▶ Enter 0, because there is no other floors.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n4. Set construction cost and Sell Prices:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3557,7 +3313,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 
                                                                           '▶ For Floor 29 - Segment 2:\n'
                                                                           '   ➔ Input the construction cost as \$400/ft².\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
               
@@ -3566,7 +3322,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       style: TextStyle(
                                                                         color: Colors.blue,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3575,7 +3331,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: "▶ Press ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      WidgetSpan(
@@ -3590,21 +3346,21 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "through the next section to define permit fees for floors -3 to 29.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\nA Numerical Illustration:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.teal, // Title color
+                                                                        color: Colors.teal, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '\nCost and Pricing Details:\n',
-                                                                      style: TextStyle(color: Colors.deepPurple, fontSize: textFontSize,fontWeight: FontWeight.bold,),
+                                                                      style: TextStyle(color: Colors.deepPurple, fontSize: textFontSize * 1.1,fontWeight: FontWeight.bold,),
                                                                     ),
                                                                      TextSpan(
                                                                       text: '\n■ construction cost:'
@@ -3615,7 +3371,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '\n\n ➔ The construction costs for the penthouses on floors 25 to 28 '
                                                                           'increase by \$50/ft² for each subsequent floor, starting at \$600/ft² for floor 25.'
                                                                           '\n\n ➔ The construction cost for the maintenance floor (floor 29) is \$700/ft².',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
@@ -3629,13 +3385,13 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           '\n\n ➔ The sell prices for the penthouses is \$4,000/ft² for floor 25, '
                                                                           'increasing by \$100/ft² for each subsequent floor.'
                                                                           '\n\n ➔ The sell price for the maintenance floor (floor 29) is \$0, as it is not for sale.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize,),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1,),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: 'If you implement the calculations based on the above data '
                                                                           'in the app, you\'ll get the following results:\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
@@ -3643,20 +3399,20 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           ' ➔ Land Area: 15,000 ft²\n'
                                                                           ' ➔ Land Cost per Square Foot: \$500\n'
                                                                           ' ➔ Total Land Cost: 15,000 ft² × \$500 = \$7,500,000\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text:'▶ Total built-up area: Floor Area for Floors -3 to 29: 33 × 9,500 ft² = 313,500'
                                                                       ,
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: '\n\n▶ Permit Fee \n'
                                                                           ' ➔ Total Permit Fee = Total built-up area × Permit Fee per ft²\n'
                                                                           ' ➔ Total Permit Fee = 313,500 ft² × \$30 = \$9,405,000\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
               
@@ -3669,7 +3425,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'properties across different floors can be time-consuming, often '
                                                                           'taking hours to complete. However, with this app, you can obtain '
                                                                           'the project\'s results in just a few minutes.',
-                                                                          style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                          style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
@@ -3680,41 +3436,48 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           ' ▶ Total Income: \$587,474,760\n'
                                                                           ' ▶ Total Profit: \$406,001,760\n'
                                                                           ' ▶ Profit Percentage: 223.7%\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
               
                                                                      TextSpan(
                                                                       text: 'Repairment-Modification Cost-Benefit Analysis\n',
-                                                                      style: TextStyle(color: Colors.pink, fontSize: textFontSize, fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.pink, fontSize: textFontSize * 1.1, fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Although the financial calculator of this app is primarily designed '
-                                                                          'for calculating the return on investment of a new construction project '
-                                                                          'built from scratch on land, it can also be used for analyzing the '
+                                                                          'for calculating the return on investment of a new construction projects '
+                                                                          'built from scratch on land, but it can also be used for analyzing the '
                                                                           'cost-benefit of repairing an existing building.\n\n'
                                                                           'Assume a building has two floors constructed on a plot '
-                                                                          'which are separate properties connected by a staircase, and you want to add an elevator.'
+                                                                          'which are separate properties for sale connected by a staircase, and you want to add an elevator.'
                                                                           'You might also want to repair the property on the second floor, and these repairs '
-                                                                          'affect price of both properties.'
-                                                                          '\n\nTherefore, you need to add the differences in price for both '
+                                                                          'affect price of whole building, that is called ARV.'
+                                                                          '\n\nIn construction and real estate, ARV stands for After Repair Value. It is the '
+                                                                          'estimated market value of a property after all planned repairs, renovations, '
+                                                                          'and improvements have been completed. ARV is used by investors and builders '
+                                                                          'to estimate the property\'s worth in its improved condition, helping to assess '
+                                                                          'the potential profitability of a renovation or flip project. It is calculated '
+                                                                          'by adding the property\'s current value and the expected increase in value '
+                                                                          'from the repairs or upgrades. '
+                                                                          '\n\nTherefore, in this example, you need to add the differences in price for both '
                                                                           'properties you will offer for sale. This will help you determine '
                                                                           'the positive income that will result from the repairs. '
                                                                           'Then, deduct the total costs of repairs from this income. This includes '
                                                                           'the cost related to the elevator and the cost of repairing the second floor.\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: 'Implementing Calculations\n',
-                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize, fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.purple, fontSize: textFontSize * 1.1, fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'To implement these calculations related to a repairment-renovation in the app:'
                                                                           '\n\n1. define a new project construction.\n'
                                                                           'Include just all cost-price segments that are affected by the repairs for this project.\n'
-                                                                           '\n2. Input the cost of Repairs for each cost-price segment that is repaired.'
-                                                                            '\n\n3. Input the expected Difference in sell price for each segment that you expect '
+                                                                           '\n2. Input the Cost of Repairs for each cost-price segment that is repaired.'
+                                                                            '\n\n3. Input the expected Difference in Sell Price for each segment that you expect '
                                                                             'to have a different price after the repair.\n\n'
               
                                                                           'Therefore, do not enter the cost of construction and sell price as for a new building project. '
@@ -3722,23 +3485,23 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'For segments that have no repairs but their sell price would change, enter zero as the repair costs, '
                                                                           'then, enter the expected difference in sell prices.\n'
                                                                           'Read example 7 to know the instructions well.\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: '■ Do not enter the land price, \n'
-                                                                          'unless you have repairs in the yard or roof of the building. To do that, enter their '
-                                                                          'repair or renovation costs of yard-roof on the third step.\n\n '
+                                                                      text: '■ Also, in step 1, enter the land price as 0 because you\'re not purchasing'
+                                                                          ' a plot to construct new building, you are just repairing-renovating a constructed building. \n'
+                                                                          'If you have repairs in the yard or roof of the building, enter their '
+                                                                          'repair costs in total in step 3 after defining cost-price segments in step 2.\n\n '
                                                                           '■ If there are permit fees for the repairs, enter their costs '
-                                                                          'in the permit fee part. '
-                                                                          'Otherwise, input zero for all permit fees since the original '
+                                                                          'in the permit fee part, otherwise, input zero for all permit fees since the original '
                                                                           'permit fees should be entered for a new construction of a new '
                                                                           'building not the old buildings that you want to renovate.\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Results and Profit Analysis\n',
-                                                                      style: TextStyle(color: Colors.teal, fontSize: textFontSize, fontWeight: FontWeight.bold),
+                                                                      style: TextStyle(color: Colors.teal, fontSize: textFontSize * 1.1, fontWeight: FontWeight.bold),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'Finally, you will receive the results of the difference in income and '
@@ -3747,15 +3510,21 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'If not, you may not recover more than you spend on repairs and modifications.\n'
                                                                           'However, this may still positively affect the time it takes to sell your home.\n'
                                                                           'In other words, your home may sell sooner.',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
-              
+                                                                    const WidgetSpan(
+                                                                      child: Divider(
+                                                                        color: Colors.red,
+                                                                        height: 1.0,
+                                                                        thickness: 3.0,
+                                                                      ),
+                                                                    ),
                                                                      TextSpan(
                                                                       text: "\n\n\nExample 7. Repair of a Three-Floor Apartments",
                                                                       style: TextStyle(
                                                                         color: Colors.pink,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3763,8 +3532,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                       text: '\n\nAssume that an existing building constructed on a 3,000 ft² plot of land '
                                                                           'has three separate floors (Floor 0, 1 and 2), designed as distinct '
                                                                           'properties. Each floor has a salable area of 1,500 ft², along with '
-                                                                          'an external staircase that occupies an additional 200 ft² as common '
-                                                                          'area. The project was constructed several years ago, and you want to '
+                                                                          'an staircase that occupies an additional 200 ft² as common '
+                                                                          'area. You have bought the building several years ago, and you want to '
                                                                           'modify it by inserting an elevator at a purchasing cost of \$30,000. '
                                                                           'The elevator will occupy 50 ft² of the common area, leaving 150 ft² '
                                                                           'for the staircase. The reconstruction of the common area to install '
@@ -3774,105 +3543,103 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           'by \$150 per square foot.'
                                                                           '\n\nTo implement the cost benefit analysis of the repairment of this project:\n'
               
-                                                                          '▶ Open app and add a new differentiated pricing, on the first page of '
-                                                                          'defining the new project, enter 0 for land area and the price of '
-                                                                          'land and costs related to the roof-yard and transaction cost since there is no '
-                                                                          'purchase cost for land or renovations in the yard or roof.'
-                                                                          '\n▶ Enter \$30,000 in "other costs" part to account elevator cost in the total cost. '
-                                                                          'Enter 0 for the first floor number. No matter what you enter as the number of properties, because '
-                                                                          'this gives you a metric when you have a new construction not repairment, you can enter 3. \n'
-                                                                          '\n▶ To define the cost-price segments of the floors, for analyzing the cost-benefit of the '
-                                                                          'repairs remember that you need to enter the cost of repairs, not the construction cost.\n'
-                                                                          '\nTo do that, go to the next part and follow these steps:\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                          '▶ Open app and add a new differentiated pricing, then on the first page '
+                                                                          ' enter 0 for land area and its price '
+                                                                          'since there is no purchase cost of land.'
+                                                                          'Enter 0 for the first floor number. \n'
+
+                                                                          '\nGo to the next step and follow these steps:\n',
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n1. Set Number of Cost-Price Segments of the First Floor:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
                                                                       text: 'First floor affected by repairment is floor 0. '
                                                                           'Enter 2 as the number of segments for the first floor, the 1,500 ft² property'
-                                                                          ' as one cost-price '
-                                                                          'segment and the elevator as another. Since there is no cost '
+                                                                          ' as one cost-price segment and the elevator area as another. Since there is no cost '
                                                                           'associated with the staircase repair, and the staircase is'
                                                                           ' not for sale or affected by the overall improvement of the '
                                                                           'building, we can ignore defining the staircase as another cost-price segment.\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
                                                                      TextSpan(
                                                                       text: "2. Input Segment Area:\n",
                                                                       style: TextStyle(
                                                                         color: Colors.blue,
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: '▶ For the Floor 0 - Segment 1 (salable area), enter 1,500.\n'
-                                                                          "▶ For the Floor 0 - Segment 2 (elevator), enter 50.\n ",
+                                                                          "▶ For the Floor 0 - Segment 2 (elevator), enter 50. Make sure turn off it's saleable switch.\n ",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: "\n3. Enter Number of Similar Floors:\n",
+                                                                      text: "\n3. Enter number of similar floors:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
-                                                                      text: 'Enter 2 as the number of similar floors to the floor 0. '
+                                                                      text: 'Enter 2 as the Number of Similar Floors to the floor 0. '
                                                                           'Similar to floor 0, floors 1 and 2 has two cost-price segments '
-                                                                          'including at least one segment affected by '
-                                                                          'the repairs: either the property with an area of 1,500 ft² or the elevator area or both.\n\n',
-                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize),
+                                                                          'including at least one segment Affected by '
+                                                                          'Repairs: either the property with an area of 1,500 ft² or the elevator area or both.\n\n',
+                                                                      style: TextStyle(color: Colors.black, fontSize: textFontSize * 1.1),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "4. Set construction cost and Sell Prices:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
                                                                      TextSpan(
-                                                                      text: "▶ Press the Set Prices button and in the displayed table,"
+                                                                      text:
+                                                                          'To define the cost-price segments of the floors, for analyzing the cost-benefit of the '
+                                                                          'repairs remember that you need to enter the cost of repairs, not the full construction cost.\n'
+                                                                          "\n▶ Press the Set Prices button and in the displayed table,"
                                                                           "\n▶ For Floor 0 - Segment 1 (salable area) input repair cost to "
                                                                           "0 and also sell price 0, because property in the first floor has no repairment and "
                                                                           "no increment in sell price."
-                                                                          "\n▶ For Floor 0 - Segment 2 (elevator) input repair cost 100 and sell price 0."
+                                                                          "\n▶ For Floor 0 - Segment 2 (elevator 50 ft²) input repair cost 100."
               
                                                                           "\n▶ For Floor 1 - Segment 0 (salable area) input repair cost to 120, and sell "
                                                                           "price 150, that is the the increment if sell price not sell price to offer."
-                                                                          "\n▶ For Floor 1 - Segment 1 (elevator) input repair cost to 100, and sell price 0."
+                                                                          "\n▶ For Floor 1 - Segment 1 (elevator) input repair cost to 100."
                                                                           "\n▶ For Floor 2 - Segment 0 (salable area) input repair cost to 0, and sell "
                                                                           "price 150."
-                                                                          "\n▶ For Floor 2 - Segment 1 (elevator) input repair cost to 100, and sell price 0.",
+                                                                          "\n▶ For Floor 2 - Segment 1 (elevator) input repair cost to 100.",
                                                                       style: TextStyle(
                                                                         color: Colors.black,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "\n\n5. Finalize this Part:\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.blue, // Title color
+                                                                        color: Colors.blue, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3881,22 +3648,24 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                                           "and proceed through the next part.\n\n"
                                                                           "In the next part, permit fee part, enter one as "
                                                                           "the number of fee segments of floor 0, then press Set Areas and enter "
-                                                                          "1550 as the area and 2 as similar floor number, then"
-                                                                          " press Set Fees button and enter 0 for both segments"
-                                                                          " fees of all floors and press the result icon to see the cost benefit "
+                                                                          "1550 as the total area of the floor you defined in previous step and enter 2 as similar floor number, then"
+                                                                          " press Set Fees button and enter 0 for the fee of both segments"
+                                                                          " of all floors."
+                                                                          '\n\n▶ Go to the next step and enter \$30,000 in "other costs" part to account elevator cost in the total cost. '
+                                                                          "\n\nFinally, press the result icon to see the cost benefit "
                                                                           "result of repairment of the project.\n\n",
                                                                       style: TextStyle(
                                                                         color: Colors.black, // Text color
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
                                                                      TextSpan(
                                                                       text: "A Numerical Illustration:\n\n",
                                                                       style: TextStyle(
-                                                                        color: Colors.teal, // Title color
+                                                                        color: Colors.teal, 
                                                                         fontWeight: FontWeight.bold,
-                                                                        fontSize: textFontSize,
+                                                                        fontSize: textFontSize * 1.1,
                                                                       ),
                                                                     ),
               
@@ -3979,7 +3748,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                               Text(
                                                 startingFloor.toString(),
                                                 style:  TextStyle(fontWeight: FontWeight.bold,
-                                                    fontSize:  textFontSize * 1.2, color: Colors.blue),
+                                                    fontSize:  textFontSize * 1.1, color: Colors.pink),
                                               ),
                                             ],
                                           ),
@@ -3991,13 +3760,27 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                         flex: 1,
                                         child: TextField(
                                           controller: numberOfSegmentsController,
-                                          style:  TextStyle(fontSize:  textFontSize),
+                                          style: TextStyle(fontSize: textFontSize),
                                           decoration: InputDecoration(
                                             filled: true,
                                             fillColor: Colors.grey[100],
                                           ),
-                                          readOnly: priceTableVisible? isReadOnly : false,
+                                          readOnly: priceTableVisible ? isReadOnly : false,
                                           keyboardType: TextInputType.number,
+                                          onTap: () {
+                                            if (priceTableVisible && isReadOnly) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'It is a saved project and you cannot change this anymore. '
+                                                        'To have a project with different number of segments, '
+                                                        'please define a new project.\n\n',
+                                                  ),
+                                                  duration: Duration(seconds: 5),
+                                                ),
+                                              );
+                                            }
+                                          },
                                         )
                                     ),
               
@@ -4017,15 +3800,17 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                               isValidNumber(numberOfSegmentsController.text) &&
                                           (int.tryParse(numberOfSegmentsController.text)!>0))
                                           {
-                                             numberOfSegmentsSaved = int.parse(numberOfSegmentsController.text);
+                                             numberOfSegmentsSaved = int.tryParse(numberOfSegmentsController.text)!;
                                             if (numberOfSegmentsSaved > 10)
                                             {
                                                userConfirmed = await showDialog<bool>(
                                                 context: context,
                                                 builder: (BuildContext context) {
                                                   return AlertDialog(
-                                                    title:  Text('Confirm Input', style: TextStyle(fontSize: textFontSize)),
-                                                    content:  Text('You have entered a big number. Are you sure '
+                                                    title:  Text('Confirm Input', style: TextStyle(fontSize: textFontSize * 1.1),),
+                                                    content:  Text('You have entered a big number. '
+                                                        'Here you should enter the number of cost price '
+                                                        'segments not the area of the floor or other data. Are you sure '
                                                         'you have this number of cost-price segments?'
                                                         , style: TextStyle(fontSize: textFontSize)),
                                                     actions: [
@@ -4068,7 +3853,6 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
               
                                                } else {setState(() { areaTableVisible = false;
                                                similarFloorVisible = false;});
-              
                                                }
                                             }
                                             else
@@ -4155,7 +3939,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                           'Set Areas',
                                       //    overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                            fontSize:  textFontSize ,
+                                            fontSize:  textFontSize *0.9,
                                           ),
                                         ),
                                       ),),
@@ -4243,6 +4027,24 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                     Switch(
                                                       value: !(nonSalableSegments.contains(row.segmentNumber)),
                                                       onChanged: (bool value) {
+                                                        if (priceTableVisible && isReadOnly) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            const SnackBar(
+                                                              content: Text(
+                                                              'The saleability of the segments cannot be'
+                                                                  ' changed after saving the project. To have'
+                                                                  ' segments with different saleability status, you must define a new project.\n\n',
+                                                                style: TextStyle(
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: Colors.white,
+                                                                  fontSize: 20,
+                                                                ),
+                                                              ),
+                                                              duration: Duration(seconds: 5),
+                                                            ),
+                                                          );
+                                                          return; // Don't toggle
+                                                        }
                                                         setState(() {
                                                           row.isSalableInArea = value;
                                                           if (!value) {
@@ -4251,18 +4053,15 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                             nonSalableSegments.remove(row.segmentNumber);
                                                           }
 
-                                                          // --- Synchronize saleability with priceTableData ---
-                                                      /*    for (var priceRow in priceTableData) {
-                                                            if (priceRow.segmentNumber == row.segmentNumber) {
-                                                              priceRow.isSalableInPrice = value;
-                                                              // Optionally, set sell price to "0" if not salable
-                                                              if (!value) {
-                                                                priceRow.textField4Controller.text = "0";
-                                                              }
-                                                            }
-                                                          }*/
-                                                          // ---------------------------------------------------
                                                         });
+                                                        if (priceTableVisible) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            const SnackBar(
+                                                              content: Text('Update the selling price in the bottom table for the salable segments.\n\n'),
+                                                              duration: Duration(seconds: 3),
+                                                            ),
+                                                          );
+                                                        }
                                                       },
                                                     ),
                                                   ),
@@ -4332,7 +4131,6 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                           } else {
                                                             nonSalableSegments.remove(row.segmentNumber);
                                                           }
-
                                                           // --- Synchronize saleability with priceTableData ---
                                                         /*  for (var priceRow in priceTableData) {
                                                             if (priceRow.segmentNumber == row.segmentNumber) {
@@ -4345,6 +4143,14 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                           }*/
                                                           // ---------------------------------------------------
                                                         });
+                                                        if (priceTableVisible) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            const SnackBar(
+                                                              content: Text('Update the selling price in the bottom table for the salable segments.\n\n'),
+                                                              duration: Duration(seconds: 5),
+                                                            ),
+                                                          );
+                                                        }
                                                       },
                                                     ),
                                                   ),
@@ -4382,8 +4188,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                     ),),
                                                   Text(
                                                     startingFloor.toString(),
-                                                    style:   TextStyle(fontSize:  textFontSize * 1.2,
-                                                        color: Colors.blue,fontWeight: FontWeight.bold),
+                                                    style:   TextStyle(fontSize:  textFontSize * 1.1,
+                                                        color: Colors.pink,fontWeight: FontWeight.bold),
                                                   ),
                                                 ],
                                               ),
@@ -4418,6 +4224,9 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                               child: ElevatedButton(
                                                 onPressed: () async
                                                 {
+                                                  // ✅ Close keyboard immediately
+                                                  FocusScope.of(context).unfocus();
+                                                  FocusManager.instance.primaryFocus?.unfocus();
 
                                                       // Check if all areaTableData text fields are not empty
                                                       bool isAllAreaTableDataFieldsFilled = true;
@@ -4490,12 +4299,17 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                             },
                                                           );
                                                           }
-                                                        if (
-                                                        nonSalableSegments.isNotEmpty ||
+                                                        if (nonSalableSegments.isNotEmpty ||
                                                             (nonSalableSegments.isEmpty && userConfirmed == true) ||
                                                             numberOfSegmentsSaved == 1
-                                                        ) {
+                                                        )
+                                                        {
+                                                          // Right place for implementing following two lines :
+                                                          numberOfFloorsDifferences = (int.tryParse(similarFloorController.text) ?? 0) - numberOfSimilarFloorsSaved;
+
                                                           numberOfSimilarFloorsSaved = int.tryParse(similarFloorController.text) ?? 0;
+                                                          priceTableData.clear();
+                                                          await checkVisibility();
 
                                                           List<String> segmentName = [];
                                                           for (int i = 0; i < numberOfSimilarFloorsSaved + 1; i++) {
@@ -4503,10 +4317,6 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                               segmentName.add('Floor ${startingFloor + i} Segment ${j + 1}');
                                                             }
                                                           }
-
-                                                          await DifferentiatedCalculationDatabaseHelper.deleteCpp(projectName1, cppValue);
-                                                          priceTableData.clear();
-                                                          await checkVisibility();
 
                                                           // --- Create price table data ---
                                                           for (int i = 0; i < segmentName.length; i++) {
@@ -4541,12 +4351,25 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                               if (nonSalableSegments.contains(priceTableData[row_].segmentNumber)) {
                                                                 priceTableData[row_].textField4Controller.text = "0";
                                                               }
+
+                                                              // --- Initialize price table segment cost if it is uniform
+                                                              if (uniqueConstructionCostPerMeter != -432 ) {
+                                                              priceTableData[row_].textField3Controller.text =
+                                                              uniqueConstructionCostPerMeter.toString();
+                                                              }
+
                                                               row_++;
                                                             }
                                                           }
-                                                          priceTableVisible = true;
-                                                        }
 
+                                                          setState(() {
+                                                            priceTableVisible = true;
+                                                          });
+                                                        }
+                                                        if (checkMaxCPP && (numberOfFloorsDifferences!= 0)) {
+                                                          await DifferentiatedCalculationDatabaseHelper.updateCpp(projectName1,
+                                                              cppValue, numberOfFloorsDifferences);
+                                                        }
                                                       }
                                                  else {
                                                   showDialog(
@@ -4599,10 +4422,10 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                                   minimumSize: const Size(120, 40),
                                                 ),
-                                                child:  Text('Set Prices',
+                                                child: Text('Set Prices',
                                                   overflow: TextOverflow.ellipsis,
                                                   style: TextStyle(
-                                                  fontSize:  textFontSize,
+                                                  fontSize:  textFontSize*0.9,
                                                 ),
                                                 ),
                                               ),
@@ -4668,8 +4491,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                           child: Text('Sell Price \n(ft²/m²)',style: TextStyle(
                                             fontSize:  textFontSize ,)),
                                         )),
-                                        DataColumn(
-                                          label: const Text(''),/*(priceTableData.isNotEmpty &&
+                                        const DataColumn(
+                                          label: Text(''),/*(priceTableData.isNotEmpty &&
                                               priceTableData.last.floorNumber == startingFloor &&
                                               numberOfSimilarFloorsSaved > 0)
                                               ?  const Text('')
@@ -4731,30 +4554,37 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                             ),*/
 
                                       ( (row.name.split(' ')[1]== startingFloor.toString())
-                                                && int.parse(similarFloorController.text)>0 ) ?
+                                                && numberOfSimilarFloorsSaved >0 ) ?
                                             DataCell(IconButton(
                                               icon:  Icon(Icons.settings_applications_sharp,
               
                                                 color: Colors.purple,size: iconSizeLarge ,),
                                               onPressed: () {
                                                 String rowName = row.name.split(' ')[0];
-                                                String rowSegment = row.name.split(' ')[3];
+                                                String rowSegment = row.name.split(' ')[3];  // ✅ Index 3
                                                 String numberOfSegments = numberOfSegmentsController.text;
-                                                if (rowName.isNotEmpty && numberOfSegments.isNotEmpty &&
-                                                    rowSegment.isNotEmpty) {
-                                              //    int floor = int.parse(row.name.split(' ')[1]);
-                                                  int segmentNumber2 = int.parse(row.name.split(' ')[3]);
-                                               //   int givenNumberOfSegments = int.parse(numberOfSegmentsController.text);
-                                                  saveCurrentSegmentOfStartingFloor(segmentNumber2);
-                                                  myIconButtonFunction(context, segmentNumber2,
-                                                      numberOfSimilarFloorsSaved,
-                                                      startingFloor, numberOfSegmentsSaved, nonSalableSegments);
 
+                                                if (rowName.isNotEmpty &&
+                                                    numberOfSegments.trim().isNotEmpty &&
+                                                    rowSegment.isNotEmpty &&
+                                                    row.textField3Controller.text.trim().isNotEmpty &&  // ✅ ALWAYS check construction cost
+                                                    (nonSalableSegments.contains(row.segmentNumber) ||  // ✅ Skip textField4 if NON-SALABLE
+                                                        row.textField4Controller.text.trim().isNotEmpty)) { // ✅ Require textField4 if SALABLE
+
+                                                  int segmentNumber2 = int.tryParse(row.name.split(' ')[3]) ?? 0;
+
+                                                  saveCurrentSegmentOfStartingFloor(segmentNumber2);
+                                                  print('ggg1');
+                                                  myIconButtonFunction(context, segmentNumber2,
+                                                      numberOfSimilarFloorsSaved, startingFloor,
+                                                      numberOfSegmentsSaved, nonSalableSegments);
+                                                  print('llll 1');
                                                 } else {
-                                                  showEmptyPopup(context);
+                                                  showEmptyRow(context);
                                                 }
                                               },
-              
+
+
                                             )) : DataCell(Container()), // show IconButton if condition is true, otherwise show empty container
                                           ],
                                         )),
@@ -4853,30 +4683,37 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
 */
 
                                                   ( (row.name.split(' ')[1]== startingFloor.toString())
-                                                      && int.parse(similarFloorController.text)>0 ) ?
+                                                      && numberOfSimilarFloorsSaved >0  ) ?
                                                   DataCell(IconButton(
                                                     icon:  Icon(Icons.settings_applications_sharp,
               
                                                       color: Colors.purple,size: iconSizeLarge ,), // setting
                                                     onPressed: () {
                                                       String rowName = row.name.split(' ')[0];
-                                                      String rowSegment = row.name.split(' ')[3];
-                                                      String numberOfSegments = numberOfSegmentsController.text;
-              
-                                                      if (rowName.isNotEmpty && numberOfSegments.isNotEmpty && rowSegment.isNotEmpty) {
-                                                    //    int floor = int.parse(row.name.split(' ')[1]);
-                                                        int segmentNumber2 = int.parse(row.name.split(' ')[3]);
-                                                     //   int givenNumberOfSegments = int.parse(numberOfSegmentsController.text);
-                                                        saveCurrentSegmentOfStartingFloor(segmentNumber2);
-                                                        myIconButtonFunction(context, segmentNumber2
-                                                            , numberOfSimilarFloorsSaved, startingFloor,
-                                                            numberOfSegmentsSaved, nonSalableSegments);
+                                                      String rowSegment = row.name.split(' ')[3];  // ✅ Index 3
+                                                       String numberOfSegments = numberOfSegmentsController.text;
 
+                                                      if (rowName.isNotEmpty &&
+                                                          numberOfSegments.trim().isNotEmpty &&
+                                                          rowSegment.isNotEmpty &&
+                                                          row.textField3Controller.text.trim().isNotEmpty &&  // ✅ ALWAYS check construction cost
+                                                          (nonSalableSegments.contains(row.segmentNumber) ||  // ✅ Skip textField4 if NON-SALABLE
+                                                              row.textField4Controller.text.trim().isNotEmpty)) { // ✅ Require textField4 if SALABLE
+
+                                                        int segmentNumber2 = int.tryParse(row.name.split(' ')[3]) ?? 0;
+
+                                                        saveCurrentSegmentOfStartingFloor(segmentNumber2);
+                                                        print('ggg 2');
+                                                        myIconButtonFunction(context, segmentNumber2,
+                                                            numberOfSimilarFloorsSaved, startingFloor,
+                                                            numberOfSegmentsSaved, nonSalableSegments);
+                                                        print('llll  2');
                                                       } else {
-                                                        showEmptyPopup(context);
+                                                        showEmptyRow(context);
                                                       }
                                                     },
-              
+
+
                                                   )) : DataCell(Container()), // show IconButton if condition is true, otherwise show empty container
                                                 ],
                                               )),
@@ -4903,18 +4740,96 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
               
                               IconButton(
                                 icon: Icon(Icons.home, color: Colors.purple[900], size: iconSizeLarge),
-                                onPressed: ()  {
-                                    // This callback will be executed after the ad is shown
-                                  NavigationService().navigateToScreen(
-                                    LandInputs(
-                                      givenProjectName: projectName1,
-                                    ),
-                                  );  NavigationService().navigateToScreen(
-                                    LandInputs(
-                                      givenProjectName: projectName1,
-                                    ),
-                                  );
-                                },
+                                  onPressed: () async {
+
+                                    if (!priceTableVisible) {
+                                      NavigationService().navigateToScreen(
+                                        LandInputs(givenProjectName: projectData.projectName),
+                                      );
+                                    }
+                                    else {
+                                      bool allFieldsAreNotEmpty1 = true;
+                                      for (int i = 0; i < priceTableData.length; i++) {
+                                        if (priceTableData[i].textField2Controller.text.isEmpty ||
+                                            !isValidNumber(priceTableData[i].textField2Controller.text) ||
+                                            priceTableData[i].textField3Controller.text.isEmpty ||
+                                            !isValidNumber(priceTableData[i].textField3Controller.text) ||
+                                            priceTableData[i].textField4Controller.text.isEmpty ||
+                                            !isValidNumber(priceTableData[i].textField4Controller.text)) {
+                                          allFieldsAreNotEmpty1 = false;
+                                          break;
+                                        }
+                                      }
+                                      if (allFieldsAreNotEmpty1)
+                                      {
+                                        await profitCalculationForEachSegment();
+                                        NavigationService().navigateToScreen(
+                                          LandInputs(givenProjectName: projectData.projectName),
+                                        );
+                                      }
+
+                                      else if ( !allFieldsAreNotEmpty1)
+                                      {
+                                        bool? shouldProceed = await showDialog<bool>(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: const Text(
+                                                'Confirm Return',
+                                                
+                                                style: TextStyle(fontSize: 22, color: Colors.purple, fontWeight: FontWeight.bold),
+                                              ),
+                                              content: const Text(
+                                                'If you need the cost and price information for this section, you must fill in all its inputs to save them. '
+                                                    '\n\nAre you sure you want to return to the first page without filling all inputs '
+                                                    'and deleting this section?',
+                                                
+                                                style: TextStyle(fontSize: 20, color: Colors.black87),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(false), // No
+                                                  child: const Text(
+                                                    'No',
+                                                    
+                                                    style: TextStyle(fontSize: 22, color: Colors.red, fontWeight: FontWeight.bold),
+                                                  ),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(true), // Yes
+                                                  child: const Text(
+                                                    'Yes',
+                                                    
+                                                    style: TextStyle(fontSize: 22, color: Colors.blue, fontWeight: FontWeight.bold),
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+
+                                        // Only if user pressed "بله" → delete + navigate
+                                        if (shouldProceed == true) {
+                                          Navigator.of(context).pop();
+                                          await DifferentiatedCalculationDatabaseHelper.deleteCpp(
+                                            projectName1,
+                                            cppValue,
+                                          );
+
+                                          NavigationService().navigateToScreen(
+                                            CostPrices(
+                                              givenProjectName: projectName1,
+                                              givenCppValue: 1,
+                                            ),
+                                          );
+                                        }
+                                        else {
+                                          Navigator.of(context).pop();
+                                        }
+                                      }
+                                    }
+                                  }
                               ),
                                const SizedBox(width: 39,),
                               IconButton(
@@ -4949,17 +4864,26 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                       }
                                     }
 
+                                    // Check projectName equality
+                                    String normalizedProjectName = projectName1.trim();
+                                    bool isProjectNameValid = projectName1 == normalizedProjectName;
+                                    if (!isProjectNameValid) {
+                                      return; // Prevent further execution if names don't match
+                                    }
+
+
                                     if (priceTableVisible && allFieldsAreNotEmpty &&
                                         numberOfSegmentsController.text.isNotEmpty)
                                     {
                                       // since if the icon buttons is pressed just data of their own row goes to the database
                                       // other rows in price table has no data regarding to their profit in the database therefore
                                       // first we save all of them into the database then navigates to next page
+
                                       await profitCalculationForEachSegment();
                                       cppValue++;
                                       await checkVisibility();// if other cco exist retrieve their data by on nextCPP
                                       if (checkMaxCPP) {
-                                        _onNextCPP(projectName1, cppValue);
+                                        _onNewCPPDataRetrieving(projectName1, cppValue);
                                         setState(() {});
                                       }
                                       else {
@@ -4971,22 +4895,18 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                           areaTableVisible = false;
                                           similarFloorVisible = false;
                                           priceTableVisible = false;
+                                          startingFloor = startingFloor + (numberOfSimilarFloorsSaved ) + 1;
                                         });
                                         // Save current price table and rerun the page with no priceTableData
                                         // priceTables.add(List.from(priceTableData));
                                         // priceTableData.clear();
-              
-                                        setState(() {
-                                           startingFloor = startingFloor + (numberOfSimilarFloorsSaved ) + 1;
-                                            //  int.parse(similarFloorController.text)
-                                   
-                                        });
+
                                       }
                                     }
               
                                     else {
                                       // Show a popup dialog with an error message
-                                      showErrorDialog1(context);
+                                      showEmptyErrorDialog1(context);
                                     }
                                   },
                                 ),
@@ -5034,7 +4954,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                         },
                                       );
                                     } else {
-                                      showErrorDialog1(context);
+                                      showEmptyErrorDialog1(context);
                                     }
                                   },),
                               ),
@@ -5046,52 +4966,69 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                     context: context,
                                     builder: (BuildContext context) {
                                       return AlertDialog(
-                                        title:  Text('Introduction', style: TextStyle(
-                                          fontSize: titleFontSize * 1.2,
-                                          color: Colors.deepPurple ,fontWeight: FontWeight.bold,
+                                        title:  Text('Differentiated Pricing Calculator', style: TextStyle(
+                                          fontSize: titleFontSize ,
+                                          color: Colors.green ,fontWeight: FontWeight.bold,
                                         ),),
                                         content: SingleChildScrollView(
                                           child: Text.rich(
                                             TextSpan(
                                               children: [
                                                  TextSpan(
-                                                  text: '\nAfter obtaining basic data like land cost, this '
-                                                      'part is dedicated to calculating the construction costs of the built-up '
-                                                      'area and the income from selling the salable area. '
-                                                      'Before starting calculations, it’s good to review the key terms: '
-                                            '\n\n- Plot Area: The plot area is the total land on which a '
+                                                  text: '\nIn ROI calculation of construction projects with differentiated pricing,'
+                                                      ' after obtaining basic data like land cost, this '
+                                                      'step is dedicated inputting necessary data to calculate construction costs of the built-up '
+                                                      'area and the income from selling the salable areas. '
+                                                      'Before starting, it’s good to review the key terms: '
+                                            '\n\n■ Plot Area: The plot area is the total land on which a '
                                                 'property is constructed; it may also be called land area or site area.'
                                                 
 
-                                            '\n\n- Built-Up Area (BUA): The built-up area is the total constructed area '
+                                            '\n\n■ Built-Up Area (BUA): It is the total constructed area '
                                                       'of a project, including internal walls, balconies, and other '
                                                       'covered spaces; sometimes referred to as constructed area. '
 
 
-                                          'Salable Area: The salable area is the portion of the built-up area '
+                                          '\n\n■ Salable Area: The salable area is the portion of the built-up area '
                                                       'that can be sold to buyers, typically excluding common '
                                                       'areas; also known as usable area or carpet area. '
-                                                      'Salable area is always part of the built-up area. '
-                                            '\nNow we can start calculation of construction costs and income of the salable parts.',
+                                                      'So, salable area is always part of the built-up area. '
+                                            '\n\nNow we can start calculation of construction costs and'
+                                                      ' income of the salable parts.',
                                                   style: TextStyle(
                                                     fontSize: textFontSize * 1.1,
                                                     color: Colors.black,
                                                   ),
                                                 ),
-              
-                                                 TextSpan(
-                                                  text: '\n\n\nBrief Introduction:\nIn this app, each construction project includes one '
-                                                      'or more cost-price plans (CPPs). Each CPP encompasses one floor or several '
-                                                      'contiguous floors, and every floor contains one or more '
-                                                      'cost-price segments (CPSs). Floors in each CPP are same in terms of number of CPSs and the area of the associated segments.\n',
+                                                TextSpan(
+                                                  text: '\n\n\nBrief Introduction'
+
+                                                      '\n\nWhat you will read below in brief is that each floor in a construction project consists of '
+                                                      'one or more "cost-price segments". Each unique combination of cost-price segments in a floor '
+                                                      'is called a "cost-price plan". In fact, each cost-price plan is a financial segmentation '
+                                                      'of a floor that differs from other cost-price plans. Floors within a cost-price plan have '
+                                                      'an equal number of cost-price segments and equal areas for corresponding segments.',
                                                   style: TextStyle(
                                                       fontSize: textFontSize * 1.1,
                                                       color: Colors.deepPurple, fontWeight: FontWeight.bold
                                                   ),
                                                 ),
+                                                TextSpan(
+                                                  text: '\n\nWith these concepts, you can define each project as a set of '
+                                                      'cost-price plans and segments, and easily estimate costs, revenues, '
+                                                      'and other investment outcomes much more accurately than with uniform pricing. '
+                                                      'These concepts, which are specifically designed for the differentiated pricing mode '
+                                                      'of this app, are fully defined below.',
+                                                  style: TextStyle(
+                                                    fontSize: textFontSize * 1.1,
+                                                    color: Colors.black,
+                                                  ),
+                                                ),
+
+
               
                                                  TextSpan(
-                                                  text: '\n\nWhat is a cost-price segment?\n',
+                                                  text: '\n\n\nWhat is a cost-price segment?\n',
                                                   style: TextStyle(
                                                       fontSize: titleFontSize * 1.2,
                                                       color: Colors.pink, fontWeight: FontWeight.bold
@@ -5101,8 +5038,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                  TextSpan(
                                                   text: '\nIn this app, each cost-price segment (CPS) on a floor refers to a specific '
                                                       'area of that floor which has'
-                                                      ' a different cost or sell price per square foot/meter (ft²/m²) compared'
-                                                      ' to other areas on the floor. '
+                                                      ' a different construction cost or sell price per unit area, square foot/meter (ft²/m²), compared'
+                                                      ' to other parts on the floor. '
 
                                                       '\n\nFor example, if a floor with 2,550 ft² has three segments with '
                                                       'areas of 1,500 ft², 1,000 ft², and 50 ft², each having '
@@ -5125,17 +5062,21 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                       'prices for the project, enabling you to obtain accurate'
                                                       ' and detailed results efficiently.'
               
-                                                      '\n\nTo clarify why we use the CPS (Cost-Price Segment) concept here:'
-                                                   'Projects often include properties with different sale prices, so a '
-                                                      'project may have multiple CPS segments to reflect these variations. '
-                                                      'Additionally, construction costs themselves can justify creating '
-                                                      'different CPS segments. Although construction cost per square foot '
-                                                      'is typically assumed to be uniform across a building—mainly because, '
-                                                      'before the project begins, you rely on estimates from similar projects '
-                                                      'rather than precise, segment-specific cost data. '
-                                                      'However, if your project includes unique features or modifications in certain '
-                                                      'areas, you can assign different construction costs per square foot '
-                                                      'to those areas by defining them as separate CPS segments. For example, if '
+                                                      '\n\nThe CPS (Cost-Price Segment) concept is used because projects '
+                                                      'often include properties with different sell prices per unit area, requiring multiple '
+                                                      'CPS segments to reflect these variations. But construction costs can also justify'
+                                                      ' creating distinct CPS segments.'
+
+                                                   '\n\nSince initial construction cost estimates rely on data from similar projects rather '
+                                                      'than precise segment-specific costs, costs are typically assumed uniform. You can enter'
+                                                      ' a single cost per unit area in the previous step after entering land data. That cost '
+                                                      'will then appear for all segments in this step, where you can still adjust individual '
+                                                      'segment costs if needed, in this case, the new costs will be shown the next time the project '
+                                                      'is viewed even by showing uniform construction cost first page.'
+
+                                                   '\n\nHowever, if your project includes unique features or modifications with additional '
+                                                      'costs in specific areas, you can assign different construction costs per unit area'
+                                                      ' to those areas by defining them as separate CPS segments. For example, if '
                                                       'you determine your general construction cost based on a reference project and plan '
                                                       'to build your building similarly, with just adding smart features to the '
                                                       'highest salable floor (unlike the reference project), this floor will incur extra '
@@ -5159,39 +5100,22 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                   text: '\n\nIn this app, each cost-price plan (CPP) represents a '
                                                       'unique financial design of a floor, in terms of number and area '
                                                       'of cost-price segments, that can be applied to a set of '
-                                                      'contiguous floors starting from the floor.'
+                                                      'floors starting from the floor and continuous upper floors with same financial design.'
 
                                                       '\n\nIndeed, every floor within a CPP contains one or '
-                                                      'more cost-price segments (CPSs) and share similar CPS '
-                                                      'configurations—both in number and area—with other floors in that CPP, if CPP'
-                                                      'has more than one floor, but has'
-                                                      ' different CPS configurations compared to floors of other CPPs.'
-                                                      ' As a result, all floors of a project can be grouped into different'
+                                                      'more cost-price segments (CPSs) and if it includes more than one floor it share similar CPS '
+                                                      'configurations—both in number and area—with other floors in that CPP, '
+                                                      ' so that, all floors of a project can be grouped into different'
                                                       ' CPPs, with each floor belonging exclusively to a single CPP. '
 
                                                       'This structure allows for clear categorization and streamlined '
                                                       'financial analysis across the entire project By defining CPS configurations '
                                                       'of the first floor of each CPP, and setting number of other flows in that CPP.'
-                                                      '\n\nFor example, If a project has a ground floor area of 2,550 ft² allocated '
-
-                                                      '■ ground floor: 2,550 ft² allocated to parking floor with parking and 50 ft² staircase'
-                                                      ', both with the same construction '
-                                                      'cost per square foot, and obviously sell price zero because parking '
-                                                      'and staircase are common areas not for sale.\n'
-
-                                                      '■ Floors 1, 2, and 3, Each having three segments with 1,000 ft² '
-                                                      '1,500 ft² and 50 ft² areas, so that they have different costs per ft² '
-                                                      'or sell prices per ft² or both.\n'
-                                                      'each with three cost-price '
-                                                      'segments: one of 1,000 ft² another of 1,500 ft² and one 50 ft² area, '
-                                                      'each having '
-                                                      'different costs per ft² or sell prices per ft² or both.\n'
-
-                                                      '■ Floors 4, 5, and 6, '
-                                                      'each with three segments: two with 1,250 ft² and one 50 ft² area, with'
-                                                      'different costs per ft² or sell prices per ft² or both.\n'
-
-                                                      'Therefore, you can define the '
+                                                      '\n\nExample: A project with ground floor (2,550 ft²) for parking/staircase (non-sale), '
+                                                      'floors 1-3 each having three segments (1,000, 1,500, and 50 ft²), and '
+                                                      'floors 4-6 each with three segments (two 1,250 ft² and one 50 ft²), each '
+                                                      'segment having different construction costs or sell prices per ft².'
+                                                      '\n\nTherefore, you can define the '
                                                       'cost-price plans and segments as follows:\n\n'
                                                       '▶ cost-price plan 1: Ground floor with parking and staircase as one'
                                                       ' cost-price segment with 2,550 ft² area.\n'
@@ -5205,12 +5129,12 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                       'two potential scenarios leading to this segmentation are shown below\n\n'
                                                       '(construction cost per square foot (CC), sell price per square foot (SP)):\n\n'
               
-                                                      'Scenario 1, for each floor of floors 1, 2, and 3:\n\n'
+                                                      '▶ Scenario 1, for each floor of floors 1, 2, and 3:\n\n'
                                                       '  - Segment 1: 1,500 ft² area — CC: 150, SP: 200\n'
                                                       '  - Segment 2: 1,000 ft² area — CC: 150, SP: 220 (different SP)\n'
                                                       '  - Segment 3: 50 ft² area — CC: 150, SP: 0\n\n'
               
-                                                      'Scenario 2,  for each floor of floors 1, 2, and 3:\n\n'
+                                                      '▶ Scenario 2,  for each floor of floors 1, 2, and 3:\n\n'
                                                       '  - Segment 1: 1,500 ft² area — CC: 150, SP: 200\n'
                                                       '  - Segment 2: 1,000 ft² area — CC: 160, SP: 200 (different CC)\n'
                                                       '  - Segment 3: 50 ft² area — CC: 150, SP: 0\n\n'
@@ -5245,7 +5169,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                       ' construction cost or selling price per square foot/meter (ft²/m²)'
                                                       ' compared to other CPSs on that floor.'
               
-                                                    'For example, a construction project with ten floors might be '
+                                                    '\n\nFor example, a construction project with ten floors might be '
                                                       'structured as follows: \n\n- CPP 1 applies to floor 0 (parking) with'
                                                       ' one CPS; \n- CPP 2 applies to floors 1–4, each with two CPSs;'
                                                       '\n- CPP 3 applies to floors 5–9, each with three CPSs.'
@@ -5300,11 +5224,11 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                       'place of their sale price to indicate they are not for sale.'
 
                                                       ' \n\nFor the example above, CPP 1 has just one floor that includes parking and staircase as '
-                                                      'one cost-price segment, so insert one as number of segments, then insert the '
+                                                      'one cost-price segment, so insert 1 as the number of segments, then insert the '
                                                       'area of the floor (2,550 ft²) and turn off the switch as the segment is not salable.'
-                                                  ' But for the CPP number 2, you should insert three as number of segments and input their associated '
+                                                  ' But for the CPP number 2, you should insert 3 as the number of segments and input their associated '
                                                       'areas and just turn off the switch for the segment with 50 ft² area.'
-                                                   '\n\nNext, you should enter the number of similar floors, which refers to floors that '
+                                                   '\n\nNext, you should enter the Number of Similar Floors, which refers to floors that '
                                                       'have the same segment layout as the first floor—meaning each segment on these '
                                                       'floors matches the corresponding segment on the first floor in both number and '
                                                       'area. In other words, for every segment on the first floor of a cost-price plan (CPP), '
@@ -5317,7 +5241,7 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                    '\n\nIn the example above, CPP 1 has just one floor, so enter 0 as number of segments. '
                                                       'in CPP two, the first floor is floor 1, and '
                                                       'the similar floors are floors 2 and 3. Therefore, you should enter 2 as '
-                                                      'the number of similar floors. This means the total number of floors in '
+                                                      'the Number of Similar Floors. This means the total number of floors in '
                                                       'cost-price plan two is 3.',
                                                   style: TextStyle(
                                                     fontSize: textFontSize * 1.1,
@@ -5326,12 +5250,8 @@ void _costSellDataGenerating(BuildContext context, String projectName1, int ccpV
                                                 ),
                                                  TextSpan(
                                                   text: '\n\n▶ 3. By pressing "Set Prices" button you can enter the cost for each '
-                                                      'cost-price segment and and sell price for salable segments. If the segment is '
-                                                      'a common area like staircase, sell price will be considered '
-                                                      'zero. If the sell price of a'
-                                                      ' segment is greater than zero the area of '
-                                                      'that segment will be considered as a salable area (usable or liveable area), and multiplying it by '
-                                                      'the price will generate the income that can be earned by selling that segment.',
+                                                      'cost-price segment and sell price if it is salable segment that multiplying it by '
+                                                      'the area of the segments will generate the income that can be earned by selling that segment.',
                                                   style: TextStyle(
                                                     fontSize: textFontSize * 1.1,
                                                     color: Colors.black,
@@ -5634,13 +5554,16 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
   Future<void> checkPercetagesData()
   async {
     // Retrieve the project starting similar data from the database
-    ProjectStartingSimilarTableData? data = 
-    await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
+    ProjectStartingSimilarTableData? data = await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
         widget.projectName, widget.CPPNumber, widget.segmentNumber1);
+    print('costPercentcheck ${data?.startingSimilarTableCostPercentage} - sellPercent ${data?.startingSimilarTableSellPricePercentage}');
 
+    print('widget.CPPNumber ${widget.CPPNumber}');
     // If the data is not null, set the text of the corresponding text fields and toggle buttons
   if (data != null) {
-  if (data.startingSimilarTableCostPerMeter != -4321 && data.startingSimilarTableCostPerMeter != 0) {
+    // Never change these conditions
+    print('data.startingSimilarTableCostPerMeter ${data.startingSimilarTableCostPerMeter}');
+  if (data.startingSimilarTableCostPerMeter != -4321 && data.startingSimilarTableCostPerMeter != 0 ) {
         _costPerMeterController.text = data.startingSimilarTableCostPerMeter.toString();
         _costPercentageController.text = '';
             setState(() {
@@ -5648,7 +5571,7 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
           _costPricingFixedSelected = false;
           _costPercentageSelected = false;
         });
-      } else if (data.startingSimilarTableCostPercentage != -4321 && data.startingSimilarTableCostPercentage != 0){
+      } else if (data.startingSimilarTableCostPercentage != -4321 && data.startingSimilarTableCostPercentage != 0 ){
         _costPerMeterController.text = "";
         _costPercentageController.text = data.startingSimilarTableCostPercentage.toString();
         setState(() {
@@ -5656,8 +5579,7 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
           _costPricingFixedSelected = false;
           _costPercentageSelected = true;
         });
-      } else   if (data.startingSimilarTableCostPerMeter == 0
-      && data.startingSimilarTableCostPercentage == 0) {
+      } else  {
     _costPerMeterController.text = "";
     _costPercentageController.text = "";
 
@@ -5688,7 +5610,7 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
       _sellPriceFixedSelected = false;
       _sellPricePerMeterSelected = false;
     });
-  }else if (_sellPriceFixedSelected) {
+  } else  {
           _sellPricePerMeterController.text = "";
           _sellPricePercentageController.text = "";
           setState(() {
@@ -5820,31 +5742,7 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
             const SizedBox(height: 10),
             Row(
               children: <Widget>[
-                Expanded(flex: 2,
-                  child: Text(
-                    'Percentage',
-                    style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.8,),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(flex: 2,
-                  child: Container(
-                    color: Colors.grey[100],
-                    child: TextField(
-                      controller: _costPercentageController,
-                      readOnly: !_costPercentageSelected,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter percentage',
-                        hintStyle: TextStyle(color: Colors.white54),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(10),
-                      ),
-                      keyboardType: TextInputType.number,
-                      style:  const TextStyle(color: Colors.black, fontSize: 23),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
+
                 Expanded(flex: 1,
                   child: Switch(
                     value: _costPercentageSelected,
@@ -5862,36 +5760,40 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                     },
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: <Widget>[
+                const SizedBox(width: 10),
                 Expanded(flex: 2,
                   child: Text(
-                    'Incremental',
-                    style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.8,),
+                    'Percentage',
+                    style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.9,),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(flex: 2,
                   child: Container(
-                    color: Colors.grey[200],
+                    color: Colors.grey[100],
                     child: TextField(
-                      controller: _costPerMeterController,
-                      readOnly: !_costPerMeterSelected,
-                      decoration: const InputDecoration(
-                        //   hintText: 'Enter per ft²/m²',
-                        hintStyle: TextStyle(color: Colors.black38),
+                      controller: _costPercentageController,
+                      readOnly: !_costPercentageSelected,
+                      decoration: InputDecoration(
+                        hintText: '%',
+                        hintStyle: TextStyle(color: Colors.black45,
+                            fontSize:
+                            isIpad ? 30 : 15),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(10),
+                        contentPadding: const EdgeInsets.all(10),
                       ),
                       keyboardType: TextInputType.number,
-                      style:  const TextStyle(color: Colors.black, fontSize: 23),
+                      style:  TextStyle(color: Colors.black,
+                          fontSize: textFontSize),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
                 Expanded(flex: 1,
                   child: Switch(
                     value: _costPerMeterSelected,
@@ -5909,6 +5811,33 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                     },
                   ),
                 ),
+                const SizedBox(width: 10),
+                Expanded(flex: 2,
+                  child: Text(
+                    'Incremental',
+                    style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.9,),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(flex: 2,
+                  child: Container(
+                    color: Colors.grey[200],
+                    child: TextField(
+                      controller: _costPerMeterController,
+                      readOnly: !_costPerMeterSelected,
+                      decoration: InputDecoration(
+                        hintText: 'per ft²/m²',
+                        hintStyle: TextStyle(color: Colors.black38,
+                            fontSize: isIpad ? 30 : 15),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(10),
+                      ),
+                      keyboardType: TextInputType.number,
+                      style:  TextStyle(color: Colors.black,
+                          fontSize: isIpad ? 30 : 20),
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 40),
@@ -5921,9 +5850,9 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                 children: [
                   Container(
                     //  color: Colors.purpleAccent[900],mainAxisSize: MainAxisSize.min,
-                    padding: const EdgeInsets.all(10),
-                    child: Text('Based on the construction cost and selling price (per ft²/m²) of segment '
-                        '${widget.segmentNumber1} on this floor, specify construction cost and selling price '
+                    padding: const EdgeInsets.all(5),
+                    child: Text('Based on the construction cost and sell price (per ft²/m²) of segment '
+                        '${widget.segmentNumber1} on this floor, specify construction cost and sell price '
                         'of segments ${widget.segmentNumber1} on the upper floors of this cost-price plan by selecting one of '
                         'the options below.',
                       style:  TextStyle(
@@ -5931,16 +5860,11 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                         // fontWeight: FontWeight.bold,
                       ),
                     ),
-                    /*Text('Based on the construction cost and selling price (per ft²/m²) of segment '
-                  '${widget.segmentNumber1} on this floor, specify the construction cost and selling price '
-                  'of segments ${widget.segmentNumber1} on the upper floors of this cost-price plan by selecting one of '
-                  'the options below.',
-                style:  TextStyle(
-                  color: Colors.white, size:  isIpad ? 30 : 18,
-                  // fontWeight: FontWeight.bold,
-                ),
-              ),*/
+
                   ),
+
+                  const  SizedBox(height: 20),
+
                   Container(
                     color: Colors.red[900],
                     padding: const EdgeInsets.all(10),
@@ -5953,15 +5877,9 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 15),
                   Row(
                     children: <Widget>[
-                      Text(
-                        'Fixed',
-                        style: TextStyle(color: Colors.white,
-                            fontSize:  textFontSize),
-                      ),
-                      const Spacer(),
                       Switch(
                         value: _costPricingFixedSelected,
                         onChanged: (bool value) {
@@ -5974,36 +5892,20 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                           });
                           widget.onCostPricingFixedSelectedChanged(value); },
                       ),
+                      const  SizedBox(width: 10),
+                      Text(
+                        'Fixed',
+                        style: TextStyle(color: Colors.white,
+                            fontSize:  textFontSize),
+                      ),
+                      const Spacer(),
+
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 15),
                   Row(
                     children: <Widget>[
-                      Expanded(flex: 2,
-                        child: Text(
-                          'Percentage',
-                          style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.8,),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(flex: 2,
-                        child: Container(
-                          color: Colors.grey[100],
-                          child: TextField(
-                            controller: _costPercentageController,
-                            readOnly: !_costPercentageSelected,
-                            decoration: const InputDecoration(
-                              hintText: 'Enter percentage',
-                              hintStyle: TextStyle(color: Colors.white54),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.all(10),
-                            ),
-                            keyboardType: TextInputType.number,
-                            style:  const TextStyle(color: Colors.black, fontSize: 23),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
+                 //     const SizedBox(width: 10),
                       Expanded(flex: 1,
                         child: Switch(
                           value: _costPercentageSelected,
@@ -6021,36 +5923,38 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                           },
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: <Widget>[
+                      const  SizedBox(width: 10),
                       Expanded(flex: 2,
                         child: Text(
-                          'Incremental',
-                          style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.8,),
+                          'Percentage',
+                          style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.9,),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(flex: 2,
                         child: Container(
-                          color: Colors.grey[200],
+                          color: Colors.grey[100],
                           child: TextField(
-                            controller: _costPerMeterController,
-                            readOnly: !_costPerMeterSelected,
+                            controller: _costPercentageController,
+                            readOnly: !_costPercentageSelected,
                             decoration: const InputDecoration(
-                              //   hintText: 'Enter per ft²/m²',
-                              hintStyle: TextStyle(color: Colors.black38),
+                              hintText: '%',
+                              hintStyle: TextStyle(color: Colors.black45),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.all(10),
                             ),
                             keyboardType: TextInputType.number,
-                            style:  const TextStyle(color: Colors.black, fontSize: 23),
+                            style:  TextStyle(color: Colors.black,  fontSize: textFontSize),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: <Widget>[
+                   //   const SizedBox(width: 5),
                       Expanded(flex: 1,
                         child: Switch(
                           value: _costPerMeterSelected,
@@ -6068,6 +5972,34 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                           },
                         ),
                       ),
+                      const  SizedBox(width: 5),
+                      Expanded(flex: 2,
+                        child: Text(
+                          'Incremental',
+                          style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.9,),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(flex: 2,
+                        child: Container(
+                          color: Colors.grey[200],
+                          child: TextField(
+                            controller: _costPerMeterController,
+                            readOnly: !_costPerMeterSelected,
+                            decoration:  InputDecoration(
+                            hintText: 'per ft²/m²',
+                              hintStyle: TextStyle(color: Colors.black38,
+                                  fontSize: isIpad ? 30 : 15),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.all(10),
+                            ),
+                            keyboardType: TextInputType.number,
+                            style:  TextStyle(color: Colors.black,
+                                fontSize: isIpad ? 30 : 20),
+                          ),
+                        ),
+                      ),
+
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -6087,18 +6019,10 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                   ),
 
 
-             const SizedBox(height: 10),
+             const SizedBox(height: 15),
             Row(
               children: <Widget>[
-                 Expanded(flex: 2,
-                  child: Text(
-                    'Fixed',
-                    style: TextStyle(color: Colors.white,
-                      fontSize: textFontSize,),
-                  ),
-                ),
-                const Spacer(),
-                 const SizedBox(width: 10),
+
                 Expanded(flex: 1,
                   child: Switch(
                     value: _sellPriceFixedSelected,
@@ -6114,35 +6038,21 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                     },
                   ),
                 ),
+                const SizedBox(width: 20),
+                 Expanded(flex: 2,
+                  child: Text(
+                    'Fixed',
+                    style: TextStyle(color: Colors.white,
+                      fontSize: textFontSize,),
+                  ),
+                ),
+                const Spacer(),
+
               ],
             ),
             Row(
               children: <Widget>[
-                 Expanded(flex: 2,
-                  child: Text(
-                    'Percentage',
-                    style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.8,),
-                  ),
-                ),
-                 const  SizedBox(width: 10),
-                Expanded(flex: 2,
-                  child: Container(
-                    color: Colors.grey[100],
-                    child: TextField(
-                      controller: _sellPricePercentageController,
-                      readOnly: !_sellPricePercentageSelected,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter percentage',
-                        hintStyle: TextStyle(color: Colors.white54),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(10),
-                      ),
-                      keyboardType: TextInputType.number,
-                      style:  const TextStyle(color: Colors.black, fontSize: 23),
-                    ),
-                  ),
-                ),
-                 const SizedBox(width: 10),
+             //   const SizedBox(width: 10),
                 Expanded(flex: 1,
                   child: Switch(
                     value: _sellPricePercentageSelected,
@@ -6160,36 +6070,41 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                     },
                   ),
                 ),
-              ],
-            ),
-             const SizedBox(height: 10),
-            Row(
-              children: <Widget>[
+                const  SizedBox(width: 10),
                  Expanded(flex: 2,
                   child: Text(
-                    'Incremental',
-                    style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.8,),
+                    'Percentage',
+                    style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.9,),
                   ),
                 ),
-                 const SizedBox(width: 10),
+                 const  SizedBox(width: 10),
                 Expanded(flex: 2,
                   child: Container(
                     color: Colors.grey[100],
                     child: TextField(
-                      controller: _sellPricePerMeterController,
-                      readOnly: !_sellPricePerMeterSelected,
-                      decoration: const InputDecoration(
-                        hintText: 'بر متر مربع وارد کنید',
-                        hintStyle: TextStyle(color: Colors.white54),
+                      controller: _sellPricePercentageController,
+                      readOnly: !_sellPricePercentageSelected,
+                      decoration:
+                      InputDecoration(
+                        hintText: '%',
+                        hintStyle: TextStyle(color: Colors.black45,
+                            fontSize: isIpad ? 30 : 15),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.all(10),
                       ),
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.black, fontSize: 23),
+                      style:   TextStyle(color: Colors.black,
+                          fontSize: isIpad ? 40 : 23),
                     ),
                   ),
                 ),
-                 const SizedBox(width: 10),
+
+              ],
+            ),
+             const SizedBox(height: 15),
+            Row(
+              children: <Widget>[
+
                 Expanded(flex: 1,
                   child: Switch(
                     value: _sellPricePerMeterSelected,
@@ -6207,6 +6122,34 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                     },
                   ),
                 ),
+                const SizedBox(width: 5),
+                 Expanded(flex: 2,
+                  child: Text(
+                    'Incremental',
+                    style: TextStyle(color: Colors.white, fontSize: textFontSize * 0.9,),
+                  ),
+                ),
+                 const SizedBox(width: 5),
+                Expanded(flex: 2,
+                  child: Container(
+                    color: Colors.grey[100],
+                    child: TextField(
+                      controller: _sellPricePerMeterController,
+                      readOnly: !_sellPricePerMeterSelected,
+                      decoration: InputDecoration(
+                        hintText: 'per ft²/m²',
+                        hintStyle: TextStyle(color: Colors.black45,
+                            fontSize: isIpad ? 30 : 15),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(10),
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: Colors.black,
+                          fontSize: isIpad ? 30 : 20),
+                    ),
+                  ),
+                ),
+
               ],
             ),
                 ],),
@@ -6223,47 +6166,9 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
               padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0), // Padding inside the button
             ),
             onPressed: () async {
-
-              // Perform action when OK button is pressed
-              double costPercent = -4321;
-              double costPerMeter = -4321;
-              double sellPercent = -4321;
-              double sellPerMeter = -4321;
-
-              // Check which toggle button is selected and get the associated text field value
-              if (_costPercentageSelected) {
-                final text = _costPercentageController.text;
-                if (text.isNotEmpty && double.tryParse(text) != null) {
-                  costPercent = double.parse(text);
-                }
-              }
-              else if (_costPerMeterSelected) {
-                final text = _costPerMeterController.text;
-                if (text.isNotEmpty && double.tryParse(text) != null) {
-                  costPerMeter = double.parse(text);
-                }
-              }
-              else {
-                _costPricingFixedSelected = true;
-                costPercent = 0;
-                costPerMeter = 0;
-              }
-
-              if (_sellPricePercentageSelected) {
-                final text = _sellPricePercentageController.text;
-                if (text.isNotEmpty && double.tryParse(text) != null) {
-                  sellPercent = double.parse(text);
-                }
-              } else if (_sellPricePerMeterSelected) {
-                final text = _sellPricePerMeterController.text;
-                if (text.isNotEmpty && double.tryParse(text) != null) {
-                  sellPerMeter = double.parse(text);
-                }
-              } else {
-                _sellPriceFixedSelected = true;
-                sellPercent = 0;
-                sellPerMeter = 0;
-              }
+            // ✅ Close keyboard immediately
+              FocusScope.of(context).unfocus();
+              FocusManager.instance.primaryFocus?.unfocus();
 
               if ( (_costPercentageController.text.isNotEmpty &&
                   !isValidNumber(_costPercentageController.text.replaceAll(',', ''))) ||
@@ -6274,14 +6179,6 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                    (_sellPricePerMeterController.text.isNotEmpty &&
                   !isValidNumber(_sellPricePerMeterController.text.replaceAll(',', '')))  )
 
-            /*  if (!_costPricingFixedSelected && (_costPercentageController.text.isEmpty ||
-                  !isValidNumber(_costPercentageController.text.replaceAll(',', ''))) &&
-                  !_costPricingFixedSelected && (_costPerMeterController.text.isEmpty ||
-                      !isValidNumber(_costPerMeterController.text.replaceAll(',', ''))) &&
-                  !_sellPriceFixedSelected && ( _sellPricePercentageController.text.isEmpty ||
-                      !isValidNumber(_sellPricePercentageController.text.replaceAll(',', ''))) &&
-                  !_sellPriceFixedSelected && (_sellPricePerMeterController.text.isEmpty ||
-                      !isValidNumber(_sellPricePerMeterController.text.replaceAll(',', '')))  )*/
               {
 
                 // Show error dialog if any input is invalid
@@ -6298,10 +6195,12 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                         ),
                       ),
                       content:  Text(
-                        'Please ensure all fields are filled with valid numbers.\n\n '
-                            'Percentage cannot be greater than 100, and does not need % symbol.\n\n'
-                            'If you have chosen to enter built-up area directly, '
-                            'the value should not exceed the land area.',
+                        'If you insert any value it should be a valid number '
+
+                            "(digits and optional decimal point only, like: 123, 123.5, 0.66) "
+                            "not including letters (e.g., a, b, c) or symbols (e.g., \$, %, &)."
+                            " Also starting or trailing decimal point (e.g., .1 or 1.) is not allowed."
+                            'Percentage cannot be greater than 100, and does not need % symbol.\n\n',
                         style: TextStyle(fontSize: textFontSize),
                       ),
                       actions: [
@@ -6324,9 +6223,52 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                 );
               }
               else {
+
+                // Perform action when OK button is pressed
+                double costPercent = -4321;
+                double costPerMeter = -4321;
+                double sellPercent = -4321;
+                double sellPerMeter = -4321;
+
+                // Check which toggle button is selected and get the associated text field value
+                if (_costPercentageSelected) {
+                  final text = _costPercentageController.text;
+                  if (text.isNotEmpty && double.tryParse(text) != null) {
+                    costPercent = double.parse(text);
+                  }
+                }
+                else if (_costPerMeterSelected) {
+                  final text = _costPerMeterController.text;
+                  if (text.isNotEmpty && double.tryParse(text) != null) {
+                    costPerMeter = double.parse(text);
+                  }
+                }
+                else {
+                  _costPricingFixedSelected = true;
+                  costPercent = 0;
+                  costPerMeter = 0;
+                }
+
+                if (_sellPricePercentageSelected) {
+                  final text = _sellPricePercentageController.text;
+                  if (text.isNotEmpty && double.tryParse(text) != null) {
+                    sellPercent = double.parse(text);
+                  }
+                } else if (_sellPricePerMeterSelected) {
+                  final text = _sellPricePerMeterController.text;
+                  if (text.isNotEmpty && double.tryParse(text) != null) {
+                    sellPerMeter = double.parse(text);
+                  }
+                } else {
+                  _sellPriceFixedSelected = true;
+                  sellPercent = 0;
+                  sellPerMeter = 0;
+                }
+
                 // Call the on PercentageUpdate method to save the data to the database
                 await widget.onPercentageUpdate(context, widget.segmentNumber1, widget.similarFloor, widget.startingFloor,
                     widget.numberOfSegments, costPercent, costPerMeter, sellPercent, sellPerMeter );
+
 
                 await widget.onCostSellDataGenerating(context, widget.projectName,widget.CPPNumber,
                     widget.segmentNumber1, widget.nonSalableSegmentsInPriceType,

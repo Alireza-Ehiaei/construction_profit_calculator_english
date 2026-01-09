@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'all_projects.dart';
 import 'package:provider/provider.dart';
 import 'billing_provider.dart';
+import 'database.dart';
 import 'navigation_service.dart';
 // import 'routes.dart';
 
@@ -52,7 +53,10 @@ class MyApp extends StatelessWidget {
 class ProjectData extends ChangeNotifier {
   String _projectName = '_oozz';
   int _firstStartingFloor = 0;
+  double _uniqueConstructionCostPerMeter = 0;
   List<String> _projectNameList = [];
+
+  double get uniqueConstructionCostPerMeter => _uniqueConstructionCostPerMeter;
 
   String get projectName => _projectName;
   int get firstStartingFloor => _firstStartingFloor;
@@ -65,6 +69,11 @@ class ProjectData extends ChangeNotifier {
 
   void setFirstStartingFloor(int value) {
     _firstStartingFloor = value;
+    notifyListeners();
+  }
+  
+  void setUniqueConstructionCostPerMeter(double value) {
+    _uniqueConstructionCostPerMeter = value;
     notifyListeners();
   }
 
@@ -92,9 +101,7 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: HomePage(backgroundImages: backgroundImages),
-    );
+    return  HomePage(backgroundImages: backgroundImages);
   }
 }
 
@@ -116,39 +123,39 @@ class _HomePageState extends State<HomePage>
   late String responseId = '';
   bool isBannerVisible = true;
 
-  final _landFocusNode = FocusNode();
+/*  final _landFocusNode = FocusNode();
   final _landPriceFocusNode = FocusNode();
   final _floorsFocusNode = FocusNode();
   final _parkingFloorsFocusNode = FocusNode();
   final _percentageFocusNode = FocusNode();
   final _areaFocusNode = FocusNode();
-  final _staircaseAreaFocusNode = FocusNode();
+  final _staircaseAreaFocusNode = FocusNode();*/
 
   @override
   void initState() {
     super.initState();
-    _landFocusNode.addListener(_onFocusChange);
+/*    _landFocusNode.addListener(_onFocusChange);
     _landPriceFocusNode.addListener(_onFocusChange);
     _floorsFocusNode.addListener(_onFocusChange);
     _parkingFloorsFocusNode.addListener(_onFocusChange);
     _percentageFocusNode.addListener(_onFocusChange);
     _areaFocusNode.addListener(_onFocusChange);
-    _staircaseAreaFocusNode.addListener(_onFocusChange);
+    _staircaseAreaFocusNode.addListener(_onFocusChange);*/
     WidgetsBinding.instance.addPostFrameCallback((_) {
   //    _initializeApp();
     });
   }
 
-  Future<void> _initializeApp() async {
+ /* Future<void> _initializeApp() async {
     // Comment out Firebase for iOS testing if not needed
-    /*
+    *//*
   try {
     await Firebase.initializeApp();
     print("Firebase initialized successfully");
   } catch (e) {
     print("Firebase initialization failed: $e");
   }
-  */
+  *//*
 
     // Initialize subscriptions
     final subscriptionsProvider = context.read<SubscriptionsProvider>();
@@ -162,11 +169,11 @@ class _HomePageState extends State<HomePage>
     } catch (e) {
       print("Subscription initialization failed: $e");
     }
-  }
+  }*/
 
   @override
   void dispose() {
-    _landFocusNode.removeListener(_onFocusChange);
+    /*_landFocusNode.removeListener(_onFocusChange);
     _landPriceFocusNode.removeListener(_onFocusChange);
     _floorsFocusNode.removeListener(_onFocusChange);
     _parkingFloorsFocusNode.removeListener(_onFocusChange);
@@ -180,27 +187,27 @@ class _HomePageState extends State<HomePage>
     _parkingFloorsFocusNode.dispose();
     _percentageFocusNode.dispose();
     _areaFocusNode.dispose();
-    _staircaseAreaFocusNode.dispose();
+    _staircaseAreaFocusNode.dispose();*/
     super.dispose();
   }
 
   void _onFocusChange() {
-    debugPrint("_landFocusNode.hasFocus ${_landFocusNode.hasFocus}");
+    /*debugPrint("_landFocusNode.hasFocus ${_landFocusNode.hasFocus}");
     debugPrint("_landPriceFocusNode.hasFocus ${_landPriceFocusNode.hasFocus}");
     debugPrint("_floorsFocusNode.hasFocus ${_floorsFocusNode.hasFocus}");
     debugPrint("_parkingFloorsFocusNode.hasFocus ${_parkingFloorsFocusNode.hasFocus}");
     debugPrint("_percentageFocusNode.hasFocus ${_percentageFocusNode.hasFocus}");
     debugPrint("_areaFocusNode.hasFocus ${_areaFocusNode.hasFocus}");
-    debugPrint("_areaFocusNode.hasFocus ${_areaFocusNode.hasFocus}");
+    debugPrint("_areaFocusNode.hasFocus ${_areaFocusNode.hasFocus}");*/
   }
 
-  void showKeyboard() {
+/*  void showKeyboard() {
     setState(() {
       _visible = !_visible;
       if (calculatorVisible = false) {}
     }
     );
-  }
+  }*/
 
   Future<void> launchEmail() async {
     final Uri emailLaunchUri = Uri(
@@ -241,6 +248,18 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+
+  void _launchFacebook() async {
+    const url = 'https://www.facebook.com/share/1AdGBGFuyw/';
+
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+    }
+  }
+
  /* void shareApp() {
     const String appLink = 'https://play.google.com/store/apps/details?id=com.tec4dev.construction_profit_calculator_english';
     const String appName = 'Construction Profit Calculator';
@@ -257,7 +276,7 @@ class _HomePageState extends State<HomePage>
         .join('&');
   }
 
-  void _showReviewModeDialog() {
+/*  void _showReviewModeDialog() {
     showDialog(
       context: context,
       builder: (context) {
@@ -291,6 +310,10 @@ class _HomePageState extends State<HomePage>
                   ),
                   const SizedBox(height: 10),
                   ElevatedButton(
+                    onPressed: () => showTestSubscriptionDialog(context),
+                    child: const Text('Test Subscription Dialog'),
+                  )
+                  ElevatedButton(
                     onPressed: () async {
                       if (_validateCredentials(username, password)) {
                         Navigator.of(context).pop();
@@ -316,7 +339,8 @@ class _HomePageState extends State<HomePage>
                       ),
                     ),
                   ),
-                 /* ElevatedButton(
+                 */
+  /* ElevatedButton(
                     onPressed: () async {
                       if (_validateCredentials(username, password)) {
                         Navigator.of(context).pop();
@@ -350,7 +374,7 @@ class _HomePageState extends State<HomePage>
                         color: Colors.white,
                       ),
                     ),
-                  ),*/
+                  ),*//*
                   if (errorMessage.isNotEmpty)
                     Text(
                       errorMessage,
@@ -368,7 +392,7 @@ class _HomePageState extends State<HomePage>
 
   bool _validateCredentials(String username, String password) {
     return username == 'demoUser' && password == 'demo123Password';
-  }
+  }*/
 
 
   // Helper method to detect if the device is an iPad.
@@ -530,7 +554,122 @@ class _HomePageState extends State<HomePage>
                               ),
                             ),
                           ),
+                         /* IconButton(
+                            icon: Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                              size: iconSizeLarge,
+                            ),
+                            onPressed: () async {
+                              // Show an alert dialog to confirm deletion
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text(
+                                        'Delete All Projects'
+                                        , style: TextStyle(
+                                      fontSize: textFontSize,)),
+                                    content: Text(
+                                        'This icon allows you to delete all projects either from uniform '
+                                            'pricing type or differentiated pricing type or refresh the app to resolve potential issues.'
+                                            '\n\nAre you sure you want to delete all project(s) or refresh the app? '
+                                            'If you press Yes you need to open app again.'
+                                        , style: TextStyle(
+                                      fontSize: textFontSize,)),
+                                    actions: [
+                                      TextButton(
+                                        child: Text('Cancel',
+                                          style: TextStyle(
+                                            fontSize: textFontSize,
+                                            color: Colors
+                                                .blue,),),
+                                        onPressed: () {
+                                          Navigator.of(context)
+                                              .pop(); // Close the dialog
+                                        },
+                                      ),
+                                      ElevatedButton(
+                                        child: Text('Yes', style:
+                                        TextStyle(
+                                          fontSize: textFontSize,
+                                          color: Colors.blue,),),
+                                        onPressed: () async {
+                                          // Delete all projects
+                                          await DifferentiatedCalculationDatabaseHelper
+                                              .deleteDifferentiatedCalculationDatabaseHelper();
 
+                                          await AllProjectsPageDatabase
+                                              .deleteAllProjectsPageDatabase();
+
+                                          await UniformCalculationDatabase
+                                              .deleteUniformCalculationDatabase();
+
+                                          await showDialog(
+                                            context: context,
+                                            builder: (
+                                                BuildContext context) {
+                                              return
+                                                AlertDialog(
+                                                  title: Text(''),
+                                                  content: Text(
+                                                      'Please close the app and open it again.'
+                                                      ,
+                                                      style: TextStyle(
+                                                        fontSize: textFontSize,)),
+                                                  actions: <
+                                                      Widget>[
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator
+                                                            .of(
+                                                            context)
+                                                            .pop();
+                                                      },
+                                                      child: Text(
+                                                          'OK',
+                                                          style: TextStyle(
+                                                            fontSize: textFontSize,)),
+                                                    ),
+                                                  ],
+                                                );
+                                            },
+                                          );
+
+
+                                          // Update the UI to reflect the absence of projects
+                                          setState(() {});
+
+                                          // Push the HomePage onto the stack
+                                          */
+                          /*      NavigationService().navigateToScreen(
+                                                const HomePage(backgroundImages: [
+                                                  'assets/images/home (1).jpeg',
+                                                  'assets/images/home (2).jpeg',
+                                                  'assets/images/home (4).jpeg',
+                                                  'assets/images/home (7).jpeg',
+                                                  'assets/images/home (11).jpeg',
+                                                  'assets/images/home (12).jpeg',
+                                                  'assets/images/home (13).jpeg',
+                                                  'assets/images/home (14).jpeg',
+                                                ],),
+                                              );
+                      *//*
+
+
+                                          // Close the dialog
+                                          if (mounted) {
+                                            Navigator.of(context)
+                                                .pop();
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),*/
                           //    Expanded(child: SizedBox(height: MediaQuery.of(context).size.height * 0.3),)
 
                           SizedBox(height: 3 * spacingHeight),
@@ -649,7 +788,7 @@ class _HomePageState extends State<HomePage>
                                                   text: '\nThis '
                                                       'app is designed to help through the complex and multifaceted world of real estate.'
                                                       '\n\nThe app is divided into four main sections:'
-                                                      '\n\n1. Financial calculators:\nThe standout feature of this app is the Investment Analyzer. '
+                                                      '\n\n1. Financial calculators:\nThe standout feature of this app is the Investment Calculators. '
                                                       'The two powerful tools provided in the return on investment (ROI) part of the app '
                                                       'allow you to input the specifications of a construction project '
                                                       'and receive detailed projections on the potential cost benefit of the project. '
@@ -681,8 +820,7 @@ class _HomePageState extends State<HomePage>
                                                 ),
 
                                                 TextSpan(
-                                                  text: '\nFinancial Calculations: Uniform Pricing '
-                                                      'and Differentiated Pricing ROI Tools\n\n',
+                                                  text: '\nFinancial Calculations:\n\n',
                                                   style: TextStyle(
                                                     fontSize: textFontSize,
                                                     fontWeight: FontWeight.bold,
@@ -690,7 +828,7 @@ class _HomePageState extends State<HomePage>
                                                 ),
                                                 TextSpan(
                                                   text:
-                                                  'Uniform and Differentiated Pricing ROI Tools are calculators for calculating '
+                                                  'Uniform and Differentiated Pricing ROI tools are calculators for calculating '
                                                       'cost and income of investment in a construction project '
                                                       'beneficial for:\n',
                                                   style: TextStyle(
@@ -752,7 +890,7 @@ class _HomePageState extends State<HomePage>
 
 
                                                 TextSpan(
-                                                  text: '\n\nROI Tool Guide',
+                                                  text: '\n\nROI Tool Introduction',
                                                   style: TextStyle(
                                                     fontSize: textFontSize,
                                                     color: Colors.pink,
@@ -763,12 +901,11 @@ class _HomePageState extends State<HomePage>
                                                   text: "\nThe ROI calculators of the app provides you with "
                                                       "two ways to assess the potential profitability of a construction Investment"
                                                       ": a uniform pricing and a differentiated pricing.\n\nIn the Uniform "
-                                                      "Pricing, you can easily input the key information about the "
-                                                      "construction of a building, including costs and "
-                                                      "sell price per square meter (m²) or square foot (ft²). Based on this data,"
-                                                      " the app will quickly generate the results of the investment analysis, "
-                                                      "including the projected return on investment and other key financial "
-                                                      "metrics.\n\nThis simple mode is great for getting a quick, high-level "
+                                                      "Pricing, you can quickly input the key information of your "
+                                                      "construction project in one page, including costs and "
+                                                      "sell price per square meter (m²) or square foot (ft²), and get"
+                                                      " the results of the investment. "
+                                                      "\n\nThis simple mode is great for getting a quick, high-level "
                                                       "understanding of the potential viability of a real estate construction project"
                                                       "that uses a uniform pricing model. "
                                                       "\n\nFor a more comprehensive analysis, you "
@@ -1019,6 +1156,16 @@ class _HomePageState extends State<HomePage>
                                 // Close icon
                                 onPressed: () {
                                   launchEmail();
+                                },
+                              ),
+
+                              SizedBox(height: spacingHeight),
+                              IconButton(
+                                icon: Icon(Icons.facebook
+                                    , size: iconSizeLarge, color: Colors.white),
+                                // Close icon
+                                onPressed: () {
+                                  _launchFacebook();
                                 },
                               ),
 

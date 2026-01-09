@@ -122,7 +122,7 @@ class _SwipeDetectorState extends State<SwipeDetector> {
                 onPressed: () async {
                   if (isReviewMode) {
                     NavigationService().navigateToScreen(
-                      const UniformCalculationPage1(givenSimpleProjectName: 'wwmm'),
+                      const UniformCalculationPage1(givenUniformProjectName: 'wwmm'),
                       arguments: 'wwmm',
                     );
                   } else {

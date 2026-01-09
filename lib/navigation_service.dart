@@ -1,4 +1,4 @@
-import 'package:construction_profit_calculator_english/result_complete.dart';
+import 'package:construction_profit_calculator_english/result_differentiated.dart';
 import 'package:flutter/material.dart';
 import 'package:construction_profit_calculator_english/permit_fees.dart';
 import 'all_projects.dart';
@@ -37,14 +37,14 @@ class NavigationService {
       givenProjectName: ModalRoute.of(context)!.settings.arguments as String,
   //    givenMaxConstructionValue: ModalRoute.of(context)!.settings.arguments as int,
       floorRangesData: ModalRoute.of(context)!.settings.arguments as List<List<dynamic>>,
-      givenMaxFloor: ModalRoute.of(context)!.settings.arguments as int,
+      maxFloorParsedToPermitFee: ModalRoute.of(context)!.settings.arguments as int,
    //   firstStartingFloorForPermitFee: int.parse(ModalRoute.of(context)!.settings.arguments as String),
     ),
     '/otherCost': (context) => OtherCosts(
       givenProjectName: ModalRoute.of(context)!.settings.arguments as String,
       //    givenMaxConstructionValue: ModalRoute.of(context)!.settings.arguments as int,
-      givenFloorRangesData: ModalRoute.of(context)!.settings.arguments as List<List<dynamic>>,
-      givenMaxFloorNumber: ModalRoute.of(context)!.settings.arguments as int,
+   //   givenFloorRangesData: ModalRoute.of(context)!.settings.arguments as List<List<dynamic>>,
+   //   givenMaxFloorNumber: ModalRoute.of(context)!.settings.arguments as int,
    //   givenFirstStartingFloorForPermitFee: int.parse(ModalRoute.of(context)!.settings.arguments as String),
     ),
     '/ResultPage': (context) => const ResultPage1(),

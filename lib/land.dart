@@ -29,7 +29,9 @@ class _LandInputsState extends State<LandInputs> {
   TextEditingController landAreaController = TextEditingController();
   TextEditingController firstFloorNumberController = TextEditingController();
   TextEditingController landPricePerMeterController = TextEditingController();
-
+  TextEditingController uniqueConstructionCostController = TextEditingController();
+   bool _isDifferentiatedConstructionCostBool = true;
+   bool _isUniqueConstructionCostPerMeterBool = false;
 
   int givenStartingFloor1 = -4321;
   bool obscureText = true;
@@ -40,14 +42,15 @@ class _LandInputsState extends State<LandInputs> {
   int columnIndex = 0;
  // late InterstitialAdManager interstitialAdManager;
 
+/*
   TextEditingController rowController = TextEditingController();
-
   TextEditingController columnIndexController2 = TextEditingController();
   TextEditingController columnIndexController3 = TextEditingController();
   TextEditingController columnIndexController4 = TextEditingController();
-  TextEditingController floorNumberController = TextEditingController();
+ // TextEditingController floorNumberController = TextEditingController();
   TextEditingController numberOfSegmentsController = TextEditingController();
   TextEditingController similarFloorController = TextEditingController();
+*/
 
   int constructionValue = 1;
   List<List<PriceTableRowData>> priceTables = [];
@@ -92,8 +95,11 @@ class _LandInputsState extends State<LandInputs> {
       landAreaController.text = projectBasicData[0].projectBasicTableLandArea.toString();
       landPricePerMeterController.text = projectBasicData[0].projectBasicTableLandPricePerMeter.toString();
       firstFloorNumberController.text = projectBasicData[0].projectBasicTableFirstFloorNumber.toString();
-
+      uniqueConstructionCostController.text = projectBasicData[0].projectBasicTableUniformConstructionCost.toString();
         selectedValue = int.tryParse(projectBasicData[0].projectBasicTableShortNumbersNumberOfZeroRemoved.toString())!;
+
+      _isUniqueConstructionCostPerMeterBool = (uniqueConstructionCostController.text != '-432');
+      _isDifferentiatedConstructionCostBool = !(uniqueConstructionCostController.text != '-432');
     }
   }
 
@@ -105,8 +111,19 @@ class _LandInputsState extends State<LandInputs> {
         isValidNumber(landPricePerMeterController.text) &&
         firstFloorNumberController.text.isNotEmpty &&
         isValidNumber(firstFloorNumberController.text) &&
-        int.tryParse(firstFloorNumberController.text) != null )) ) {
-      //    await insert to ();
+        int.tryParse(firstFloorNumberController.text) != null  &&
+        (_isDifferentiatedConstructionCostBool || (_isUniqueConstructionCostPerMeterBool &&
+            isValidNumber(uniqueConstructionCostController.text))))) ) {
+
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
+          projectName1,
+          double.parse(landAreaController.text),
+          double.parse(landPricePerMeterController.text),
+          double.tryParse(uniqueConstructionCostController.text) ?? -432,
+          int.tryParse(firstFloorNumberController.text) ?? 0,
+          selectedValue
+      );
+
       NavigationService().navigateToScreen(
         const AllProjectsPage(),
       );
@@ -138,7 +155,10 @@ class _LandInputsState extends State<LandInputs> {
           title:  Text('Error', style: TextStyle(fontSize: textFontSize,
             fontWeight: FontWeight.bold,color: Colors.red,)),
           content:  Text(
-              "Please fill all required fields. \n\nInputs should be a valid number "
+              "Since before you've saved this project you should fill all required fields. Later if you "
+                  "don't want this project anymore you can delete it "
+                  "by pressing delete icon at the bottom of the second page of the app.\n\nInputs "
+                  "should be a valid number, "
                   "(digits and optional decimal point only, like: 123, 123.5, 0.66) "
                   "not including letters (e.g., a, b, c) or symbols (e.g., \$, %, &)."
                   " Also a trailing decimal point (e.g., '1.') is not allowed.",
@@ -174,7 +194,7 @@ class _LandInputsState extends State<LandInputs> {
           title:  const Text(''),
           content:  Text("You didn't save this project. For saving you should be ensured that "
               "construction cost, sell price and permit fees for all parts of all floors "
-              "have been entered then in the last page press save icon "
+              "have been entered then in the last page (result page) press save icon "
               "and set a name for this project. \n\nDo you want to save it?",
             style: TextStyle(
               fontSize: textFontSize,
@@ -187,13 +207,7 @@ class _LandInputsState extends State<LandInputs> {
               ),
               onPressed: () {
                 Navigator.of(context).pop();
-                NavigationService().navigateToScreen(
-                  CostPrices(
-                    givenProjectName: projectName1,
-                   // firstStartingFloor: int.parse(firstFloorNumberController.text.replaceAll(',', '')),
-                    givenCppValue: 1,
-                  ),
-                );
+
               },
               child:  Text(
                 'Save',
@@ -324,7 +338,7 @@ class _LandInputsState extends State<LandInputs> {
                                           child: Text(
                                             projectData.projectName == "***" ? " Basic Data"
                                                 : projectData.projectName == "_oozz" ? " Basic Data"
-                                                : '${projectData.projectName} Basic Data',
+                                                : 'Basic Data - ${projectData.projectName}',
                                             style: TextStyle(color: Colors.white, fontSize: textFontSize),
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -345,8 +359,7 @@ class _LandInputsState extends State<LandInputs> {
                                 ),
                               ),
                               SizedBox(height: spacingHeight),
-                
-                
+
                               Row(
                                 children: [
                                    SizedBox(width: textFontSize),
@@ -489,17 +502,17 @@ class _LandInputsState extends State<LandInputs> {
                 
                                                         TextSpan(
                                                           text: '\nInstead of writing out the full number, you can select the '
-                                                              'corresponding  level to indicate how many zeros should'
-                                                              ' be considered in front of the number for prices and costs.',
+                                                              'corresponding shorting level to indicate how many zeros should'
+                                                              ' be considered in front of the number for prices and costs to be shown in the result page.',
                                                           style: TextStyle(
                                                           fontSize: textFontSize,
                                                         ),
                                                         ),
                                                          TextSpan(
                                                           text: '\n\nFor example, if you have a price or cost like 25,000,000, you '
-                                                              'can select " 6" from the dropdown. This will automatically add 6 '
+                                                              'can select "6" from the dropdown. This will automatically add 6 '
                                                               'zeros in front of the number you enter for calculations, allowing you to just '
-                                                              'type "25" instead of the full 25,000,000. Another example, by entering "33" with " 9" selected, '
+                                                              'type "25" instead of the full 25000000. Another example, by entering "33" with " 9" selected, '
                                                               'the actual value in calculations of the app will be 33,000,000,000.',
                                                           style: TextStyle(
                                                             fontSize: textFontSize,
@@ -508,7 +521,7 @@ class _LandInputsState extends State<LandInputs> {
                                                          TextSpan(
                                                           text: '\n\nIt is important to note that all measurements like land area '
                                                               'or unit area should be written completely with all necessary zeros. '
-                                                              'These  options are specifically designed to simplify the entry '
+                                                              'Shorting options are specifically designed to simplify the entry '
                                                               'of prices and costs that would otherwise have many zeros in some currencies.',
                                                           style: TextStyle(
                                                             fontSize: textFontSize,
@@ -516,7 +529,7 @@ class _LandInputsState extends State<LandInputs> {
                                                         ),
                                                          TextSpan(
                                                           text: '\n\nHowever, if you prefer a more compact representation and do not '
-                                                              'want to see a large number of zeros, you can select " 0" from '
+                                                              'want to see a large number of zeros, you can select "0" from '
                                                               'the dropdown. When " 0" is selected, you can enter prices and costs with '
                                                               'as many zeros removed as you like. This will keep the number you enter exactly as-is, '
                                                               'without any additional zeros added. Just remember to mentally adjust the '
@@ -526,7 +539,7 @@ class _LandInputsState extends State<LandInputs> {
                                                           ),
                                                         ),
                                                          TextSpan(
-                                                          text: ' For instance, entering "500" instead of "500,000" with " 0" '
+                                                          text: ' For instance, entering "500" instead of "500,000" with "0" '
                                                               'selected will result in the actual price being considered as 500. In this '
                                                               'case, you will need to mentally add "000" to the displayed results.',
                                                           style: TextStyle(
@@ -626,7 +639,7 @@ class _LandInputsState extends State<LandInputs> {
                                    Expanded(
                                     flex: 3,
                                     child:
-                                    Text('Land Price (ft²)', style: TextStyle(
+                                    Text('Land Price', style: TextStyle(
                                       fontWeight: FontWeight.bold, fontSize: textFontSize,
                                     ),),
                                   ),
@@ -638,10 +651,13 @@ class _LandInputsState extends State<LandInputs> {
                                         decoration: InputDecoration(
                                           filled: true,
                                           fillColor: Colors.grey[100],
-                                          hintText:  '' ,
+                                          hintText:  'per ft²/m²' ,
+                                          hintStyle: TextStyle(color: Colors.black38,
+                                              fontSize: isIpad ? 30 : 15),
                                         ),
                                         keyboardType: TextInputType.number,
-                                        style: TextStyle(fontSize: textFontSize),)
+                                        style: TextStyle(fontSize:
+                                        isIpad ? fontSizePad : fontSizePhone),)
                                   ),
                                   const SizedBox(width: 3.0),
                                   IconButton(
@@ -653,7 +669,7 @@ class _LandInputsState extends State<LandInputs> {
                                             title:  Text('Land Price', style: TextStyle(
                                               fontWeight: FontWeight.bold,color: Colors.deepPurple,fontSize: textFontSize
                                             ),),
-                                            content:  Text('\nEnter the price of purchasing one square ft²/m² of land.', style: TextStyle(
+                                            content:  Text('Enter the price of purchasing one square foot/meter (ft²/m²) of land.', style: TextStyle(
                                               fontSize: textFontSize,
                                             ),),
                                             actions: [
@@ -748,6 +764,149 @@ class _LandInputsState extends State<LandInputs> {
                                   SizedBox(width: spacingHeight),
                                 ],
                               ),
+                                  SizedBox(height: spacingHeight * 4),
+
+
+                                  Padding(
+                                    padding: const EdgeInsets.all(20.0),
+                                    child: Container(
+                                      color: Colors.brown[100],
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+
+                                                Switch(
+                                                  value: _isDifferentiatedConstructionCostBool,
+                                                  onChanged: (bool value) {
+                                                    setState(() {
+                                                      _isDifferentiatedConstructionCostBool = value;
+                                                      if (value) {
+                                                        _isUniqueConstructionCostPerMeterBool = false;
+                                                        uniqueConstructionCostController.clear();
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+
+                                                const SizedBox(width: 10),
+                                                // Text
+                                                Expanded(
+                                                  child: Text(
+                                                    'Differentiated Construction Cost',
+                                                    style: TextStyle(
+                                                      color: Colors.black87,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: isIpad ? 35 : 18,
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Spacer to align with first row's text field (empty space)
+                                                //      Spacer(),
+                                                IconButton(
+                                                  onPressed: () {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (BuildContext context) {
+                                                        return AlertDialog(
+                                                          title:  Text('Uniform Construction Cost', style: TextStyle(
+                                                              fontWeight: FontWeight.bold,color: Colors.green,fontSize: isIpad ? 35 : 18,
+                                                          ),),
+                                                          content:  SingleChildScrollView(
+                                                            child: Text( 'Differentiated Cost: Choose this option if you want to specify individual'
+                                                                ' construction costs for each segment you\'ll define in the next step'
+                                                                ' when setting individual sell prices of the segments. \n'
+
+                                                              '\nUniform Cost: Enter construction cost per square foot/meter to apply '
+                                                                'uniformly across all segments and floors you\'ll define in the next step. '
+                                                                'This is the most common method.'
+
+                                                               ,  style: TextStyle(
+                                                              fontSize: isIpad ? 35 : 18,
+                                                            ),),
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(context).pop();
+                                                              },
+                                                              child:  Text('OK', style: TextStyle(fontSize: isIpad ? 35 : 18,
+                                                                fontWeight: FontWeight.bold,color: Colors.blue,
+                                                              ),),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                  icon:  Icon(Icons.question_mark,
+                                                    size: iconSizeSmall,  color: Colors.brown,),
+                                                ),
+                                                SizedBox(width: spacingHeight),
+                                              ],
+                                            ),
+                                            SizedBox(height: spacingHeight*2),
+
+                                            Row(
+                                              children: [
+                                                // Text field - Move Expanded to be direct child of Row
+                                                Switch(
+                                                  value: _isUniqueConstructionCostPerMeterBool,
+                                                  onChanged: (bool value) {
+                                                    setState(() {
+                                                      _isUniqueConstructionCostPerMeterBool = value;
+                                                      if (value) {
+                                                        _isDifferentiatedConstructionCostBool = false;
+                                                        uniqueConstructionCostController.clear();
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+                                                const SizedBox(width: 5),
+                                                 Expanded(
+                                                  child: Text(
+                                                    'Uniform Construction Cost',
+                                                    style: TextStyle(
+                                                      color: Colors.black87,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: isIpad ? 35 : 18,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: spacingHeight),
+
+
+                                                Expanded(
+                                               //   flex: 2,
+                                                  child: TextField(
+                                                    controller: uniqueConstructionCostController,
+                                                    readOnly: !_isUniqueConstructionCostPerMeterBool,
+                                                    decoration: InputDecoration(
+                                                      hintText: 'per ft²/m²', hintStyle: TextStyle(color:
+                                                          Colors.black38, fontSize: isIpad ? 30 : 15,),
+                                                      fillColor: Colors.white,
+                                                      filled: true,
+                                                      border: const OutlineInputBorder(),
+                                                    ),
+                                                    style:  TextStyle(fontSize: isIpad ? fontSizePad : fontSizePhone),
+                                                    keyboardType: TextInputType.number,
+                                                    textAlign: TextAlign.center,
+
+                                                  ),
+                                                ),
+
+
+                                              ],
+                                            ),
+                                            SizedBox(height: spacingHeight),
+
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -766,7 +925,7 @@ class _LandInputsState extends State<LandInputs> {
                               children: [
                                  SizedBox(width: textFontSize),
                 
-                                IconButton(
+                            /*    IconButton(
                                   icon: Icon(Icons.home, color: Colors.purple[900], size: iconSizeLarge),
                                   onPressed: () async {
                              //       await interstitialAdManager.showInterstitialAd(context);
@@ -776,7 +935,7 @@ class _LandInputsState extends State<LandInputs> {
                                   },
                                 ),
                 
-                                const SizedBox(width: 46),
+                                const SizedBox(width: 46),*/
                 
                                 IconButton(
                                   icon:  Icon(Icons.arrow_back_ios,
@@ -787,110 +946,6 @@ class _LandInputsState extends State<LandInputs> {
                                     else {
                                       _onBackButtonPressedCallback(context);
                                     } },),
-                
-                                const SizedBox(width: 46),
-                
-                                IconButton(
-                                  icon:  Icon(Icons.arrow_forward_ios,
-                                      color: Colors.deepPurple, size: iconSizeLarge),
-                                  onPressed: () async {
-                
-                                    if (landAreaController.text.isNotEmpty &&
-                                        isValidNumber(landAreaController.text) &&
-                                        landPricePerMeterController.text.isNotEmpty &&
-                                        isValidNumber(landPricePerMeterController.text) &&
-                                        firstFloorNumberController.text.isNotEmpty &&
-                                        isValidNumber(firstFloorNumberController.text) &&
-                                        int.tryParse(firstFloorNumberController.text) != null
-                                    ) {
-                
-                                      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
-                                        projectName1,
-                                        double.parse(landAreaController.text),
-                                        double.parse(landPricePerMeterController.text),
-                                        int.tryParse(firstFloorNumberController.text) ?? 0,
-                                          selectedValue ?? 0
-                                      );
-                
-                                      // Save the project basic data to the database
-                                     /* await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
-                                        ProjectBasicData(
-                                          projectBasicTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectBasicId(),
-                                          projectBasicTableProjectName: projectName1,
-                                          projectBasicTableLandArea: double.parse(landAreaController.text),
-                                          projectBasicTableLandPricePerMeter: double.parse(landPricePerMeterController.text),
-                                          projectBasicTableRoofAndYardConstructionCosts: double.parse(roofAndYardConstructionCostsController.text),
-                                          projectBasicTableTransactionCosts: double.parse(transactionCostsController.text),
-                                          projectBasicTableOtherCosts: double.parse(otherCostController.text),
-                                          projectBasicTableFirstFloorNumber: int.tryParse(firstFloorNumberController.text) ?? 0,
-                                          projectBasicTableNumberOfSaleableProperties: double.parse(numberOfSaleablePropertiesController.text),
-                                          projectBasicTableShortNumbersNumberOfZeroRemoved: (selectedValue),
-                                        ),
-                                      );*/
-                
-                                /*      if (givenStartingFloor1 != -4321 &&
-                                          int.parse(firstFloorNumberController.text.replaceAll(',', '')) != givenStartingFloor1){
-                                        String startingFloorProjectName = projectName1;
-                                        int differenceStartingFloor = givenStartingFloor1 - int.parse(firstFloorNumberController.text.replaceAll(',', ''));
-                
-                                        // Update the starting floor for the rows with the matching project name
-                                        await DifferentiatedCalculationDatabaseHelper.updateStartingFloorForInTableStartingSimilar(
-                                            startingFloorProjectName, differenceStartingFloor);
-                                      }*/
-                
-                                      givenStartingFloor1 = int.parse(firstFloorNumberController.text.replaceAll(',', ''));
-                
-                                      projectData.setFirstStartingFloor(givenStartingFloor1);
-                
-                                      NavigationService().navigateToScreen(
-                                        CostPrices(
-                                          givenProjectName: projectName1,
-                                //          firstStartingFloor: int.parse(firstFloorNumberController.text.replaceAll(',', '')),
-                                          givenCppValue: 1,
-                                        ),
-                                      );
-
-                                    }
-                                    else {
-                                      // Show a popup dialog with an error message
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title:  Text('Error'
-                                                , style: TextStyle(fontSize: textFontSize,
-                                              fontWeight: FontWeight.bold,color: Colors.red,)),
-                                            content:  SingleChildScrollView(
-                                              child: ListBody(
-                                                children: <Widget>[
-                                                  Text(
-                                                    '\nAll fields must be filled with valid values.\n\n '
-                                                        "The first floor number should be an integer, not a decimal value."
-                                                        "(digits and optional decimal point only, like: 123, 123.5, 0.66) "
-                                                        "not including letters (e.g., a, b, c) or symbols (e.g., \$, %, &)."
-                                                        " Also starting or trailing decimal point (e.g., .1 or 1.) is not allowed.",
-                                                    style: TextStyle(fontSize: textFontSize),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child:  Text('OK', style: TextStyle(fontSize: textFontSize,
-                                                  fontWeight: FontWeight.bold,color: Colors.red,
-                                                ),),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    }
-                                  },
-                                ),
-                
                                 const SizedBox(width: 36),
                                 IconButton(
                                   onPressed: () {
@@ -898,19 +953,19 @@ class _LandInputsState extends State<LandInputs> {
                                       context: context,
                                       builder: (BuildContext context) {
                                         return AlertDialog(
-                                          title:  Text('Introduction', style: TextStyle(
-                                            fontSize: textFontSize,color: Colors.brown,fontWeight: FontWeight.bold,
+                                          title:  Text('Construction financial calculator with differentiated pricing', style: TextStyle(
+                                            fontSize: textFontSize,color: Colors.green[600],fontWeight: FontWeight.bold,
                                           ),),
                                           content:  SingleChildScrollView(
                                             child: Text.rich(
                                               TextSpan(
                                                 children: [
-                
+
                                                   TextSpan(
-                                                    text: '\nSimilar to the Simple Calculation part of the app, this part called '
+                                                    text: '\nSimilar to the Uniform Pricing Calculator of the app, this tool called '
                                                         'Differentiated Pricing is a financial calculator specifically designed '
-                                                        'for feasibility studies and analyzing the cost benefits of constructing a building. '
-                                                        '\n\nUnlike the simple calculation, this tool has a differentiated pricing model '
+                                                        'for feasibility studies and analyzing the financial cost benefit of constructing a building. '
+                                                        '\n\nUnlike the uniform pricing, this calculator has a differentiated pricing model '
                                                         'that allows you to input varying construction cost, '
                                                         'permission cost and sell prices for different units '
                                                         'defined on each floor and across multiple floors. This '
@@ -927,7 +982,7 @@ class _LandInputsState extends State<LandInputs> {
                                                       color: Colors.black,
                                                     ),
                                                   ),
-                
+
                                                   TextSpan(
                                                     text: '\n\nSteps to Use This Calculator',
                                                     style: TextStyle(
@@ -943,7 +998,7 @@ class _LandInputsState extends State<LandInputs> {
                                                     ),
                                                   ),
                                                   TextSpan(
-                                                    text: '\nIn this page, as the first step of complete calculation tool, '
+                                                    text: '\nAs the first step of differentiated pricing tool, '
                                                         'enter the basic project information, such as:',
                                                     style: TextStyle(
                                                       fontSize: textFontSize,color: Colors.black,
@@ -951,6 +1006,12 @@ class _LandInputsState extends State<LandInputs> {
                                                   ),
                                                   TextSpan(
                                                     text: '\n- Land area (plot area)',
+                                                    style: TextStyle(
+                                                      fontSize: textFontSize,color: Colors.black,
+                                                    ),
+                                                  ),
+                                                  TextSpan(
+                                                    text: '\n\nYou are now in this page.',
                                                     style: TextStyle(
                                                       fontSize: textFontSize,color: Colors.black,
                                                     ),
@@ -970,14 +1031,14 @@ class _LandInputsState extends State<LandInputs> {
                                                     ),
                                                   ),
                                                   TextSpan(
-                                                    text: '\nIn the next pages for each ft²/m² of all '
+                                                    text: '\nIn the next pages for each square feet / square meter (ft²/m²) of all '
                                                         'cost-price segments (explained below) you will need to '
                                                         'define construction cost and sell price',
                                                     style: TextStyle(
                                                       fontSize: textFontSize,color: Colors.black,
                                                     ),
                                                   ),
-                
+
                                                   TextSpan(
                                                     text: '\n\n3. Permission cost',
                                                     style: TextStyle(
@@ -994,7 +1055,7 @@ class _LandInputsState extends State<LandInputs> {
                                                     ),
                                                   ),
                                                   TextSpan(
-                                                    text: '\n\n4. Other Basic Data',
+                                                    text: '\n\n4. Other Data',
                                                     style: TextStyle(
                                                       fontSize: textFontSize,
                                                       fontWeight: FontWeight.bold,color: Colors.blue,
@@ -1026,9 +1087,9 @@ class _LandInputsState extends State<LandInputs> {
                                                     ),
                                                   ),
                                                   TextSpan(
-                                                    text: "\n\n■ Unlike the simple calculation, in this part"
-                                                        " there is no need to define the number of common or sealable "
-                                                        "floors, or specifying their associated areas "
+                                                    text: "\n\n■ Unlike the uniform pricing, in this part"
+                                                        " there is no need to define the number of common or salable "
+                                                        "floors, and specify their associated areas "
                                                         "at first. Instead, for all segments in each floor, you must "
                                                         "set both the construction costs and sell prices.",
                                                     style: TextStyle(
@@ -1036,15 +1097,15 @@ class _LandInputsState extends State<LandInputs> {
                                                       color: Colors.black,
                                                     ),
                                                   ),
-                
+
                                                   TextSpan(
-                                                    text: '\n\n■ In the complete calculation you can set the area of each floor '
+                                                    text: '\n\n■ In the differentiated pricing you can set the area of each floor '
                                                         'independently of the land area on which the building is built-up . '
                                                         'In reality, it\'s possible for a building to have a larger built-up '
                                                         'area on certain floors than the area of the land itself. For example, '
                                                         'consider two buildings located on opposite sides of a street. If floors '
                                                         '5 to 10 are connected by a building structure that serves as a bridge between '
-                                                        'the two buildings, the built-up area on those floors exceeds the '
+                                                        'the two buildings, the built-up area on those floors can exceed the '
                                                         'total land area of the two buildings. '
                                                         '\n\nAdditionally, floors can vary in area. For example, in a five-story building,'
                                                         ' each floor starting from the first can have 10% less built-up area than '
@@ -1058,11 +1119,11 @@ class _LandInputsState extends State<LandInputs> {
                                                       color: Colors.black,
                                                     ),
                                                   ),
-                
+
                                                   TextSpan(
                                                     text:
                                                     '\n\nEach page has its own dedicated guidance '
-                                                        'that you can access by pressing the question icon next to the relevant'
+                                                        'that you can access by pressing the question icon "?" next to the relevant'
                                                         ' section. Additionally, there is an overall guidance for each page that '
                                                         'you can read by pressing the question icon located at the bottom of that page.',
                                                     style: TextStyle(
@@ -1070,11 +1131,15 @@ class _LandInputsState extends State<LandInputs> {
                                                       color: Colors.black,
                                                     ),
                                                   ),
+
+                                                  const TextSpan(
+                                                    text: '\n\nExamples on Facebook (link on first page).',
+                                                  )
                                                 ],
                                               ),
                                             ),
                                           ),
-                
+
                                           actions: [
                                             TextButton(
                                               onPressed: () {
@@ -1092,6 +1157,98 @@ class _LandInputsState extends State<LandInputs> {
                                   icon:  Icon(Icons.help_center_rounded,
                                       color: Colors.purple[900], size: iconSizeLarge),
                                 ),
+                                const SizedBox(width: 36),
+                
+                                IconButton(
+                                  icon:  Icon(Icons.arrow_forward_ios,
+                                      color: Colors.deepPurple, size: iconSizeLarge),
+                                  onPressed: () async {
+                
+                                    if (landAreaController.text.isNotEmpty &&
+                                        isValidNumber(landAreaController.text) &&
+                                        landPricePerMeterController.text.isNotEmpty &&
+                                        isValidNumber(landPricePerMeterController.text) &&
+                                        firstFloorNumberController.text.isNotEmpty &&
+                                        isValidNumber(firstFloorNumberController.text) &&
+                                        int.tryParse(firstFloorNumberController.text) != null &&
+                                        (_isDifferentiatedConstructionCostBool || (_isUniqueConstructionCostPerMeterBool &&
+                                    isValidNumber(uniqueConstructionCostController.text)))
+                                    ) {
+                
+                                      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
+                                        projectName1,
+                                        double.parse(landAreaController.text),
+                                        double.parse(landPricePerMeterController.text),
+                                          double.parse(uniqueConstructionCostController.text),
+                                        int.tryParse(firstFloorNumberController.text) ?? 0,
+                                          selectedValue
+                                      );
+                
+
+                                      givenStartingFloor1 = int.tryParse(firstFloorNumberController.text.replaceAll(',', ''))!;
+                
+                                      projectData.setFirstStartingFloor(givenStartingFloor1);
+                                      // First, parse the text to double
+                                      double parsedValue = double.tryParse(uniqueConstructionCostController.text) ?? -432;
+
+                                      // Then check and set if not -432
+                                      if (_isUniqueConstructionCostPerMeterBool && parsedValue != -432) {
+                                        Provider.of<ProjectData>(context, listen: false)
+                                            .setUniqueConstructionCostPerMeter(parsedValue);
+                                      }
+
+                                      NavigationService().navigateToScreen(
+                                        CostPrices(
+                                          givenProjectName: projectName1,
+                                //          firstStartingFloor: int.parse(firstFloorNumberController.text.replaceAll(',', '')),
+                                          givenCppValue: 1,
+                                        ),
+                                      );
+
+                                    }
+                                    else {
+                                      // Show a popup dialog with an error message
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title:  Text('Error'
+                                                , style: TextStyle(fontSize: textFontSize,
+                                              fontWeight: FontWeight.bold,color: Colors.red,)),
+                                            content:  SingleChildScrollView(
+                                              child: ListBody(
+                                                children: <Widget>[
+                                                  Text(
+                                                    '\nFields must be filled with valid values.'
+                                                        "\n\nThe first floor number should be an integer, not a decimal value."
+                                                    '\n\nTo use uniform construction cost, enter a valid value '
+                                                        'per unit area. Or select differentiated construction cost to define costs individually later.'
+                                                        "\n\nvalid values are digits and optional decimal point only, like: 123, 123.5, 0.66 "
+                                                        "not including letters (e.g., a, b, c) or symbols (e.g., \$, %, &)."
+                                                        " Also starting or trailing decimal point (e.g., .1 or 1.) is not allowed.",
+                                                    style: TextStyle(fontSize: textFontSize),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child:  Text('OK', style: TextStyle(fontSize: textFontSize,
+                                                  fontWeight: FontWeight.bold,color: Colors.red,
+                                                ),),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    }
+                                  },
+                                ),
+                
+
                               ],
                             ),
                 

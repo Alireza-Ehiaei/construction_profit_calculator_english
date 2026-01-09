@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:construction_profit_calculator_english/result_complete.dart';
+import 'package:construction_profit_calculator_english/result_differentiated.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -10,17 +10,16 @@ import 'main.dart';
 import 'navigation_service.dart';
 import 'permit_fees.dart';
 
-
 class OtherCosts extends StatefulWidget {
   final String givenProjectName;
-  final List<List<dynamic>> givenFloorRangesData;
-  final int givenMaxFloorNumber;
+ // final List<List<dynamic>> givenFloorRangesData;
+ // final int givenMaxFloorNumber;
 
   const OtherCosts({
     super.key,
     required this.givenProjectName,
-    required this.givenFloorRangesData,
-    required this.givenMaxFloorNumber,
+  //  required this.givenFloorRangesData,
+  //  required this.givenMaxFloorNumber,
 
   });
 
@@ -33,8 +32,9 @@ class _OtherCostsState extends State<OtherCosts> {
   late String projectName1;
   TextEditingController transactionCostsController = TextEditingController();
   TextEditingController otherCostController = TextEditingController();
-  TextEditingController roofAndYardConstructionCostsController = TextEditingController();
+  TextEditingController yardConstructionCostsController = TextEditingController();
   TextEditingController numberOfSalablePropertiesController = TextEditingController();
+  TextEditingController numberOfInvestmentYearsController = TextEditingController();
 
   bool obscureText = true;
   List<AreaTableRowData> areaTableData = [];
@@ -57,8 +57,8 @@ class _OtherCostsState extends State<OtherCosts> {
   void initState() {
     super.initState();
     projectName1 = widget.givenProjectName;
-    givenFloorRangesData = widget.givenFloorRangesData;
-    givenMaxFloorNumber = widget.givenMaxFloorNumber;
+  //  givenFloorRangesData = widget.givenFloorRangesData;
+  //  givenMaxFloorNumber = widget.givenMaxFloorNumber;
     startingFloor = Provider.of<ProjectData>(context, listen: false).firstStartingFloor;
     checkBasicData();
 
@@ -80,14 +80,20 @@ class _OtherCostsState extends State<OtherCosts> {
 
     if (projectBasicData.isNotEmpty)
     {
-      roofAndYardConstructionCostsController.text = projectBasicData[0].projectBasicTableRoofAndYardConstructionCosts.toString();
-      transactionCostsController.text = projectBasicData[0].projectBasicTableTransactionCosts.toString();
-      otherCostController.text = projectBasicData[0].projectBasicTableOtherCosts.toString();
-      numberOfSalablePropertiesController.text = projectBasicData[0].projectBasicTableNumberOfSalableProperties.toString();
+      yardConstructionCostsController.text = formatNumber(projectBasicData[0].projectBasicTableYardConstructionCostPerMeter);
+      transactionCostsController.text = formatNumber(projectBasicData[0].projectBasicTableTransactionCosts);
+      otherCostController.text = formatNumber(projectBasicData[0].projectBasicTableOtherCosts);
+      numberOfSalablePropertiesController.text = formatNumber(projectBasicData[0].projectBasicTableNumberOfSalableProperties);
+      numberOfInvestmentYearsController.text =  formatNumber(projectBasicData[0].projectBasicTableNumberOfInvestmentYears);
     }
 
   }
 
+  String formatNumber(double value) {
+    if (value == 0) return '0';
+    if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+    return value.toStringAsFixed(2);  // 2 decimals for non-whole
+  }
 
   String formatNumberWithThousandSeparator(num number)
   {
@@ -118,7 +124,7 @@ class _OtherCostsState extends State<OtherCosts> {
     return formattedNumber;
   }
 
-  int maxDivisibleByThree(num num)
+ /* int maxDivisibleByThree(num num)
   {
     String numStr = num.toString().split('.')[0];
     int numDigits = numStr.length;
@@ -128,9 +134,14 @@ class _OtherCostsState extends State<OtherCosts> {
     }
 
     return  pow(10, numDigits-1).toInt();
+  }*/
+
+  int completeThreeDigitBatches(num num) {
+    String numStr = num.toString().split('.')[0];
+    int numDigits = numStr.length;
+    int ss = numDigits -2;  // Integer division
+    return  pow(10, ss).toInt();
   }
-
-
   void showErrorDialog1(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     const ipadBreakpoint = 850.0; // or your preferred breakpoint
@@ -230,7 +241,7 @@ class _OtherCostsState extends State<OtherCosts> {
         builder: (context, projectData, child) {
           return Scaffold(
             body: Container(
-              color: Colors.blueGrey[300],
+              color: const Color.fromRGBO(0, 42, 78, 1.0),
               child: SafeArea(
                 child: Column(mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -241,7 +252,7 @@ class _OtherCostsState extends State<OtherCosts> {
 
                             Padding(
                               padding: const EdgeInsets.fromLTRB(8,2,8,0),
-                              child: Container(color: const Color(0xFF5E0209),
+                              child: Container(color: const Color.fromRGBO(1, 29, 53, 1.0),
                                 child: Row(
                                   children: [
                                     Padding(
@@ -282,33 +293,16 @@ class _OtherCostsState extends State<OtherCosts> {
                                   children: [
                                     SizedBox(height: spacingHeight),
 
-
                                     Row(
                                       children: [  SizedBox(width: textFontSize),
                                         Expanded(
                                           flex: 3,
                                           child:
                                           Text('Transaction Costs (%)', style: TextStyle(
-                                            fontWeight: FontWeight.bold, fontSize: textFontSize,
+                                            fontWeight: FontWeight.bold,color: Colors.white,  fontSize: textFontSize,
                                           ),),
                                         ),
 
-                                        /*    Expanded(
-                                                                flex: 1,
-                                                                child: SizedBox(height: 55,
-                                  child:Transform.rotate(
-                                    angle: pi / 2, // -90 degrees
-                                    child: Switch(
-                                      value: TransactionCostBoolValue,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          TransactionCostBoolValue = value;
-                                        });
-                                      },
-                                    ),
-                                  )
-                                                                ),
-                                                              ),*/
                                         const SizedBox(width: 3.0),
                                         Expanded(
                                             flex: 2,
@@ -319,12 +313,12 @@ class _OtherCostsState extends State<OtherCosts> {
                                                 filled: true,
                                                 fillColor: Colors.grey[100],
                                               ),
-                                              keyboardType: TextInputType.number, // Set the keyboard type to number input
+                                              keyboardType: TextInputType.number, 
                                               style: TextStyle(fontSize: textFontSize), )
                                         ),
 
 
-                                        const SizedBox(width: 3.0),
+                                        const SizedBox(width: 12.0),
                                         IconButton(
                                           onPressed: () {
                                             showDialog(
@@ -332,7 +326,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                               builder: (BuildContext context) {
                                                 return AlertDialog(
                                                   title:  Text('Transaction costs', style: TextStyle(
-                                                      fontWeight: FontWeight.bold,color: Colors.deepPurple,fontSize: textFontSize
+                                                      fontWeight: FontWeight.bold,color: Colors.green[900],fontSize: textFontSize
                                                   ),),
                                                   content:  SingleChildScrollView(
                                                     child: Text('\nTransactional costs in real estate refer to the '
@@ -347,9 +341,9 @@ class _OtherCostsState extends State<OtherCosts> {
                                                         '\n\nFor example, if the total transactional costs are 5% of the '
                                                         'property price, you would enter "5" in the corresponding field '
                                                         'and no need to attach percentage sign. '
-                                                        'Then if the property price is 500,000 currency units, the transactional '
-                                                        'costs would be calculated as 5% of 500,000 currency units, which '
-                                                        'equals 25,000 currency units. This 25,000 currency units would '
+                                                        'Then if the property price is 500,000 \$, the transactional '
+                                                        'costs would be calculated as 5% of 500,000 \$, which '
+                                                        'equals 25,000 \$. This 25,000 \$ would '
                                                         'then be added to the other costs associated with the property.\n\n'
                                                         'It\'s important to note that the specific transaction'
                                                         ' costs and their amounts can vary depending on the '
@@ -365,7 +359,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                                         Navigator.of(context).pop();
                                                       },
                                                       child:  Text('OK', style: TextStyle(fontSize: textFontSize,
-                                                        fontWeight: FontWeight.bold,color: Colors.red,
+                                                        fontWeight: FontWeight.bold,color: Colors.blue,
                                                       ),),
                                                     ),
                                                   ],
@@ -373,7 +367,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                               },
                                             );
                                           },
-                                          icon:  Icon(Icons.question_mark, size: iconSizeSmall,  color: Colors.brown,),
+                                          icon:  Icon(Icons.question_mark, size: iconSizeSmall,  color: Colors.yellow,),
                                         ),
                                         SizedBox(width: spacingHeight),
                                       ],
@@ -386,9 +380,9 @@ class _OtherCostsState extends State<OtherCosts> {
                                         Expanded(
                                           flex: 3,
                                           child:
-                                          Text('Top Roof - Yard \nConstruction Cost (ft²)'
+                                          Text('Yard Construction Cost (ft²)'
                                             , style: TextStyle(
-                                              fontWeight: FontWeight.bold, fontSize: textFontSize,
+                                              fontWeight: FontWeight.bold,color: Colors.white,  fontSize: textFontSize,
                                             ),),
                                         ),
 
@@ -396,53 +390,57 @@ class _OtherCostsState extends State<OtherCosts> {
                                         Expanded(
                                             flex: 2,
                                             child: TextField(
-                                              controller: roofAndYardConstructionCostsController,
+                                              controller: yardConstructionCostsController,
                                               decoration: InputDecoration(
                                                 hintText:  '' ,
                                                 filled: true,
                                                 fillColor: Colors.grey[100],
                                               ),
-                                              keyboardType: TextInputType.number, // Set the keyboard type to number input
+                                              keyboardType: TextInputType.number, 
                                               style: TextStyle(fontSize: textFontSize), )
                                         ),
 
 
-                                        const SizedBox(width: 3.0),
+                                        const SizedBox(width: 12.0),
                                         IconButton(
                                           onPressed: () {
                                             showDialog(
                                               context: context,
                                               builder: (BuildContext context) {
                                                 return AlertDialog(
-                                                  title:  Text('Top Roof-Yard Construction Cost', style: TextStyle(
-                                                      fontWeight: FontWeight.bold,color: Colors.deepPurple,fontSize: textFontSize
+                                                  title:  Text('Yard Construction Cost', style: TextStyle(
+                                                      fontWeight: FontWeight.bold,color: Colors.green[900],fontSize: textFontSize
                                                   ),),
                                                   content:  SingleChildScrollView(
                                                     child: Text(
-                                                      '\nIn this app, the total area of the top roof and yard is considered equal '
+                                                      '\nIn this app, the total area of yard is considered equal '
                                                           'to the area of'
-                                                          ' land purchased for development.\n\n'
-                                                          'Usually, the cost of constructing the yard and roof is considered in the construction '
-                                                          'cost per ft²/m² of the built-up area. '
+                                                          ' land purchased minus constructed area in the ground floor.'
+
+                                                      'For example, if a plot of land has 1,000 ft², of which 600 ft² is used for building, '
+                                                          'then the area of the yard is also 400 ft². \n\n'
+                                                          'Usually, the cost of constructing the yard is considered in the construction '
+                                                          'cost (per ft²/m²) of the built-up area. '
                                                           'In this case, there is no need to separately enter a positive cost for '
-                                                          'yard and roof construction; you can enter zero here.\n\n'
-                                                          'However, if you have not accounted for the cost of yard and roof '
+                                                          'yard construction; you can enter zero here.\n\n'
+                                                          'However, if you have not accounted for the cost of yard '
                                                           'construction in the built-up area cost, or if you have additional '
-                                                          'modifications on the roof and yard that are not included in the built-up '
+                                                          'modifications on the yard that are not included in the built-up '
                                                           'area construction cost, and you want to calculate these costs separately, '
-                                                          'you have two options:\n\n'
-                                                          '1. If you know the cost of construction for these areas per ft²/m², then you should enter that cost here.\n\n'
-                                                          '2. If you know the total cost of construction for the roof and yard, you can either divide it by the land '
-                                                          'area and enter the result here or alternatively enter zero here and add the total cost of construction '
-                                                          'for the roof and yard to the "Other Costs" value below to be added directly to total costs.\n\n'
-                                                          'For example, if a plot of land has 1,000 ft², of which 500 ft² is used for constructing a four-story building, '
-                                                          'then the area of the top roof is also 500 ft². '
-                                                          'The yard area plus the top roof area in total is equal to the land area purchased (1,000 ft²).'
-                                                          ' The total construction cost of the yard and top roof includes the costs associated with '
+                                                          'enter the cost of construction of yard per ft²/m² here.\n\n'
+
+
+                                                          ' The construction cost of the yard includes the costs associated with '
                                                           'constructing the walls, garden, and other expenses like plumbing, electricity, and landscaping. '
-                                                          'These costs are all factored into the overall construction cost of the top roof and yard. '
-                                                          'These expenses can be broken down into the total area of the top roof and yard to achieve '
-                                                          'a cost per ft², providing a clear understanding of the construction costs for both the yard and roof.'
+                                                          'These costs are all factored into the overall construction cost of yard. '
+                                                          'These expenses can be broken down into the total area of the and yard to achieve '
+                                                          'yard construction cost per ft²/m².'
+
+                                                          'Also, If you know the total cost of construction of yard, not cost per per ft²/m², you '
+                                                          'can enter zero here and add it '
+                                                          'to the "Other Costs" value below to be added directly to total costs, but '
+                                                          'if you prefer to have cost of each section like yard separately you have to '
+                                                          'enter the cost of construction of yard per ft²/m².\n\n'
                                                       , style: TextStyle(
                                                       fontSize: textFontSize,
                                                     ),
@@ -454,7 +452,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                                         Navigator.of(context).pop();
                                                       },
                                                       child:  Text('OK', style: TextStyle(fontSize: textFontSize,
-                                                        fontWeight: FontWeight.bold,color: Colors.red,
+                                                        fontWeight: FontWeight.bold,color: Colors.blue,
                                                       ),),
                                                     ),
                                                   ],
@@ -462,7 +460,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                               },
                                             );
                                           },
-                                          icon:  Icon(Icons.question_mark, size: iconSizeSmall,  color: Colors.brown,),
+                                          icon:  Icon(Icons.question_mark, size: iconSizeSmall,  color: Colors.yellow,),
                                         ),
                                         SizedBox(width: spacingHeight),
                                       ],
@@ -476,7 +474,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                           flex: 3,
                                           child:
                                           Text('Other Costs', style: TextStyle(
-                                            fontWeight: FontWeight.bold, fontSize: textFontSize,
+                                            fontWeight: FontWeight.bold,color: Colors.white,  fontSize: textFontSize,
                                           ),),
                                         ),
 
@@ -488,10 +486,10 @@ class _OtherCostsState extends State<OtherCosts> {
                                                 filled: true,
                                                 fillColor: Colors.grey[100],
                                               ),
-                                              keyboardType: TextInputType.number, // Set the keyboard type to number input
+                                              keyboardType: TextInputType.number, 
                                               style: TextStyle(fontSize: textFontSize),)
                                         ),
-                                        const SizedBox(width: 3.0),
+                                        const SizedBox(width: 12.0),
                                         IconButton(
                                           onPressed: () {
                                             showDialog(
@@ -499,7 +497,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                               builder: (BuildContext context) {
                                                 return AlertDialog(
                                                   title:  Text('Other Costs', style: TextStyle(
-                                                      fontWeight: FontWeight.bold,color: Colors.deepPurple,fontSize: textFontSize
+                                                      fontWeight: FontWeight.bold,color: Colors.green[900],fontSize: textFontSize
                                                   ),),
                                                   content:  SingleChildScrollView(
                                                     child: Text.rich(
@@ -561,7 +559,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                                         Navigator.of(context).pop();
                                                       },
                                                       child:  Text('OK', style: TextStyle(fontSize: textFontSize,
-                                                        fontWeight: FontWeight.bold,color: Colors.red,
+                                                        fontWeight: FontWeight.bold,color: Colors.blue,
                                                       ),),
                                                     ),
                                                   ],
@@ -569,7 +567,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                               },
                                             );
                                           },
-                                          icon:  Icon(Icons.question_mark, size: iconSizeSmall,  color: Colors.brown,),
+                                          icon:  Icon(Icons.question_mark, size: iconSizeSmall,  color: Colors.yellow,),
                                         ),
                                         SizedBox(width: spacingHeight),
                                       ],
@@ -581,8 +579,8 @@ class _OtherCostsState extends State<OtherCosts> {
                                         Expanded(
                                           flex: 3,
                                           child:
-                                          Text('Total Number of Properties', style: TextStyle(
-                                            fontWeight: FontWeight.bold, fontSize: textFontSize,
+                                          Text('Number of Properties', style: TextStyle(
+                                            fontWeight: FontWeight.bold,color: Colors.white, fontSize: textFontSize,
                                           ),),
                                         ),
 
@@ -594,40 +592,42 @@ class _OtherCostsState extends State<OtherCosts> {
                                                 filled: true,
                                                 fillColor: Colors.grey[100],
                                               ),
-                                              keyboardType: TextInputType.number, // Set the keyboard type to number input
+                                              keyboardType: TextInputType.number, 
                                               style: TextStyle(fontSize: textFontSize),)
                                         ),
-                                        const SizedBox(width: 1.0),
+                                        const SizedBox(width: 12.0),
                                         IconButton(
                                           onPressed: () {
                                             showDialog(
                                               context: context,
                                               builder: (BuildContext context) {
                                                 return AlertDialog(
-                                                  title:  Text('Total Number of Properties', style: TextStyle(
-                                                      fontWeight: FontWeight.bold,color: Colors.deepPurple,fontSize: textFontSize
+                                                  title:  Text('Number of Properties', style: TextStyle(
+                                                      fontWeight: FontWeight.bold,color: Colors.green[900],fontSize: textFontSize
                                                   ),),
-                                                  content:  Text('\nThe number of properties refers to the '
-                                                      'total number of separate units or dwellings within a building '
-                                                      'that could be sold to buyers. It is not related to the cost-price '
-                                                      'segments or permit fee segments you\'ve defined in previous parts.'
-                                                      'Number of properties is determined by '
-                                                      'the number of floors in the building and the number of properties on each floor.'
-                                                      '\n\nFor example, if a building has 3 floors above the ground floor '
-                                                      'which is used fully for parking, and floors 1 and 2 has 2 '
-                                                      'properties and floor number 3 has 1 property, '
-                                                      'then the total number of properties is 5, '
-                                                      'regardless of the individual areas of those properties.\n',
-                                                    style: TextStyle(
-                                                      fontSize: textFontSize,
-                                                    ),),
+                                                  content:  SingleChildScrollView(
+                                                    child: Text('\nThe number of properties refers to the '
+                                                        'total number of separate units or dwellings within a building '
+                                                        'that could be sold to buyers. It is not related to the cost-price '
+                                                        'segments or permit fee segments you\'ve defined in previous parts.'
+                                                        'Number of properties is determined by '
+                                                        'the number of floors in the building and the number of properties on each floor.'
+                                                        '\n\nFor example, if a building has 3 floors above the ground floor '
+                                                        'which is used fully for parking, and floors 1 and 2 has 2 '
+                                                        'properties and floor number 3 has 1 property, '
+                                                        'then the total number of properties is 5, '
+                                                        'regardless of the individual areas of those properties.\n',
+                                                      style: TextStyle(
+                                                        fontSize: textFontSize,
+                                                      ),),
+                                                  ),
                                                   actions: [
                                                     TextButton(
                                                       onPressed: () {
                                                         Navigator.of(context).pop();
                                                       },
                                                       child:  Text('OK', style: TextStyle(fontSize: textFontSize,
-                                                        fontWeight: FontWeight.bold,color: Colors.red,
+                                                        fontWeight: FontWeight.bold,color: Colors.blue,
                                                       ),),
                                                     ),
                                                   ],
@@ -635,11 +635,85 @@ class _OtherCostsState extends State<OtherCosts> {
                                               },
                                             );
                                           },
-                                          icon:  Icon(Icons.question_mark_sharp, size: iconSizeSmall, color: Colors.brown,),
+                                          icon:  Icon(Icons.question_mark_sharp, size: iconSizeSmall, color: Colors.yellow,),
                                         ),
                                         SizedBox(width: spacingHeight),
                                       ],
                                     ),
+
+                                    SizedBox(height: spacingHeight),
+
+
+                                    Row(
+                                      children: [  SizedBox(width: textFontSize),
+                                        Expanded(
+                                          flex: 3,
+                                          child:
+                                          Text('Investment period', style: TextStyle(
+                                            fontWeight: FontWeight.bold,color: Colors.white , fontSize: textFontSize,
+                                          ),),
+                                        ),
+
+
+                                        const SizedBox(width: 3.0),
+                                        Expanded(
+                                            flex: 2,
+                                            child: TextField(
+                                              controller: numberOfInvestmentYearsController,
+                                              decoration: InputDecoration(
+
+                                                filled: true,
+                                                fillColor: Colors.grey[100],
+                                              ),
+                                              keyboardType: TextInputType.number,
+                                              style: TextStyle(fontSize: textFontSize), )
+                                        ),
+
+
+                                        const SizedBox(width: 12.0),
+                                        IconButton(
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title:  Text('Investment period', style: TextStyle(
+                                                      fontWeight: FontWeight.bold,color: Colors.green[900],fontSize: textFontSize
+                                                  ),),
+                                                  content:  SingleChildScrollView(
+                                                    child: Text('The number of years you expect the investment in the '
+                                                        'project to take, from the start of construction'
+                                                        ' until the sell of all units, when the profit or '
+                                                        'loss of the project is fully determined.'
+                                                        '\n\nFor example, if the project is built in one year'
+                                                        ' and you anticipate that it will take two years to sell all the units'
+                                                        ' you should enter the number 3 as the investment period.'
+                                                        '\n\nYou must enter this time period in years, i.e.'
+                                                        ' If a project takes 16 months, enter 1.25 and '
+                                                        ' If it takes 18 months, enter 1.5'
+                                                        , style: TextStyle(fontSize: textFontSize,
+                                                        )),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop();
+                                                      },
+                                                      child:  Text('OK', style: TextStyle(fontSize: textFontSize,
+                                                        fontWeight: FontWeight.bold,color: Colors.blue,
+                                                      ),),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                          icon:  Icon(Icons.question_mark, size: iconSizeSmall,  color: Colors.yellow,),
+                                        ),
+                                        SizedBox(width: spacingHeight),
+                                      ],
+                                    ),
+
                                   ],
                                 ),
                               ],
@@ -661,7 +735,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                 SizedBox(width: textFontSize),
                 
                                 IconButton(
-                                  icon: Icon(Icons.home, color: Colors.purple[900], size: iconSizeLarge),
+                                  icon: Icon(Icons.home, color: Colors.white, size: iconSizeLarge),
                                   onPressed: () async {
                                     //       await interstitialAdManager.showInterstitialAd(context);
                                     // This callback will be executed after the ad is shown
@@ -675,42 +749,81 @@ class _OtherCostsState extends State<OtherCosts> {
                                 ),
                 
                                 const SizedBox(width: 46),
-                
+
+
                                 IconButton(
                                   icon:  Icon(
                                       Icons.arrow_back_ios,
-                                      color: Colors.purple[900], size: iconSizeLarge),
-                                  onPressed: () {
-                                    NavigationService().navigateToScreen(
-                                      // From here it shouldn't go to permit fee inputs because it cannot refresh floor ranges
-                                      FloorRangesPage(
-                                        givenProjectName: projectName1,
-                                        //    firstStartingFloorForFloorRangesPage: startingFloor,
-                                      ),
-                                      arguments: {
-                                        'givenProjectName': projectName1,
-                                        //       'firstStartingFloorForFloorRangesPage': startingFloor,
-                                      },
-                                    );
-                                     },
+                                      color: Colors.white, size: iconSizeLarge),
+                                  onPressed: () async {
+                                    if (numberOfSalablePropertiesController.text.isEmpty ||
+                                        !isValidNumber(numberOfSalablePropertiesController.text) ||
+
+                                        numberOfInvestmentYearsController.text.isEmpty ||
+                                        !isValidNumber(numberOfInvestmentYearsController.text) ||
+
+                                        yardConstructionCostsController.text.isEmpty ||
+                                        !isValidNumber(yardConstructionCostsController.text) ||
+                                        otherCostController.text.isEmpty ||
+                                        !isValidNumber(otherCostController.text) ||
+                                        transactionCostsController.text.isEmpty ||
+                                        !isValidNumber(transactionCostsController.text)
+                                    )
+                                    {
+                                     showErrorDialog1(context);
+                                    }
+                                    else {
+                                      await DifferentiatedCalculationDatabaseHelper
+                                          .updateProjectBasicDataRemaining(
+                                        projectName1,
+                                        double.parse(yardConstructionCostsController.text),
+                                        double.parse(
+                                            transactionCostsController.text),
+                                        double.parse(otherCostController.text),
+                                        double.parse(
+                                            numberOfSalablePropertiesController.text),
+                                        double.parse(
+                                            numberOfInvestmentYearsController.text),
+                                      );
+                                      //We check all fields in return pressing condition because sometimes they
+                                      // are initial and if they are not saved later we'll be lost but
+                                      // No need to check if number of years invested and numberOfSalableProperties
+                                      // is zero because when the forward arrow icon is pressed it will be checked
+                                      NavigationService().navigateToScreen(
+                                        // From here it shouldn't go to permit fee inputs because it cannot refresh floor ranges
+                                        FloorRangesPage(
+                                          givenProjectName: projectName1,
+                                          //    firstStartingFloorForFloorRangesPage: startingFloor,
+                                        ),
+                                        arguments: {
+                                          'givenProjectName': projectName1,
+                                          //       'firstStartingFloorForFloorRangesPage': startingFloor,
+                                        },
+                                      );
+                                    }
+                                  },
                                 ),
-                
+
                                 const SizedBox(width: 46),
                 
                                 IconButton(
                                   icon:  Icon(Icons.leaderboard_outlined,
-                                      color: Colors.purple[900], size: iconSizeLarge),
+                                      color: Colors.white,  size: iconSizeLarge),
                                   onPressed: ()
                                   async {
-                print('sss');
+
                                     if (numberOfSalablePropertiesController.text.isEmpty ||
                                         !isValidNumber(numberOfSalablePropertiesController.text) ||
-                                       ( double.parse(numberOfSalablePropertiesController.text) == 0.0) ||
-                                        roofAndYardConstructionCostsController.text.isEmpty ||
-                                        !isValidNumber(roofAndYardConstructionCostsController.text) ||
-                                        otherCostController.text.isEmpty ||
+                                        ( double.parse(numberOfSalablePropertiesController.text) == 0.0) ||
+
+                                        numberOfInvestmentYearsController.text.isEmpty ||
+                                        !isValidNumber(numberOfInvestmentYearsController.text) ||
+                                        ( double.parse(numberOfInvestmentYearsController.text) == 0.0) ||
+
+                                        !isValidNumber(yardConstructionCostsController.text) ||
+
                                         !isValidNumber(otherCostController.text) ||
-                                        transactionCostsController.text.isEmpty ||
+
                                         !isValidNumber(transactionCostsController.text)
                                     )
                                     {
@@ -730,8 +843,8 @@ class _OtherCostsState extends State<OtherCosts> {
                 
                                             content: Text(
                                               'Please fill in all text fields.\n\n'
-                                                  'Number of properties cannot be zero.\n\n'
-                                                  'If you don\'t have any roof-yard construction costs, transaction costs, '
+                                                  'Number of properties and number of years of investment cannot be zero.\n\n'
+                                                  'If you don\'t have any yard construction cost, transaction costs, '
                                                   'or other costs, you can set them to zero.'
                                                   '\n\nAlso, inputs cannot be empty and should be a valid number '
                                                   "(digits and optional decimal point only, like: 123, 123.5, 0.66) "
@@ -765,10 +878,11 @@ class _OtherCostsState extends State<OtherCosts> {
                                     {
                                       await DifferentiatedCalculationDatabaseHelper.updateProjectBasicDataRemaining(
                                         projectName1,
-                                        double.parse(roofAndYardConstructionCostsController.text),
+                                        double.parse(yardConstructionCostsController.text),
                                         double.parse(transactionCostsController.text),
                                         double.parse(otherCostController.text),
                                         double.parse(numberOfSalablePropertiesController.text),
+                                        double.parse(numberOfInvestmentYearsController.text),
                                       );
                 
                 
@@ -780,52 +894,40 @@ class _OtherCostsState extends State<OtherCosts> {
                                       List<ProjectTableData> projectData = await
                                       DifferentiatedCalculationDatabaseHelper
                                           .getCostPricingData(projectName1);
-                
-                                      List<
-                                          PermitFeeSegmentPricingData> permitFeeData =
-                                      await DifferentiatedCalculationDatabaseHelper
-                                          .getPermitFeeSegmentPricingData(
-                                          projectName1);
-                
-                
-                                      double landArea = (projectBasicDataList[0]
-                                          .projectBasicTableLandArea);
+
+                                      double landArea = (projectBasicDataList[0].projectBasicTableLandArea);
                                       String landAreaText = formatNumberWithThousandSeparator(
                                           landArea);
-                
+
                                       int shortNumbersNumberOfZeroRemoved = projectBasicDataList[0]
                                           .projectBasicTableShortNumbersNumberOfZeroRemoved;
-                
                                       double landPricePerMeter = (projectBasicDataList[0]
                                           .projectBasicTableLandPricePerMeter)
-                                          * pow(10, shortNumbersNumberOfZeroRemoved)
-                                              .toInt();
-                
+                                          * pow(10, shortNumbersNumberOfZeroRemoved).toInt();
+
                                       double costOfLand = landPricePerMeter *
                                           landArea;
-                
+
                                       String costOfLandText = formatNumberWithThousandSeparator(
                                           costOfLand);
-                
+
                                       double totalNumberOfFloors = (givenMaxFloorNumber ==
-                                          (projectBasicDataList[0]
-                                              .projectBasicTableFirstFloorNumber)) ?
+                                          (projectBasicDataList[0].projectBasicTableFirstFloorNumber)) ?
                                       1 : givenMaxFloorNumber -
                                           ((projectBasicDataList[0]
                                               .projectBasicTableFirstFloorNumber)) +
                                           1;
-                
+
                                       String totalNumberOfFloorsText = totalNumberOfFloors
                                           .toString();
-                
-                
+
+
                                       ////////////// Areas
                                       double groundFloor = double.maxFinite;
                                       double totalAreaGroundFloor = 0.0;
                                       for (ProjectTableData data in projectData) {
                                         int floorNumber = int.parse(
-                                            data.costPricingTableFloorNumber
-                                                .toString());
+                                            data.costPricingTableFloorNumber.toString());
                                         if (floorNumber >= 0) {
                                           if (floorNumber < groundFloor) {
                                             // Found a new lower ground floor, reset total area
@@ -848,8 +950,7 @@ class _OtherCostsState extends State<OtherCosts> {
                 
                                       double totalCommonArea = 0;
                                       for (ProjectTableData data in projectData) {
-                                        if (data
-                                            .costPricingTableSegmentSellPricePerMeter ==
+                                        if (data.costPricingTableSegmentSellPricePerMeter ==
                                             0) {
                                           totalCommonArea +=
                                               data.costPricingTableSegmentArea;
@@ -889,8 +990,8 @@ class _OtherCostsState extends State<OtherCosts> {
                                             data.costPricingTableCostOfSegment;
                                       }
                                       totalConstructionCost = totalConstructionCost *
-                                          pow(10, shortNumbersNumberOfZeroRemoved)
-                                              .toInt();
+                                          pow(10, shortNumbersNumberOfZeroRemoved).toInt();
+
                                       String totalConstructionCostText = formatNumberWithThousandSeparator(
                                           totalConstructionCost);
                 
@@ -899,47 +1000,56 @@ class _OtherCostsState extends State<OtherCosts> {
                                           totalConstructedArea;
                                       String averageConstructionCostPerMeterText = formatNumberWithThousandSeparator(
                                           averageConstructionCostPerMeter);
-                
-                                      // Calculate the TotalPermissionCost
-                                      double totalPermissionCost = 0;
-                                      for (PermitFeeSegmentPricingData data in permitFeeData) {
-                                        totalPermissionCost += data
-                                            .permitFeeSegmentPricingTableTotalSegmentPermitFee;
+
+                                      List<UniquePermitFeeData> uniquePermitFeeData = await DifferentiatedCalculationDatabaseHelper
+                                          .getUniquePermitFeeData(projectName1);
+                                      double totalPermitFee = 0;
+                                      if (uniquePermitFeeData.isNotEmpty &&(
+                                          uniquePermitFeeData.first.uniquePermitFeeTableIsUniquePermitFeePerMeterBool == 1
+                                              || uniquePermitFeeData.first.uniquePermitFeeTableIsUniquePermitFeeTotalBool == 1))
+                                      {
+                                        totalPermitFee = uniquePermitFeeData.first.uniquePermitFeeTableUniquePermitFeeTotal;
                                       }
-                                      totalPermissionCost = totalPermissionCost *
-                                          pow(10, shortNumbersNumberOfZeroRemoved)
-                                              .toInt();
-                                      String totalPermissionCostText = formatNumberWithThousandSeparator(
-                                          totalPermissionCost);
-                
+                                      else
+                                      {
+                                        //   print('MeterBool ${uniquePermitFeeData.first.uniquePermitFeeTableIsUniquePermitFeePerMeterBool}');
+                                        //    print('TotalBool ${uniquePermitFeeData.first.uniquePermitFeeTableIsUniquePermitFeeTotalBool}');
+                                        List<PermitFeeSegmentPricingData> permitFeeData =
+                                        await DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentPricingData(projectName1);
+                                        // Calculate the TotalPermitFee
+
+                                        for (PermitFeeSegmentPricingData data in permitFeeData) {
+                                          totalPermitFee += data.permitFeeSegmentPricingTableTotalSegmentPermitFee;
+                                        }
+                                      }
+                                      totalPermitFee = totalPermitFee *
+                                          pow(10, shortNumbersNumberOfZeroRemoved).toInt();
+                                      String totalPermitFeeText = formatNumberWithThousandSeparator(totalPermitFee);
+
                                       //   bool yardConstructionCostsBoolValue= bool.parse(resultProjectData[0].resultProjectTableYardConstructionCostsBoolValue);
-                
-                                      double roofAndYardConstructionCostsTotalValue =
-                                      (landArea * (projectBasicDataList[0]
-                                          .projectBasicTableRoofAndYardConstructionCosts)
-                                          * pow(10, shortNumbersNumberOfZeroRemoved)
-                                              .toInt());
-                
-                                      /*double roofAndYardConstructionCostsTotalValue = yardConstructionCostsBoolValue ?
+
+
+                                      double yardConstructionCostsTotalValue =
+                                      ((landArea- totalAreaGroundFloor) * (projectBasicDataList[0].projectBasicTableYardConstructionCostPerMeter)
+                                          * pow(10, shortNumbersNumberOfZeroRemoved).toInt());
+
+                                      /*double yardConstructionCostsTotalValue = yardConstructionCostsBoolValue ?
                                         (landArea * double.parse(resultProjectData[0].resultProjectTableRoofAndYardConstructionCosts.replaceAll(',', ''))
                                         * pow(10, shortNumbersNumberOfZeroRemoved).toInt())
                                         : (double.parse(resultProjectData[0].resultProjectTableRoofAndYardConstructionCosts.replaceAll(',', ''))
                                         * pow(10, shortNumbersNumberOfZeroRemoved).toInt());*/
-                                      String roofAndYardConstructionCostsText = formatNumberWithThousandSeparator(
-                                          roofAndYardConstructionCostsTotalValue);
-                
-                                      double averagePermissionCostPerMeter = totalPermissionCost /
+                                      String yardConstructionCostsText = formatNumberWithThousandSeparator(
+                                          yardConstructionCostsTotalValue);
+
+                                      double averagePermitFeePerMeter = totalPermitFee /
                                           totalConstructedArea;
-                                      String averagePermissionCostPerMeterText = formatNumberWithThousandSeparator(
-                                          averagePermissionCostPerMeter);
-                
-                                      double givenOtherCost = (projectBasicDataList[0]
-                                          .projectBasicTableOtherCosts)
-                                          * pow(10, shortNumbersNumberOfZeroRemoved)
-                                              .toInt();
-                                      String givenOtherCostText = formatNumberWithThousandSeparator(
-                                          (givenOtherCost));
-                
+                                      String averagePermitFeePerMeterText = formatNumberWithThousandSeparator(
+                                          averagePermitFeePerMeter);
+
+                                      double givenOtherCost = (projectBasicDataList[0].projectBasicTableOtherCosts)
+                                          * pow(10, shortNumbersNumberOfZeroRemoved).toInt();
+                                      String givenOtherCostText = formatNumberWithThousandSeparator((givenOtherCost));
+
                                       // Calculate the TotalIncome
                                       double totalIncome = 0;
                                       for (ProjectTableData data in projectData) {
@@ -957,13 +1067,11 @@ class _OtherCostsState extends State<OtherCosts> {
                                           totalSalableArea;
                                       String unitAverageSellPricePerMeterText = formatNumberWithThousandSeparator(
                                           unitAverageSellPricePerMeter);
-                
+
                                       //  bool TransactionCostBoolValue= bool.parse(resultProjectData[0].resultProjectTableTransactionCostBoolValue);
                 
                                       double transactionCostsValue =
-                                      ((totalIncome * ((projectBasicDataList[0]
-                                          .projectBasicTableTransactionCosts)) /
-                                          100));
+                                      ((totalIncome * ((projectBasicDataList[0].projectBasicTableTransactionCosts)) /100));
                 
                                       /*  double transactionCostsValue = TransactionCostBoolValue ?
                                     ((totalIncome * (double.parse(resultProjectData[0].resultProjectTableTransactionCosts.replaceAll(',', '')))/100))
@@ -972,12 +1080,16 @@ class _OtherCostsState extends State<OtherCosts> {
                                             */
                                       String transactionCostsText = formatNumberWithThousandSeparator(
                                           transactionCostsValue);
-                
+
                                       double landPricePerMeterToAverageSellPricePerMeter = landPricePerMeter /
                                           unitAverageSellPricePerMeter;
                                       String landPricePerMeterToAverageSellPricePerMeterText = formatNumberWithThousandSeparator(
                                           landPricePerMeterToAverageSellPricePerMeter);
-                
+
+                                      landPricePerMeterToAverageSellPricePerMeter =
+                                          landPricePerMeterToAverageSellPricePerMeter *
+                                              pow(10, shortNumbersNumberOfZeroRemoved).toInt();
+
                                       landPricePerMeterToAverageSellPricePerMeter =
                                           landPricePerMeterToAverageSellPricePerMeter *
                                               pow(10, shortNumbersNumberOfZeroRemoved)
@@ -987,16 +1099,12 @@ class _OtherCostsState extends State<OtherCosts> {
                                       double unitMinSellPricePerMeter = double
                                           .infinity; // Initialize to infinity
                                       double unitMaxSellPricePerMeter = 0; // You can keep this as is
-                
+
                                       for (ProjectTableData data in projectData) {
                                         // Check if the sell price is positive
-                                        if (data
-                                            .costPricingTableSegmentSellPricePerMeter >
-                                            0) {
+                                        if (data.costPricingTableSegmentSellPricePerMeter > 0) {
                                           // Update minimum sell price if the current price is less than the current minimum
-                                          if (data
-                                              .costPricingTableSegmentSellPricePerMeter <
-                                              unitMinSellPricePerMeter) {
+                                          if (data.costPricingTableSegmentSellPricePerMeter <unitMinSellPricePerMeter) {
                                             unitMinSellPricePerMeter = data
                                                 .costPricingTableSegmentSellPricePerMeter;
                                           }
@@ -1009,7 +1117,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                           }
                                         }
                                       }
-                
+
                                       // Check if unitMinSellPricePerMeter was updated
                                       if (unitMinSellPricePerMeter ==
                                           double.infinity) {
@@ -1036,15 +1144,16 @@ class _OtherCostsState extends State<OtherCosts> {
                                       // Calculate the total cost
                                       double totalCosts = costOfLand +
                                           totalConstructionCost +
-                                          totalPermissionCost +
-                                          roofAndYardConstructionCostsTotalValue +
+                                          totalPermitFee +
+                                          yardConstructionCostsTotalValue +
                                           transactionCostsValue + givenOtherCost;
                 
                                       String totalCostsText = formatNumberWithThousandSeparator(
                                           totalCosts);
                 
-                                      int tenX = maxDivisibleByThree(totalCosts);
-                
+                                      int tenX = completeThreeDigitBatches(totalCosts);
+                                      String tenXX = formatNumberWithThousandSeparator(tenX);
+                                      
                                       double allCostsIncurredPerMeterOfSalableArea = totalCosts /
                                           totalSalableArea;
                                       String allCostsIncurredPerMeterOfSalableAreaText = formatNumberWithThousandSeparator
@@ -1054,53 +1163,57 @@ class _OtherCostsState extends State<OtherCosts> {
                                       double totalProfit = totalIncome - totalCosts;
                                       String totalProfitText = formatNumberWithThousandSeparator(
                                           totalProfit);
-                
+
                                       // Calculate the ProfitPerSalableArea
-                                      double profitPercentage = (totalProfit /
-                                          totalCosts) * 100;
+                                      double profitPercentage = (totalProfit /totalCosts) * 100;
                                       String profitPercentageText = '${formatNumberWithThousandSeparator(
                                           profitPercentage)}%';
-                
+
+                                      double profitPercentageAnnually = (profitPercentage /
+                                          projectBasicDataList[0].projectBasicTableNumberOfInvestmentYears);
+
+                                      String profitPercentageAnnuallyText = '${formatNumberWithThousandSeparator(
+                                          profitPercentageAnnually)}%';
+
                                       // Calculate the ProfitPerSalableArea
                                       double profitPerSalableArea = totalProfit /
                                           totalSalableArea;
                                       String profitPerSalableAreaText = formatNumberWithThousandSeparator(
                                           profitPerSalableArea);
-                
-                                      double landPermissionCostsPerTotalCosts = (costOfLand +
-                                          totalPermissionCost) / totalCosts;
-                                      String landPermissionCostsPerTotalCostsText = formatNumberWithThousandSeparator(
-                                          landPermissionCostsPerTotalCosts);
-                
-                                      double neededSalableAreaToBeSoldToFinanceLandAndPermissionCost = (costOfLand +
-                                          totalPermissionCost) /
+
+                                      double landPermitFeesPerTotalCosts = (costOfLand +
+                                          totalPermitFee) / totalCosts;
+                                      String landPermitFeesPerTotalCostsText = formatNumberWithThousandSeparator(
+                                          landPermitFeesPerTotalCosts);
+
+                                      double neededSalableAreaToBeSoldToFinanceLandAndPermitFee = (costOfLand +
+                                          totalPermitFee) /
                                           unitAverageSellPricePerMeter;
-                                      String neededSalableAreaToBeSoldToFinanceLandAndPermissionCostText =
-                                      formatNumberWithThousandSeparator(
-                                          neededSalableAreaToBeSoldToFinanceLandAndPermissionCost);
-                
+
+                                      String neededSalableAreaToBeSoldToFinanceLandAndPermitFeeText =
+                                      formatNumberWithThousandSeparator(neededSalableAreaToBeSoldToFinanceLandAndPermitFee);
+
                                       double saleableAreaConstructedPerMillionCurrencySegments = (totalSalableArea *
                                           tenX) / totalCosts;
                                       String saleableAreaConstructedPerMillionCurrencySegmentsText =
                                       (saleableAreaConstructedPerMillionCurrencySegments
                                           .toStringAsFixed(2));
-                
+
                                       double numberOfSalablePropertiesPerMillionCurrencySegments =
                                           ((projectBasicDataList[0]
-                                              .projectBasicTableNumberOfSalableProperties) *
-                                              tenX)
+                                              .projectBasicTableNumberOfSalableProperties) * tenX)
                                               / totalCosts;
-                
+
                                       String numberOfSalablePropertiesPerMillionCurrencySegmentsText =
-                                      numberOfSalablePropertiesPerMillionCurrencySegments
-                                          .toStringAsFixed(2);
-                
-                
+                                      numberOfSalablePropertiesPerMillionCurrencySegments.toStringAsFixed(2);
+
+
                                       List<List<dynamic>> consFloor = [];
                                       double costOfProject = 0;
                                       double incomeOfProject = 0;
                                       double profitOfProject = 0;
-                
+
+
                                       for (int i = 0; i < projectData.length; i++) {
                                         bool found = false;
                                         for (int j = 0; j < consFloor.length; j++) {
@@ -1221,10 +1334,9 @@ class _OtherCostsState extends State<OtherCosts> {
                                       ResultProjectColumnsClassData resultProjectData_ = ResultProjectColumnsClassData(
                                         resultProjectTableId: await DifferentiatedCalculationDatabaseHelper
                                             .getNextResultProjectTableId(),
-                                        resultProjectTableProjectName: widget
-                                            .givenProjectName,
+                                        resultProjectTableProjectName: widget.givenProjectName,
                                         resultProjectTablePricing: 'differentiated',
-                
+
                                         resultProjectTableLandArea: landAreaText,
                                         resultProjectTableTotalNumberOfFloorsText: totalNumberOfFloorsText,
                                         resultProjectTableFloorZeroConstructedArea: totalAreaGroundFloorText,
@@ -1232,45 +1344,57 @@ class _OtherCostsState extends State<OtherCosts> {
                                         resultProjectTableTotalCommonArea: totalCommonAreaText,
                                         resultProjectTableTotalSalableArea: totalSalableAreaText,
                                         resultProjectTableTotalConstructedArea: totalConstructedAreaText,
-                
+
                                         resultProjectTableSegmentAverageSellPricePerMeter: unitAverageSellPricePerMeterText,
                                         resultProjectTableLandPricePerMeterToAverageSellPricePerMeter: landPricePerMeterToAverageSellPricePerMeterText,
                                         resultProjectTableSegmentMinSellPricePerMeter: unitMinSellPricePerMeterText,
                                         resultProjectTableSegmentMaxSellPricePerMeter: unitMaxSellPricePerMeterText,
                                         resultProjectTableTotalIncome: totalIncomeText,
-                
+
                                         resultProjectTableAverageConstructionCostPerMeter: averageConstructionCostPerMeterText,
-                                        resultProjectTableAveragePermissionCostPerMeter: averagePermissionCostPerMeterText,
-                
+                                        resultProjectTableAveragePermitFeePerMeter: averagePermitFeePerMeterText,
+
                                         resultProjectTableCostOfLand: costOfLandText,
                                         resultProjectTableTotalConstructionCost: totalConstructionCostText,
-                                        resultProjectTableTotalPermissionCost: totalPermissionCostText,
-                
-                                        resultProjectTableRoofAndYardConstructionCostsText: roofAndYardConstructionCostsText,
+                                        resultProjectTableTotalPermitFee: totalPermitFeeText,
+
+                                        resultProjectTableYardConstructionCostPerMeterText: yardConstructionCostsText,
                                         resultProjectTableOtherCostsText: givenOtherCostText,
-                
+
                                         resultProjectTableTotalCosts: totalCostsText,
-                
+
                                         resultProjectTableTotalProfit: totalProfitText,
                                         resultProjectTableProfitPercentageOfProject: profitPercentageText,
                                         resultProjectTableProfitPerSalableArea: profitPerSalableAreaText,
                                         resultProjectTableTransactionCostsText: transactionCostsText,
-                                        resultProjectTableLandPermissionCostsPerTotalCosts: landPermissionCostsPerTotalCostsText,
-                                        resultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermissionCost: neededSalableAreaToBeSoldToFinanceLandAndPermissionCostText,
+                                        resultProjectTableLandPermitFeesPerTotalCosts: landPermitFeesPerTotalCostsText,
+                                        resultProjectTableNeededSalableAreaToBeSoldToFinanceLandAndPermitFee: neededSalableAreaToBeSoldToFinanceLandAndPermitFeeText,
                                         resultProjectTableAllCostsIncurredPerMeterOfSalableArea: allCostsIncurredPerMeterOfSalableAreaText,
-                                        resultProjectTableNumberOfSalablePropertiesPerMillionCurrencySegments: numberOfSalablePropertiesPerMillionCurrencySegmentsText,
-                                        resultProjectTableSalableAreaConstructedPerMillionCurrencySegments: saleableAreaConstructedPerMillionCurrencySegmentsText,
+                                        resultProjectTableMicroScale: tenXX,
+                                        resultProjectTableNumberOfSalablePropertiesPerMicroScale: numberOfSalablePropertiesPerMillionCurrencySegmentsText,
+                                        resultProjectTableSalableAreaConstructedPerMicroScale: saleableAreaConstructedPerMillionCurrencySegmentsText,
                                         resultProjectTableTotalSalableAreaToLandArea: resultProjectTableTotalSalableAreaToLandArea
                                             .toStringAsFixed(2),
                                         resultProjectTableNumberOfSalableProperties: projectBasicDataList[0]
-                                            .projectBasicTableNumberOfSalableProperties
-                                            .toString(),
-                
+                                            .projectBasicTableNumberOfSalableProperties.toString(),
+                                        resultProjectTableProfitPercentageAnnually: profitPercentageAnnuallyText,
                                       );
-                
-                                      await DifferentiatedCalculationDatabaseHelper
-                                          .insertOrUpdateResultProjectData(
+
+                                      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateResultProjectData(
                                           resultProjectData_);
+
+                                      if (projectName1!= '_oozz') {
+                                        await AllProjectsPageDatabase.updateAllProjectsPageData(
+                                          projectName1,
+                                          'differentiated',
+                                          totalCostsText,
+                                          totalIncomeText,
+                                          totalProfitText,
+                                          profitPercentageText,);
+                                      }
+
+                                   //   InterstitialAdManager.showInterstitial();
+                                      await Future.delayed(const Duration(seconds: 2));
 
                                       NavigationService().navigateToScreen(const ResultPage1());
 
@@ -1291,7 +1415,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                         {
                                     await AllProjectsPageDatabase.updateProjectOtherFields(
                                         projectName: widget.givenProjectName,       // Identifies the row to update
-                                        Pricing: 'differentiated',           // Your calculation type to identify the row
+                                        pricingType: 'differentiated',           // Your calculation type to identify the row
                                         fieldsToUpdate: {
                                           AllProjectsPageDatabase
                                               .columnAllProjectsPageProjectName: widget

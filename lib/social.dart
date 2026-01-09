@@ -99,7 +99,7 @@ class RealEstateTopicsPageState extends State<RealEstateTopicsPage> {
                           padding: const EdgeInsets.fromLTRB(0,10,0,10),
                           child: Text(
                             'Society & Real Estate',
-                            style: TextStyle(
+                            textAlign: TextAlign.center,  style: TextStyle(
                               fontSize: titleFontSize, // Increase the font size of the text
                               color: Colors.white, // Set the text color to white
                             ),
@@ -125,7 +125,7 @@ class RealEstateTopicsPageState extends State<RealEstateTopicsPage> {
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(0,10,0,10),
                           child: Text('Environment & Real Estate',
-                            style: TextStyle(
+                            textAlign: TextAlign.center, style: TextStyle(
                               fontSize: titleFontSize, // Increase the font size of the text
                               color: Colors.white, // Set the text color to white
                             ),
@@ -153,7 +153,7 @@ class RealEstateTopicsPageState extends State<RealEstateTopicsPage> {
                           padding: const EdgeInsets.fromLTRB(0,10,0,10),
                           child: Text(
                             'Economy & Real Estate',
-                            style: TextStyle(
+                            textAlign: TextAlign.center,  style: TextStyle(
                               fontSize: titleFontSize, // Set the font size of the text
                               color: Colors.white, // Set the text color to white
                             ),
@@ -801,8 +801,8 @@ class ExpandedTopicsSocietyPageState extends State<ExpandedTopicsSocietyPage> {
                             ),
                             child:  Padding(
                               padding: const EdgeInsets.all(10.0),
-                              child: Text('Personal-Family Development'
-                                , style: TextStyle(color: Colors.black,
+                              child: Text('Personal-Family Development',
+    textAlign: TextAlign.center , style: TextStyle(color: Colors.black,
                                     fontSize: textFontSize),),
                             )
                         ),
@@ -2541,7 +2541,7 @@ class EnvironmentPageState extends State<EnvironmentPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(10.0),
                         child: Text( 'Environment and Real Estate Market',
-                          style: TextStyle(color: Colors.white, fontSize: titleFontSize
+                          textAlign: TextAlign.center,  style: TextStyle(color: Colors.white, fontSize: titleFontSize
                               ,fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -2601,7 +2601,7 @@ class EnvironmentPageState extends State<EnvironmentPage> {
                                               'industries, including the types of construction materials '
                                               'used and resource consumption.\n\n',
                                           style: TextStyle(
-                                            fontSize: textFontSize, 
+                                            fontSize: textFontSize,
                                           ),
                                         ),
                                       ]
@@ -2636,12 +2636,12 @@ class EnvironmentPageState extends State<EnvironmentPage> {
                               ),
                               child:  Padding(
                                 padding: const EdgeInsets.all(10.0),
-                                child: Text('Home Construction Materials'
-                                  , style: TextStyle(color: Colors.black, fontSize: textFontSize),),
+                                child: Text('Home Construction Materials',
+                                    textAlign: TextAlign.center, style: TextStyle(color: Colors.black, fontSize: textFontSize),),
                               )
                           ),
                         ),
-
+                    SizedBox(height: spacingHeight),
 
                     if (_materialEnvironmentExpanded)
                       SingleChildScrollView(
@@ -2872,7 +2872,7 @@ class EnvironmentPageState extends State<EnvironmentPage> {
                           ),
                         ),
                       ),
-                     SizedBox(height: spacingHeight),
+
 
                         SizedBox(width:buttonWidth,
                           child: ElevatedButton(
@@ -2897,11 +2897,12 @@ class EnvironmentPageState extends State<EnvironmentPage> {
                               child:  Padding(
                                 padding: const EdgeInsets.all(10.0),
                                 child: Text('Resource Consumption'
-                                  , style: TextStyle(color: Colors.black, fontSize: textFontSize),),
+                                  ,textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.black, fontSize: textFontSize),),
                               )
                           ),
                         ),
-
+                    SizedBox(height: spacingHeight),
                     if (_resourceEnvironmentExpanded)
                       Scrollbar(
                         thickness: 8.0, // Set the thickness of the scrollbar

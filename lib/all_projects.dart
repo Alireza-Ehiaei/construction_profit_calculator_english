@@ -1,4 +1,4 @@
-import 'package:construction_profit_calculator_english/result_complete.dart';
+import 'package:construction_profit_calculator_english/result_differentiated.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -86,31 +86,57 @@ class AllProjectsPageDatabase {
 
 static Future<int> insertOrUpdateAllProjectsPageData(
     AllProjectsPageData1 allProjectsPageData)
-async {
-  final db = await database;
-  final maps = await db.query(
-    tableAllProjectsPageData,
-    where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
-    whereArgs: [allProjectsPageData.allProjectsPageProjectName, allProjectsPageData.allProjectsPageCalculationName],
-  );
-  if (maps.isNotEmpty) {
+    async {
+      final db = await database;
+      final maps = await db.query(
+        tableAllProjectsPageData,
+        where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
+        whereArgs: [allProjectsPageData.allProjectsPageProjectName, allProjectsPageData.allProjectsPageCalculationName],
+      );
+      if (maps.isNotEmpty) {
+        await db.update(
+          tableAllProjectsPageData,
+          allProjectsPageData.toMap(),
+          where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
+          whereArgs: [allProjectsPageData.allProjectsPageProjectName, allProjectsPageData.allProjectsPageCalculationName],
+        );
+        return maps.first[columnAllProjectsPageId] as int;
+      } else {
+        final id = await db.insert(
+          tableAllProjectsPageData,
+          allProjectsPageData.toMap(),
+        );
+        return id;
+      }
+    }
+  static Future<void> updateAllProjectsPageData(
+      String projectName,
+      String calculationName,
+      String costOfProject,
+      String incomeOfProject,
+      String profitOfProject,
+      String profitPercentageOfProject,
+      )
+  async {
+    final db = await database;
+
     await db.update(
       tableAllProjectsPageData,
-      allProjectsPageData.toMap(),
+      {
+        columnAllProjectsPageCostOfProject: costOfProject,
+        columnAllProjectsPageIncomeOfProject: incomeOfProject,
+        columnAllProjectsPageProfitOfProject: profitOfProject,
+        columnAllProjectsPageProfitPercentageOfProject: profitPercentageOfProject,
+        columnAllProjectsPagePricingType: calculationName,
+        columnAllProjectsPageProjectName: projectName,
+      },
       where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
-      whereArgs: [allProjectsPageData.allProjectsPageProjectName, allProjectsPageData.allProjectsPageCalculationName],
+      whereArgs: [projectName, calculationName],
     );
-    return maps.first[columnAllProjectsPageId] as int;
-  } else {
-    final id = await db.insert(
-      tableAllProjectsPageData,
-      allProjectsPageData.toMap(),
-    );
-    return id;
   }
-}
 
-  static Future<int> updateProjectFinancials(NewFinancialData newFinancialData) async {
+
+ /* static Future<int> updateProjectFinancials(NewFinancialData newFinancialData) async {
     final db = await database;
 
     // Fetch existing row
@@ -166,20 +192,21 @@ async {
     return id;
   }
 
-
+*/
 
   static Future<int> updateProjectOtherFields({
     required String projectName,
-    required String Pricing,
+    required String pricingType,
     required Map<String, dynamic> fieldsToUpdate,
-  }) async {
+  })
+  async {
     final db = await database;
     // Only update the specified columns
     final result = await db.update(
       tableAllProjectsPageData,
       fieldsToUpdate,
       where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
-      whereArgs: [projectName, Pricing],
+      whereArgs: [projectName, pricingType],
     );
     return result; // returns number of rows affected
   }
@@ -207,32 +234,33 @@ async {
     });
   }
 
-  static Future<void> updateProjectNameInAllProjectsPageData(String oldProjectName, String newProjectName, String calcType) async {
+  static Future<void> updateProjectNameInAllProjectsPageData(String oldProjectName, String newProjectName, String pricingType) async {
     final db = await database;
 
-    if (calcType == 'uniform') {
+    if (pricingType == 'uniform') {
       await db.rawUpdate(
         'UPDATE $tableAllProjectsPageData SET $columnAllProjectsPageProjectName = ? '
             'WHERE $columnAllProjectsPageProjectName = ? '
             'AND $columnAllProjectsPagePricingType = ?',
-        [newProjectName, oldProjectName, calcType],
+        [newProjectName, oldProjectName, pricingType],
       );
-    } else if (calcType == 'Differentiated') {
+    } else if (pricingType == 'Differentiated') {
       await db.rawUpdate(
         'UPDATE $tableAllProjectsPageData SET $columnAllProjectsPageProjectName = ? '
             'WHERE $columnAllProjectsPageProjectName = ? '
             'AND $columnAllProjectsPagePricingType = ?',
-        [newProjectName, oldProjectName, calcType],
+        [newProjectName, oldProjectName, pricingType],
       );
     }
   }
 
-  static Future<void> deleteProjectFromAllProjectsPageData(String projectName) async {
+  static Future<void> deleteProjectFromAllProjectsPageData(String projectName, String calculationType)
+  async {
     final db = await database;
     await db.delete(
       tableAllProjectsPageData,
-      where: '$columnAllProjectsPageProjectName = ?',
-      whereArgs: [projectName],
+      where: '$columnAllProjectsPageProjectName = ? AND $columnAllProjectsPagePricingType = ?',
+      whereArgs: [projectName, calculationType],
     );
   }
 
@@ -313,15 +341,13 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
   // Define a list to store the selected values for each row
   List<String> selectedValues = List.filled(
       10, ''); // Re place 10 with the appropriate length
-  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+//  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
 
 
   @override
   void initState() {
     super.initState();
-    _initializeProjectData(); // Assuming this is a method you have
-    // Call the new method
-
+    _initializeProjectData();
   }
 
 
@@ -521,7 +547,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                   body: Container(
                     color: const Color.fromRGBO(13, 110, 76, 1.0),
                     child: Padding(
-                      padding: const EdgeInsets.all(12.0),
+                      padding: const EdgeInsets.all(8.0),
                       child: FutureBuilder<List<List<dynamic>>>(
                         future: _getAllProjectDataFromAllProjectsPageDatabase(),
                         builder: (context, snapshot) {
@@ -816,7 +842,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                     'Environmentally\nFriendly',
                                                     style: TextStyle(
                                                         color: Colors.white,
-                                                        fontSize: textFontSize
+                                                        fontSize: textFontSize * 0.8
                                                     ),
                                                   ),
                                                   // New column for the text value
@@ -846,7 +872,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                     'Socially\nFriendly',
                                                     style: TextStyle(
                                                         color: Colors.white,
-                                                        fontSize: textFontSize
+                                                        fontSize: textFontSize * 0.8
                                                     ),
                                                   ),
                                                   // New column for the text value
@@ -1044,18 +1070,19 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                             size: iconSizeLarge,
                                           ),
                                           onPressed: () async {
+                                     //       final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
+                                     //       final projectData = Provider.of<ProjectData>(context, listen: false);
+
                                             showDialog(
                                               context: context,
                                               builder: (BuildContext context) {
                                                 return AlertDialog(
                                                   content: SizedBox(
                                                     child: Column(
-                                                      mainAxisSize: MainAxisSize
-                                                          .min,
+                                                      mainAxisSize: MainAxisSize.min,
                                                       children: [
                                                         SizedBox(
-                                                            height: spacingHeight *
-                                                                3),
+                                                            height: spacingHeight * 3),
                                                         /* Flexible(
                                                 flex: 1,
                                                 child: ElevatedButton(
@@ -1116,6 +1143,10 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                       , style: TextStyle(fontSize: textFontSize, color: Colors.white)),
                                                 ),
                                               ),*/
+                                                     /*   ElevatedButton(
+                                                          onPressed: () => subscriptionsProvider.showTestSubscriptionDialog(context),
+                                                          child: const Text('Test Subscription Dialog'),
+                                                        ),*/
 
                                                         Flexible(
                                                           flex: 1,
@@ -1123,19 +1154,54 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                             width: double.infinity, // Force equal width
                                                             child: ElevatedButton(
                                                               onPressed: () async {
-                                                                final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                                                                final projectData = Provider.of<ProjectData>(context, listen: false);
+                                                                final subscriptionsProvider = context.read<SubscriptionsProvider>();
 
-                                                                if (subscriptionsProvider.hasUniformActiveSubscription ||
-                                                                    subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
-                                                                  projectData.setProjectName("_oozz");
-                                                                  NavigationService().navigateToScreen(
-                                                                    const UniformCalculationPage1(givenSimpleProjectName: 'wwmm'),
-                                                                    arguments: 'wwmm',
+                                                                // 1️⃣ Check purchased access (excluding trial)
+                                                                final bool hasPurchasedAccess = subscriptionsProvider.hasUniformActiveSubscription ||
+                                                                    subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
+
+                                                                if (hasPurchasedAccess) {
+                                                                  // ✅ Grant access immediately
+                                                                  projectData.setProjectName("wwmm");
+                                                                  Navigator.of(context).pop(); // Close any parent dialogs if open
+
+                                                                  if (context.mounted) {
+                                                                    Navigator.of(context).push(
+                                                                      MaterialPageRoute(
+                                                                        builder: (_) => const UniformCalculationPage1(givenUniformProjectName: 'wwmm'),
+                                                                      ),
+                                                                    );
+                                                                  }
+
+                                                                  // Optional: show trial message if applicable
+                                                                  // final bool hasTrialAccess = subscriptionsProvider.hasTrialActive;
+                                                                  // if (hasTrialAccess) {
+                                                                  //   ScaffoldMessenger.of(context).showSnackBar(
+                                                                  //     const SnackBar(
+                                                                  //       content: Text("✅ Trial access is active.\n"),
+                                                                  //       backgroundColor: Colors.green,
+                                                                  //     ),
+                                                                  //   );
+                                                                  // }
+
+                                                                } else {
+                                                                  // 2️⃣ Show loading spinner while subscription UI loads
+                                                                  showDialog(
+                                                                    context: context,
+                                                                    barrierDismissible: false,
+                                                                    builder: (_) => const Center(
+                                                                      child: CircularProgressIndicator(strokeWidth: 3),
+                                                                    ),
                                                                   );
-                                                                  return;
+
+                                                                  try {
+                                                                    // 3️⃣ Call the real subscription UI (handles errors internally)
+                                                                    await subscriptionsProvider.showUniformSubscriptionUI(context);
+                                                                  } finally {
+                                                                    // 4️⃣ Close spinner dialog after completion
+                                                                    if (context.mounted) Navigator.of(context).pop();
+                                                                  }
                                                                 }
-                                                                await subscriptionsProvider.showUniformSubscriptionUI(context);
                                                               },
                                                               style: ElevatedButton.styleFrom(
                                                                 backgroundColor: Colors.blue,
@@ -1148,6 +1214,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 style: TextStyle(fontSize: textFontSize),
                                                               ),
                                                             ),
+
                                                           ),
                                                         ),
 
@@ -1157,23 +1224,55 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           flex: 1,
                                                           child: SizedBox(
                                                             width: double.infinity, // Force equal width
-                                                            child: ElevatedButton(
+                                                            child:ElevatedButton(
                                                               onPressed: () async {
-                                                                final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                                                                final projectData = Provider.of<ProjectData>(context, listen: false);
+                                                                final subscriptionsProvider = context.read<SubscriptionsProvider>();
 
-                                                                if (subscriptionsProvider
-                                                                    .hasDifferentiatedActiveSubscription ||
-                                                                    subscriptionsProvider
-                                                                        .hasDifferentiatedPlusUniformCalculationProductId) {
+                                                                // 1️⃣ Check purchased access (excluding trial)
+                                                                final bool hasPurchasedAccess = subscriptionsProvider.hasDifferentiatedActiveSubscription ||
+                                                                    subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
+
+                                                                if (hasPurchasedAccess) {
+                                                                  // ✅ Grant access immediately
                                                                   projectData.setProjectName("_oozz");
-                                                                  NavigationService().navigateToScreen(
-                                                                    const LandInputs(givenProjectName: '_oozz'),
-                                                                    arguments: '_oozz',
+                                                                  Navigator.of(context).pop(); // Close any parent dialogs if open
+
+                                                                  if (context.mounted) {
+                                                                    NavigationService().navigateToScreen(
+                                                                      const LandInputs(givenProjectName: '_oozz'),
+                                                                      arguments: '_oozz',
+                                                                    );
+                                                                  }
+
+                                                                  // Optional: show trial message if applicable
+                                                                  // final bool hasTrialAccess = subscriptionsProvider.hasTrialActive;
+                                                                  // if (hasTrialAccess) {
+                                                                  //   ScaffoldMessenger.of(context).showSnackBar(
+                                                                  //     const SnackBar(
+                                                                  //       content: Text("✅ Trial access is active.\n"),
+                                                                  //       backgroundColor: Colors.green,
+                                                                  //     ),
+                                                                  //   );
+                                                                  // }
+
+                                                                } else {
+                                                                  // 2️⃣ Show loading spinner while subscription UI loads
+                                                                  showDialog(
+                                                                    context: context,
+                                                                    barrierDismissible: false,
+                                                                    builder: (_) => const Center(
+                                                                      child: CircularProgressIndicator(strokeWidth: 3),
+                                                                    ),
                                                                   );
-                                                                  return;
+
+                                                                  try {
+                                                                    // 3️⃣ Call the real subscription UI (it handles errors internally)
+                                                                    await subscriptionsProvider.showDifferentiatedSubscriptionUI(context);
+                                                                  } finally {
+                                                                    // 4️⃣ Close spinner dialog after completion
+                                                                    if (context.mounted) Navigator.of(context).pop();
+                                                                  }
                                                                 }
-                                                                await subscriptionsProvider.showDifferentiatedSubscriptionUI(context);
                                                               },
                                                               style: ElevatedButton.styleFrom(
                                                                 backgroundColor: Colors.blue,
@@ -1184,484 +1283,16 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                               child: Text(
                                                                 'Differentiated Pricing',
                                                                 style: TextStyle(fontSize: textFontSize),
-                                                                textAlign: TextAlign.center, // Center the longer text
+                                                                textAlign: TextAlign.center,
                                                               ),
                                                             ),
+
+
                                                           ),
                                                         ),
-                                                      /*  Flexible(
-                                                            flex: 1,
-                                                            child: ElevatedButton(
-                                                              onPressed: () async {
-                                                                final subscriptionsProvider = Provider
-                                                                    .of<
-                                                                    SubscriptionsProvider>(
-                                                                    context,
-                                                                    listen: false);
-                                                                final projectData = Provider
-                                                                    .of<
-                                                                    ProjectData>(
-                                                                    context,
-                                                                    listen: false);
-
-                                                                // Check if user already has active subscription
-                                                                if (subscriptionsProvider
-                                                                    .hasDifferentiatedActiveSubscription ||
-                                                                    subscriptionsProvider
-                                                                        .hasDifferentiatedPlusUniformCalculationProductId) {
-                                                                  // Navigate directly
-                                                                  projectData.setProjectName("_oozz");
-                                                                  NavigationService()
-                                                                      .navigateToScreen(
-                                                                    const LandInputs(
-                                                                        givenProjectName: '_oozz'),
-                                                                    arguments: '_oozz',
-                                                                  );
-                                                                  return;
-                                                                }
-
-                                                                // Show manage subscription dialog
-                                                                showDialog(
-                                                                  context: context,
-                                                                  builder: (
-                                                                      context) =>
-                                                                      AlertDialog(
-                                                                        title: const Text(
-                                                                            'Manage Subscription'),
-                                                                        content: Text(
-                                                                          'Please restore purchases if you have already subscribed, or subscribe now.',
-                                                                          style: TextStyle(
-                                                                              fontSize: textFontSize,
-                                                                              color: Colors
-                                                                                  .purple),
-                                                                        ),
-                                                                        actions: [
-                                                                          TextButton(
-                                                                            onPressed: () async {
-                                                                              // Show a loading dialog using the current valid context
-                                                                              showDialog(
-                                                                                context: context,
-                                                                                barrierDismissible: false,
-                                                                                builder: (
-                                                                                    BuildContext loadingContext) {
-                                                                                  return const Center(
-                                                                                      child: CircularProgressIndicator());
-                                                                                },
-                                                                              );
-
-                                                                              try {
-                                                                                bool restorationSuccess = await subscriptionsProvider
-                                                                                    .restorePurchases();
-
-                                                                                // Immediately close the loading dialog as soon as the task is done
-                                                                                // We use the context from the loading dialog's builder for robustness
-                                                                                Navigator
-                                                                                    .of(
-                                                                                    context,
-                                                                                    rootNavigator: true)
-                                                                                    .pop();
-
-                                                                                // Close the initial subscription dialog (the parent of this button)
-                                                                                // before navigating or showing the final result.
-                                                                                Navigator
-                                                                                    .of(
-                                                                                    context)
-                                                                                    .pop();
-
-                                                                                if (restorationSuccess &&
-                                                                                    (subscriptionsProvider
-                                                                                        .hasDifferentiatedActiveSubscription ||
-                                                                                        subscriptionsProvider
-                                                                                            .hasDifferentiatedPlusUniformCalculationProductId)) {
-                                                                                  // Navigate to the next screen on success
-                                                                                  projectData
-                                                                                      .setProjectName(
-                                                                                      "_oozz");
-                                                                                  NavigationService()
-                                                                                      .navigateToScreen(
-                                                                                    const LandInputs(
-                                                                                        givenProjectName: '_oozz'),
-                                                                                    arguments: '_oozz',
-                                                                                  );
-                                                                                } else {
-                                                                                  // Show the "Restoration Unsuccessful" dialog on failure
-                                                                                  showDialog(
-                                                                                    context: context,
-                                                                                    builder: (
-                                                                                        _) =>
-                                                                                        AlertDialog(
-                                                                                          title: const Text(
-                                                                                              'Restoration Unsuccessful'),
-                                                                                          content: const Text(
-                                                                                            'No active subscriptions were found. Please subscribe or check your App Store/Google Play account purchases.',
-                                                                                          ),
-                                                                                          actions: [
-                                                                                            TextButton(
-                                                                                              onPressed: () {
-                                                                                                Navigator
-                                                                                                    .of(
-                                                                                                    context)
-                                                                                                    .pop();
-                                                                                                subscriptionsProvider
-                                                                                                    .showDifferentiatedSubscriptionUI(
-                                                                                                    context);
-                                                                                              },
-                                                                                              child: const Text(
-                                                                                                  'Subscribe'),
-                                                                                            ),
-                                                                                            TextButton(
-                                                                                              onPressed: () =>
-                                                                                                  Navigator
-                                                                                                      .of(
-                                                                                                      context)
-                                                                                                      .pop(),
-                                                                                              child: const Text(
-                                                                                                  'Cancel'),
-                                                                                            ),
-                                                                                          ],
-                                                                                        ),
-                                                                                  );
-                                                                                }
-                                                                              } catch (e) {
-                                                                                // Ensure the loading dialog is closed even if an error occurs
-                                                                                Navigator
-                                                                                    .of(
-                                                                                    context,
-                                                                                    rootNavigator: true)
-                                                                                    .pop();
-                                                                                // Also close the parent dialog if still open
-                                                                                if (Navigator
-                                                                                    .of(
-                                                                                    context)
-                                                                                    .canPop()) {
-                                                                                  Navigator
-                                                                                      .of(
-                                                                                      context)
-                                                                                      .pop();
-                                                                                }
-
-                                                                                ScaffoldMessenger
-                                                                                    .of(
-                                                                                    context)
-                                                                                    .showSnackBar(
-                                                                                  SnackBar(
-                                                                                      content: Text(
-                                                                                          'Error restoring purchases: $e')),
-                                                                                );
-                                                                              }
-                                                                            },
-                                                                            child: Text(
-                                                                                'Restore Purchases',
-                                                                                style: TextStyle(
-                                                                                    fontSize: textFontSize,
-                                                                                    color: Colors
-                                                                                        .deepPurple)),
-                                                                          ),
-                                                                          TextButton(
-                                                                            onPressed: () {
-                                                                              Navigator
-                                                                                  .of(
-                                                                                  context)
-                                                                                  .pop();
-                                                                              subscriptionsProvider
-                                                                                  .showDifferentiatedSubscriptionUI(
-                                                                                  context);
-                                                                            },
-                                                                            child: Text(
-                                                                                'Subscribe',
-                                                                                style: TextStyle(
-                                                                                    fontSize: textFontSize,
-                                                                                    color: Colors
-                                                                                        .deepPurple)),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                );
-                                                              },
-                                                              style: ElevatedButton
-                                                                  .styleFrom(
-                                                                  backgroundColor: Colors
-                                                                      .blue),
-                                                              child: Text(
-                                                                'Differentiated Pricing',
-                                                                style: TextStyle(
-                                                                    fontSize: textFontSize,
-                                                                    color: Colors
-                                                                        .white),
-                                                              ),
-                                                            )
-                                                        ),*/
-
                                                         SizedBox(
-                                                            height: spacingHeight *
-                                                                3),
+                                                            height: spacingHeight *3),
 
-                                                        /*   SizedBox(height: spacingHeight * 1.6,),
-                                              Flexible(flex: 1,
-                                                child: ElevatedButton(
-                                                  onPressed: () async {
-                      
-                                                    final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                      
-                                                    // Check if billing is available
-                                                    bool isBillingAvailable = await checkGooglePlayBillingAvailability();
-                      
-                                                    if (!isBillingAvailable) {
-                                                      // Show a dialog indicating that billing is not available
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (BuildContext context) => AlertDialog(
-                                                          title:  Text('No Subscription Available'),
-                                                          content: RichText(
-                                                            text: TextSpan(
-                                                              children: [
-                                                                 TextSpan(
-                                                                  text: 'No subscription found. ',
-                                                                  style: TextStyle(fontSize: titleFontSize , color: Colors.black), // Regular text
-                                                                ),
-                                                                 TextSpan(
-                                                                  text: 'Check your internet connection and your ',
-                                                                  style: TextStyle(fontSize: titleFontSize , color: Colors.black), // Regular text
-                                                                ),
-                                                                TextSpan(
-                                                                  text: 'Google Play account',
-                                                                  style:  TextStyle(fontSize: titleFontSize , color: Colors.blue, decoration: TextDecoration.underline), // Clickable text
-                                                                  recognizer: TapGestureRecognizer()
-                                                                    ..onTap = () async {
-                                                                      const url = 'https://play.google.com/store/account/subscriptions';
-                                                                      if (await canLaunchUrl(Uri.parse(url))) { // Updated method
-                                                                        await launchUrl(Uri.parse(url)); // Updated method
-                                                                      } else {
-                                                                        throw 'Could not launch $url';
-                                                                      }
-                                                                    },
-                                                                ),
-                                                                 TextSpan(
-                                                                  text: ' connection to ensure you have a subscription.',
-                                                                  style: TextStyle(fontSize: titleFontSize , color: Colors.black), // Regular text
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                          actions: <Widget>[
-                                                            TextButton(
-                                                              child:  Text('OK',   style: TextStyle(
-                                    fontSize: isIpad ? 40 : 28,
-                                    fontWeight: FontWeight.bold,
-                                  ),),
-                                                              onPressed: () => Navigator.of(context).pop(),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    }
-                                                    else {
-                      
-                                                      bool isLoadingIndicatorShown = false;
-                      
-                                                    if (subscriptionsProvider.isLoading ||
-                                                          (!subscriptionsProvider.hasUniformActiveSubscription && !subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId))
-                                                      {
-                      
-                                                        // Show loading indicator
-                                                        showDialog(
-                                                          context: context,
-                                                          barrierDismissible: false,
-                                                          builder: (BuildContext context) => const Center(child: CircularProgressIndicator()),
-                                                        );
-                      
-                                                        isLoadingIndicatorShown = true;
-                      
-                                                        // Call the restoration method and 3 seconds ait are necessary
-                                                        try {
-                      
-                                                          bool restorationSuccess = await subscriptionsProvider.initializeSubscriptions();
-                                                          print("Restoration result: $restorationSuccess");
-                      
-                                                          // Recheck subscription status
-                                                          subscriptionsProvider.hasUniformActiveSubscription = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.UniformCalculationProductId);
-                                                          subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.differentiatedPlusUniformCalculationProductId);
-                                                          print("  uniform Active Subscription: ${subscriptionsProvider.hasUniformActiveSubscription}");
-                                                          print("  Differentiated Pricing Plus Uniform Pricing: ${subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId}");
-                      
-                                                        } catch (e) {
-                                                          print("Error restoring purchases during button press: $e");
-                                                        }
-                      
-                                                        // Wait for three seconds to allow for subscription restoration
-                                                        await Future.delayed(const Duration(seconds: 3));
-                      
-                                                        // Dismiss the loading dialog
-                                                        if (isLoadingIndicatorShown) {
-                                                          Navigator.of(context, rootNavigator: true).pop();
-                      
-                                                        }
-                                                        print("  Differentiated Pricing Plus Uniform Pricing 1: ${subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId}");
-                      
-                                                      }
-                      
-                                                      // Proceed with checking subscription status and navigation
-                                                      if (subscriptionsProvider.hasUniformActiveSubscription || subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId) {
-                      
-                                                        NavigationService().navigateToScreen(
-                                                          const UniformCalculationPage1(givenUniformProjectName: 'wwmm'),
-                                                          arguments: 'wwmm',
-                                                        );
-                                                      } else {
-                                                        subscriptionsProvider.showUniformSubscriptionUI(context);
-                                                      }
-                                                    }
-                                                  },
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.blue,
-                                                  ),
-                                                  child:  Text(
-                                                    ' Uniform Pricing ',
-                                                    style: TextStyle(
-                                                      fontSize: textFontSize,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                      
-                                             SizedBox(height: spacingHeight * 1.6,),
-                      
-                                              Flexible(flex: 1,
-                                                child: ElevatedButton(
-                                                  onPressed: () async {
-                      
-                                                    final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                      
-                                                    // Check if billing is available
-                                                    bool isBillingAvailable = await checkGooglePlayBillingAvailability();
-                      
-                                                    if (!isBillingAvailable) {
-                                                      // Show a dialog indicating that billing is not available
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (BuildContext context) => AlertDialog(
-                                                          title:  Text('No Subscription Available'),
-                                                          content: RichText(
-                                                            text: TextSpan(
-                                                              children: [
-                                                                 TextSpan(
-                                                                  text: 'No subscription found. ',
-                                                                  style: TextStyle(fontSize: titleFontSize , color: Colors.black), // Regular text
-                                                                ),
-                                                                 TextSpan(
-                                                                  text: 'Check your internet connection and your ',
-                                                                  style: TextStyle(fontSize: titleFontSize , color: Colors.black), // Regular text
-                                                                ),
-                                                                TextSpan(
-                                                                  text: 'Google Play account',
-                                                                  style:  TextStyle(fontSize: titleFontSize , color: Colors.blue, decoration: TextDecoration.underline), // Clickable text
-                                                                  recognizer: TapGestureRecognizer()
-                                                                    ..onTap = () async {
-                                                                      const url = 'https://play.google.com/store/account/subscriptions';
-                                                                      if (await canLaunchUrl(Uri.parse(url))) { // Updated method
-                                                                        await launchUrl(Uri.parse(url)); // Updated method
-                                                                      } else {
-                                                                        throw 'Could not launch $url';
-                                                                      }
-                                                                    },
-                                                                ),
-                                                                 TextSpan(
-                                                                  text: ' connection to ensure you have a subscription.',
-                                                                  style: TextStyle(fontSize: titleFontSize , color: Colors.black), // Regular text
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                          actions: <Widget>[
-                                                            TextButton(
-                                                              child:  Text('OK',   style: TextStyle(
-                                    fontSize: isIpad ? 40 : 28,
-                                    fontWeight: FontWeight.bold,
-                                  ),),
-                                                              onPressed: () => Navigator.of(context).pop(),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    } else {
-                                                      bool isLoadingIndicatorShown = false;
-                      
-                                                      if (subscriptionsProvider.isLoading ||
-                                                          (!subscriptionsProvider.hasDifferentiatedActiveSubscription && !subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId)) {
-                      
-                                                        // Show loading indicator
-                                                        showDialog(
-                                                          context: context,
-                                                          barrierDismissible: false,
-                                                          builder: (BuildContext context) => const Center(child: CircularProgressIndicator()),
-                                                        );
-                      
-                                                        isLoadingIndicatorShown = true;
-                      
-                                                        // Call the restoration method
-                                                        try {
-                                                          bool restorationSuccess = await subscriptionsProvider.initializeSubscriptions();
-                                                          print("Restoration result: $restorationSuccess");
-                      
-                                                          // Recheck subscription status
-                                                          subscriptionsProvider.hasDifferentiatedActiveSubscription = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.differentiatedCalculationProductId);
-                                                          subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId = subscriptionsProvider.isProductPurchased(SubscriptionsProvider.differentiatedPlusUniformCalculationProductId);
-                                                          print("Rechecked Subscription Status during button press:");
-                                                          print("  Differentiated Active Subscription: ${subscriptionsProvider.hasDifferentiatedActiveSubscription}");
-                                                          print("  Differentiated Plus Uniform Pricing: ${subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId}");
-                      
-                                                        } catch (e) {
-                                                          print("Error restoring purchases during button press: $e");
-                                                        }
-                      
-                                                        // Wait for three seconds to allow for subscription restoration
-                                                        await Future.delayed(Duration(seconds: 3));
-                      
-                                                        // Dismiss the loading dialog
-                                                        if (isLoadingIndicatorShown) {
-                                                          Navigator.of(context, rootNavigator: true).pop();
-                                                        }
-                                                      }
-                      
-                                                      // Proceed with checking subscription status and navigation
-                                                    */ /*  if (subscriptionsProvider.hasDifferentiatedActiveSubscription ||
-                                                          subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId)*/ /*
-                      
-                                                      if (1==1){
-                                                   */ /*     final projectData = Provider.of<ProjectData>(context, listen: false);
-                                                        await DifferentiatedCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
-                                                        await DifferentiatedCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
-                                                        final projectNames = await DifferentiatedCalculationDatabaseHelper.getAllProjectNames();
-                                                        if (projectNames.contains("_oozz")) {
-                                                          await DifferentiatedCalculationDatabaseHelper.deleteProjectOfDifferentiatedCalculationDatabase("_oozz");
-                                                        }
-                                                        projectData.projectNameList.clear();
-                                                        projectData.setProjectName('_oozz');*/ /*
-                                                        // Navigate to Land Inputs Page
-                                                        NavigationService().navigateToScreen(
-                                                          const LandInputs(givenProjectName: '_oozz'),
-                                                          arguments: '_oozz',
-                                                        );
-                                                      } else {
-                                                        subscriptionsProvider.showDifferentiatedSubscriptionUI(context);
-                                                      }
-                                                    }
-                                                  },
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.blue,
-                                                  ),
-                                                  child:  Text(
-                                                    'Differentiated Pricing',
-                                                    style: TextStyle(
-                                                      fontSize: textFontSize,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                      
-                                              ),
-                                               SizedBox(height: spacingHeight * 1.6,),*/
                                                       ],
                                                     ),
                                                   ),
@@ -1732,13 +1363,11 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                         child: Text('OK',
                                                           style: TextStyle(
                                                             fontSize: textFontSize,
-                                                            color: Colors
-                                                                .red, // Set the text color to white
+                                                            color: Colors.red, // Set the text color to white
                                                           ),),
                                                         onPressed: () {
                                                           // Close the dialog when the user presses the OK button.
-                                                          Navigator.of(context)
-                                                              .pop();
+                                                          Navigator.of(context).pop();
                                                         },
                                                       ),
                                                     ],
@@ -1746,29 +1375,23 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                 },
                                               );
                                             } else if (trueCount == 1) {
-                                              int selectedIndex = selectedRows
-                                                  .indexOf(true);
-                                              String Pricing = snapshot
+                                              int selectedIndex = selectedRows.indexOf(true);
+                                              String pricingType = snapshot
                                                   .data![selectedIndex][10];
                                               String projectName = snapshot
                                                   .data![selectedIndex][1];
 
-                                              if (Pricing ==
+                                              if (pricingType ==
                                                   'differentiated') {
-                                                projectData.setProjectName(
-                                                    projectName);
-                                                projectData.projectNameList
-                                                    .clear();
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (
-                                                        context) => const ResultPage1(),
-                                                  ),
+                                                projectData.setProjectName(projectName);
+                                                projectData.projectNameList.clear();
+                                                NavigationService().navigateToScreen(
+                                                  LandInputs(givenProjectName: projectName),
+                                                  arguments: projectName,
                                                 );
                                               }
                                               else if
-                                              (Pricing == 'uniform') {
+                                              (pricingType == 'uniform') {
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
@@ -1781,14 +1404,15 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           buildabilityPercentageOrAreaValue: 0,
                                                           floorCommonAreaValue: 0,
                                                           otherCostValue: 0,
-                                                          permissionPerMeterBoolValue: 0,
-                                                          permissionPerMeterOrTotalCostValue: 0,
+                                                          permitPerMeterBoolValue: 0,
+                                                          permitPerMeterOrTotalCostValue: 0,
                                                           totalNumberOfFloorsValue: 0,
                                                           numberOfSaleableFloorsValue: 0,
                                                           apartmentSellPricePerMeterValue: 0,
                                                           buildablePercentageBoolValueResult: 0,
                                                           constructionCostPerMeterValue: 0,
                                                           totalNumberOfPropertiesValue: 0,
+                                                          numberOfInvestmentYearsValue: 0,
                                                         ),
                                                   ),
                                                 );
@@ -1800,7 +1424,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                 builder: (
                                                     BuildContext context) {
                                                   return AlertDialog(
-                                                    title: Text(''),
+                                                    title: const Text(''),
                                                     content: Text(
                                                       'Please select just one project.',
                                                       style: TextStyle(
@@ -1895,15 +1519,14 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                       title: Text(
                                                           'Confirm Deletion'
                                                           , style: TextStyle(
-                                                        fontSize: textFontSize,)),
+                                                        fontSize: textFontSize,color: Colors.pink)),
                                                       content: Text(
                                                           'Are you sure you want to delete the selected project?'
                                                           , style: TextStyle(
                                                         fontSize: textFontSize,)),
                                                       actions: <Widget>[
                                                         TextButton(
-                                                          child: Text('Cancel'
-                                                              ,
+                                                          child: Text('No',
                                                               style: TextStyle(
                                                                 fontSize: textFontSize,)),
                                                           onPressed: () {
@@ -1912,22 +1535,47 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           },
                                                         ),
                                                         TextButton(
-                                                          child: Text('Yes'
-                                                              ,
+                                                          child: Text('Yes',
                                                               style: TextStyle(
-                                                                fontSize: textFontSize,)),
+                                                                fontSize: textFontSize,color: Colors.red)),
                                                           onPressed: () async {
-                                                            // Proceed with the deletion of the selected projects
-                                                            for (String projectName in selectedProjects) {
-                                                              await DifferentiatedCalculationDatabaseHelper
-                                                                  .deleteProjectOfDifferentiatedCalculationDatabase(
-                                                                  projectName);
-                                                              await UniformCalculationDatabase
-                                                                  .deleteProjectOfUniformCalculationDatabase();
-                                                              await AllProjectsPageDatabase
-                                                                  .deleteProjectFromAllProjectsPageData(
-                                                                  projectName);
+                                                            // Build a map: projectName -> calculationType
+                                                            final Map<String, String> calcTypeByProject = {};
+                                                            for (int i = 0; i < selectedRows.length; i++) {
+                                                              if (selectedRows[i]) {
+                                                                final String projectName = snapshot.data![i][1];
+                                                                final String calculationType = snapshot.data![i][10];
+                                                                calcTypeByProject[projectName] = calculationType;
+                                                              }
                                                             }
+
+                                                            // Proceed with the deletion of the selected projects
+                                                            for (String projectName in calcTypeByProject.keys) {
+                                                            final String calculationType = calcTypeByProject[projectName]!;
+
+                                                            // Check calculation type and call appropriate deletion method
+                                                            if (calculationType.toLowerCase().contains('differentiated')) {
+                                                            // Delete from differentiated database
+                                                            await DifferentiatedCalculationDatabaseHelper
+                                                                .deleteProjectOfDifferentiatedCalculationDatabase(projectName);
+                                                            } else if (calculationType.toLowerCase().contains('uniform')) {
+                                                            // Delete from uniform database
+                                                            await UniformCalculationDatabase
+                                                                .deleteProjectOfUniformCalculationDatabase(projectName);
+                                                            } else {
+                                                            // Unknown type or fallback - delete from both for safety
+                                                            print('⚠️ Unknown calculation type "$calculationType" for project "$projectName"');
+                                                            await DifferentiatedCalculationDatabaseHelper
+                                                                .deleteProjectOfDifferentiatedCalculationDatabase(projectName);
+                                                            await UniformCalculationDatabase
+                                                                .deleteProjectOfUniformCalculationDatabase(projectName);
+                                                            }
+
+                                                            // Always delete from the all projects page database
+                                                            await AllProjectsPageDatabase
+                                                                .deleteProjectFromAllProjectsPageData(projectName, calculationType);
+                                                            }
+
                                                             // Initialize an empty list to store the deleted indexes
                                                             List<
                                                                 int> deletedIndexes = [
@@ -1959,7 +1607,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                   .showSnackBar(
                                                                 const SnackBar(
                                                                   content: Text(
-                                                                      'Selected project(s) have been deleted.'),
+                                                                      'Selected project(s) have been deleted.\n\n'),
                                                                   backgroundColor: Color(
                                                                       0xFF9A87BE),
                                                                 ),
@@ -2120,7 +1768,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                         children: [
 
                                                           TextSpan(
-                                                            text: '\nUniform Pricing',
+                                                            text: 'Uniform Pricing',
                                                             style: TextStyle(
                                                               fontSize: textFontSize,
                                                               fontWeight: FontWeight
@@ -2129,13 +1777,14 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           ),
                                                           TextSpan(
                                                             text: '\nUse a constant rate for the sale price and a constant rate for the '
-                                                                'construction cost per unit area to calculate building project profitability',
+                                                                'construction cost and permit cost per unit area for each part of a building project '
+                                                                'to calculate project profitability',
                                                             style: TextStyle(
                                                               fontSize: textFontSize,
                                                             ),
                                                           ),
                                                           TextSpan(
-                                                            text: '\nDifferentiated Calculation',
+                                                            text: '\n\nDifferentiated Calculation',
                                                             style: TextStyle(
                                                               fontSize: textFontSize,
                                                               fontWeight: FontWeight
@@ -2144,7 +1793,8 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                           ),
                                                           TextSpan(
                                                             text: '\nMaximize accuracy: input custom sale '
-                                                                'prices and construction costs per unit area for each part of a building project to generate a '
+                                                                'prices and construction & permit costs per unit area for each part of a building '
+                                                                'project to generate a '
                                                                 'detailed profitability report.\n',
                                                             style: TextStyle(
                                                               fontSize: textFontSize,
@@ -2217,15 +1867,17 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                             ),
                                                           ),
                                                           TextSpan(
-                                                            text: '. This will take you to the project\'s result page, '
-                                                                'where you can see all the results of that project based '
+                                                            text: '. This will take you to the project\'s page, '
+                                                                'where you can see all the profitability results of that project based '
                                                                 'on the data you entered when you created the project. '
-                                                                'However, you can also view key results in a summary table, '
-                                                                'allowing you to compare different projects saved from either '
-                                                                'the uniform or differentiated pricing. You can sort the rows '
-                                                                'by pressing the title of each column in the table. For example, '
-                                                                'if you want to sort the projects based on cost, simply click on '
-                                                                'the "Cost" header in the table.',
+                                                                'However, you can also view additional results in a summary table in the '
+                                                                'last page of the projects with differentiated pricing type. '
+                                                           //     'allowing you to compare different projects saved from either '
+                                                           //     'the uniform or differentiated pricing. You can sort the rows '
+                                                           //     'by pressing the title of each column in the table. For example, '
+                                                            //    'if you want to sort the projects based on cost, simply click on '
+                                                            //    'the "Cost" header in the table.'
+                                                            ,
                                                             style: TextStyle(
                                                               fontSize: textFontSize,
                                                             ),
@@ -2341,9 +1993,12 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                             ),
                                                           ),
                                                           TextSpan(
-                                                            text: ' When saving a project, you will be asked to enter your project’s social and environmental friendliness level. '
-                                                                'You can use the information provided on the first page of the app and, it\'s better, consult with specialists to assign '
-                                                                'a value from 1 to 10 (where 10 is the best and 1 is the worst). Among projects with equal profitability, this rating '
+                                                            text: ' When saving a project, you will be asked to enter your project’s '
+                                                                'social and environmental friendliness level. '
+                                                                'You can use the information provided in Society and Environment parts on the first page of the app '
+                                                                'and, it\'s better, consult with specialists to assign '
+                                                                'a value from 1 to 10 (where 10 is the best and 1 is the worst). Among '
+                                                                'projects with equal profitability, this rating '
                                                                 'helps you compare which project better aligns with social and environmental goals.',
                                                             style: TextStyle(
                                                               fontSize: textFontSize,
@@ -2353,12 +2008,13 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
 
                                                           TextSpan(
                                                             text: '\n\nIt\'s important to note that the calculations in this app '
-                                                                'provide results for your investment without factoring in the'
-                                                                ' duration of the project. Typically, you should divide your project '
+                                                                'provide results for your investment both without factoring in the'
+                                                                ' duration of the project, and then with considering the duration. Typically, you '
+                                                                'should divide your project '
                                                                 'profit by the number of years from the start of construction to the '
                                                                 'sale of all properties. For example, if a project yields a 40% profit '
                                                                 'and can be constructed in 1.5 years with an additional six months for '
-                                                                'selling, your annual profit would be 20%.'
+                                                                'selling all units of project, your annual profit would be 20%.'
                                                                 '\n\nLarger projects usually require more time to construct and sell. Therefore, '
                                                                 'if a project has a 60% profit over three years, you might consider two '
                                                                 'smaller projects, each with a 60% profit, that can be completed and '
