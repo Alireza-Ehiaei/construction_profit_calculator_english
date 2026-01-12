@@ -73,7 +73,7 @@ class _CostPricesState extends State<CostPrices> {
   @override
   void initState() {
     super.initState();
-    startingFloor = Provider.of<ProjectData>(context, listen: false).firstStartingFloor;
+    startingFloor = Provider.of<ProjectProviderData>(context, listen: false).firstStartingFloor;
     projectName1 = widget.givenProjectName;
     givenCppValue = widget.givenCppValue;
     _costPercentageSelected = false;
@@ -121,7 +121,6 @@ class _CostPricesState extends State<CostPrices> {
   async { // print('costPercent_onPer $costPercent - sellPercent_onPer $sellPercent');
   await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
     (ProjectStartingSimilarTableData(
-      startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
       startingSimilarTableProjectName: projectName1,
       startingSimilarTableCpp: cppValue,
       startingSimilarTableStartingFloor: startingFloor,
@@ -284,7 +283,6 @@ class _CostPricesState extends State<CostPrices> {
     // Insert or update StartingSimilarTableData with correct sellability and prices
     await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
       ProjectStartingSimilarTableData(
-        startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
         startingSimilarTableProjectName: projectName1,
         startingSimilarTableCpp: cppValue,
         startingSimilarTableStartingFloor: startingFloor,
@@ -292,10 +290,12 @@ class _CostPricesState extends State<CostPrices> {
         startingSimilarTableSegmentSalable: isSalable ? 1 : 0,
         startingSimilarTableSimilarFloor: numberOfSimilarFloorsSaved,
         startingSimilarTableNumberOfSegments: numberOfSegmentsSaved,
-        startingSimilarTableCostPercentage: _costPercentageSelected && _costPercentageController.text.isNotEmpty
+        startingSimilarTableCostPercentage: _costPercentageSelected &&
+            _costPercentageController.text.isNotEmpty
             ? double.parse(_costPercentageController.text)
             : (data?.startingSimilarTableCostPercentage ?? 0),
-        startingSimilarTableCostPerMeter: _costPerMeterSelected && _costPerMeterController.text.isNotEmpty
+        startingSimilarTableCostPerMeter: _costPerMeterSelected &&
+            _costPerMeterController.text.isNotEmpty
             ? double.parse(_costPerMeterController.text)
             : (data?.startingSimilarTableCostPerMeter ?? 0),
         startingSimilarTableSellPricePercentage: sellPricePercentage,
@@ -304,7 +304,7 @@ class _CostPricesState extends State<CostPrices> {
     );
 
     // Save ProjectTableData for all segments
-    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
+
     for (int i = 0; i < priceTableData.length; i++) {
       int segNum = int.parse(priceTableData[i].name.split(' ')[3]);
       bool segmentIsSalable = !(nonSalableSegments.contains(segNum));
@@ -317,7 +317,7 @@ class _CostPricesState extends State<CostPrices> {
 
       await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(
         ProjectTableData(
-          costPricingTableProjectId: nextId++,
+
           costPricingTableProjectName: projectName1,
           costPricingTableCpp: cppValue,
           costPricingTableFloorNumber: int.parse(priceTableData[i].name.split(' ')[1]),
@@ -351,10 +351,13 @@ class _CostPricesState extends State<CostPrices> {
   }
 
 
-
-
   Future<void> profitCalculationForEachSegment() async {
-    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
+
+    // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
+    List<Map<String, dynamic>> fetchStartingSimilarData = await
+    DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
+      projectName1, cppValue,);
+
     for (int i = 0; i < priceTableData.length; i++) {
       double segmentArea = priceTableData[i].textField2Controller.text
           .isNotEmpty
@@ -385,7 +388,7 @@ class _CostPricesState extends State<CostPrices> {
 
       await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(
           ProjectTableData(
-            costPricingTableProjectId: nextId++,
+
             costPricingTableProjectName: projectName1,
             costPricingTableCpp: cppValue,
             costPricingTableFloorNumber: floor,
@@ -404,12 +407,10 @@ class _CostPricesState extends State<CostPrices> {
       // also if both fetch and insert methods are deleted then If data is generated
       // without pressing setting icon they won't be saved into the database
 
-      List<Map<String, dynamic>> data = await DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
-          projectName1, cppValue,);
-    //  for (int i = 1; i <= numberOfSegmentsSaved; i++) {
+
       bool isDataFound = false;
-      for (int j = 0; j < data.length; j++) {
-        if (data[j]['startingSimilarTableSegmentNumber'] == segment) {
+      for (int j = 0; j < fetchStartingSimilarData.length; j++) {
+        if (fetchStartingSimilarData[j]['startingSimilarTableSegmentNumber'] == segment) {
           isDataFound = true; // Data regarding percentage and incremental of the segment have been saved by pressing the setting icon
           break;
         }
@@ -418,7 +419,6 @@ class _CostPricesState extends State<CostPrices> {
       if (!isDataFound) {
         await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
           ProjectStartingSimilarTableData(
-            startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
             startingSimilarTableProjectName: projectName1,
             startingSimilarTableCpp: cppValue,
             startingSimilarTableStartingFloor: startingFloor,
@@ -447,11 +447,107 @@ class _CostPricesState extends State<CostPrices> {
       }
     }}
 
+ /* fetch inside
+
+ Future<void> profitCalculationForEachSegment() async {
+
+    for (int i = 0; i < priceTableData.length; i++) {
+      double segmentArea = priceTableData[i].textField2Controller.text
+          .isNotEmpty
+          ? double.parse(priceTableData[i].textField2Controller.text)
+          : -4321;
+      double segmentCost = priceTableData[i].textField3Controller.text
+          .isNotEmpty
+          ? double.parse(priceTableData[i].textField3Controller.text)
+          : -4321;
+      double segmentPrice = priceTableData[i].textField4Controller.text
+          .isNotEmpty
+          ? double.parse(priceTableData[i].textField4Controller.text)
+          : -4321;
+      double costOfSegment = (segmentCost != -1 && segmentArea != -1)
+          ? segmentCost * segmentArea
+          : -4321;
+      double incomeOfSegment = (segmentPrice != -1 && segmentArea != -1)
+          ? segmentPrice * segmentArea
+          : -4321;
+      double profitOfSegment = (segmentPrice != -1 && segmentCost != -1 &&
+          segmentArea != -1)
+          ? (segmentPrice - segmentCost) * segmentArea
+          : -4321;
+
+      int floor = int.parse(priceTableData[i].name.split(' ')[1]);
+      int segment = int.parse(priceTableData[i].name.split(' ')[3]);
+
+
+      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(
+          ProjectTableData(
+
+            costPricingTableProjectName: projectName1,
+            costPricingTableCpp: cppValue,
+            costPricingTableFloorNumber: floor,
+            costPricingTableSegmentNumber: segment,
+            costPricingTableSegmentArea: segmentArea,
+            costPricingTableSegmentCostPerMeter: segmentCost,
+            costPricingTableSegmentSellPricePerMeter: segmentPrice,
+            costPricingTableCostOfSegment: costOfSegment,
+            costPricingTableIncomeOfSegment: incomeOfSegment,
+            costPricingTableProfitOfSegment: profitOfSegment,
+            costPricingTableIndex3: -1,
+          ));
+
+      // The following fetch method should not be deleted because if you directly call insert
+      // method it will replace percentage data being saved with -4321, and
+      // also if both fetch and insert methods are deleted then If data is generated
+      // without pressing setting icon they won't be saved into the database
+
+      List<Map<String, dynamic>> fetchStartingSimilarData = await
+      DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
+          projectName1, cppValue,);
+    //  for (int i = 1; i <= numberOfSegmentsSaved; i++) {
+      bool isDataFound = false;
+      for (int j = 0; j < fetchStartingSimilarData.length; j++) {
+        if (fetchStartingSimilarData[j]['startingSimilarTableSegmentNumber'] == segment) {
+          isDataFound = true; // Data regarding percentage and incremental of the segment have been saved by pressing the setting icon
+          break;
+        }
+      }// print('segment $i salable? ${nonSalableSegments.contains(segment)}');
+
+      if (!isDataFound) {
+        await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData(
+          ProjectStartingSimilarTableData(
+            startingSimilarTableProjectName: projectName1,
+            startingSimilarTableCpp: cppValue,
+            startingSimilarTableStartingFloor: startingFloor,
+            startingSimilarTableSegmentNumber: segment,
+            startingSimilarTableSegmentSalable: nonSalableSegments.contains(segment) ? 0 : 1,
+            startingSimilarTableSimilarFloor: numberOfSimilarFloorsSaved,
+            startingSimilarTableNumberOfSegments: numberOfSegmentsSaved,
+            startingSimilarTableCostPercentage: _costPercentageSelected && _costPercentageController.text.isNotEmpty
+                ? double.parse(_costPercentageController.text)
+                : -4321,
+            startingSimilarTableCostPerMeter: _costPerMeterSelected && _costPerMeterController.text.isNotEmpty
+                ? double.parse(_costPerMeterController.text)
+                : -4321,
+            startingSimilarTableSellPricePercentage: nonSalableSegments.contains(segment)
+                ? 0
+                : (_sellPricePercentageSelected && _sellPricePercentageController.text.isNotEmpty
+                ? double.parse(_sellPricePercentageController.text)
+                : -4321),
+            startingSimilarTableSellPricePerMeter: nonSalableSegments.contains(segment)
+                ? 0
+                : (_sellPricePerMeterSelected && _sellPricePerMeterController.text.isNotEmpty
+                ? double.parse(_sellPricePerMeterController.text)
+                : -4321),
+          ),
+        );
+      }
+    }}*/
+
 
 
 
   // icon in popup of CostPrices
-  void myIconButtonFunction
+  void costPriceSettingIconButtonFunction
       (BuildContext context,  int segmentNumber1,
       int similarFloor, int startingFloor, int numberOfSegments, Set<int> nonSalableSegmentsInMyIcon)
      { // print('similarFloor $similarFloor - startingFloor $startingFloor - numberOfSegments $numberOfSegments');
@@ -910,8 +1006,8 @@ class _CostPricesState extends State<CostPrices> {
   @override
   Widget build(BuildContext context) {
 
-  return  Consumer<ProjectData>(
-      builder: (context, projectData, child) {
+  return  Consumer<ProjectProviderData>(
+      builder: (context, projectProviderData, child) {
 
         double screenHeight = MediaQuery.of(context).size.height;
 
@@ -941,8 +1037,8 @@ class _CostPricesState extends State<CostPrices> {
         final iconSizeSmall = isIpad ? iconSizeSmallPad : iconSizeSmallPhone;
         final double spacingHeight = isIpad ? 16.0 : 10.0;
 
-        double uniqueConstructionCostPerMeter = projectData.uniqueConstructionCostPerMeter;
-        print('Retrieved cost: $uniqueConstructionCostPerMeter');
+        double retrievedUniformConstructionCostPerMeter = projectProviderData.uniformConstructionCostPerMeter;
+        print('Retrieved cost: $retrievedUniformConstructionCostPerMeter');
 
         return Scaffold(
           body: Container(
@@ -972,9 +1068,9 @@ class _CostPricesState extends State<CostPrices> {
                                           maxWidth: screenWidth * 0.7,
                                         ),
                                         child: Text(
-                                          projectData.projectName == "***" ? " Cost Price Data"
-                                              : projectData.projectName == "_oozz" ? " Cost Price Data"
-                                              : 'Cost-Price Data - ${projectData.projectName}',
+                                          projectProviderData.projectName == "***" ? " Cost Price Data"
+                                              : projectProviderData.projectName == "_oozz" ? " Cost Price Data"
+                                              : 'Cost-Price Data - ${projectProviderData.projectName}',
                                           style: TextStyle(color: Colors.white, fontSize: textFontSize),
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -3785,7 +3881,7 @@ class _CostPricesState extends State<CostPrices> {
                                     ),
               
                                     SizedBox(width: spacingHeight * 0.5),
-              
+              //⇓
                                     Expanded(
                                       flex: 2,
                                       child: ElevatedButton(
@@ -4218,7 +4314,7 @@ class _CostPricesState extends State<CostPrices> {
                                       ),
               
                                         SizedBox(width: spacingHeight * 0.5),
-
+                                    //    ⇓
                                             Expanded(
                                               flex: 2,
                                               child: ElevatedButton(
@@ -4353,9 +4449,9 @@ class _CostPricesState extends State<CostPrices> {
                                                               }
 
                                                               // --- Initialize price table segment cost if it is uniform
-                                                              if (uniqueConstructionCostPerMeter != -432 ) {
+                                                              if (retrievedUniformConstructionCostPerMeter != -432 ) {
                                                               priceTableData[row_].textField3Controller.text =
-                                                              uniqueConstructionCostPerMeter.toString();
+                                                                  retrievedUniformConstructionCostPerMeter.toString();
                                                               }
 
                                                               row_++;
@@ -4430,6 +4526,7 @@ class _CostPricesState extends State<CostPrices> {
                                                 ),
                                               ),
                                             ),
+
                                             ],
                                           ),
                                         ],
@@ -4574,11 +4671,11 @@ class _CostPricesState extends State<CostPrices> {
                                                   int segmentNumber2 = int.tryParse(row.name.split(' ')[3]) ?? 0;
 
                                                   saveCurrentSegmentOfStartingFloor(segmentNumber2);
-                                                  print('ggg1');
-                                                  myIconButtonFunction(context, segmentNumber2,
+
+                                                  costPriceSettingIconButtonFunction(context, segmentNumber2,
                                                       numberOfSimilarFloorsSaved, startingFloor,
                                                       numberOfSegmentsSaved, nonSalableSegments);
-                                                  print('llll 1');
+
                                                 } else {
                                                   showEmptyRow(context);
                                                 }
@@ -4703,11 +4800,11 @@ class _CostPricesState extends State<CostPrices> {
                                                         int segmentNumber2 = int.tryParse(row.name.split(' ')[3]) ?? 0;
 
                                                         saveCurrentSegmentOfStartingFloor(segmentNumber2);
-                                                        print('ggg 2');
-                                                        myIconButtonFunction(context, segmentNumber2,
+
+                                                        costPriceSettingIconButtonFunction(context, segmentNumber2,
                                                             numberOfSimilarFloorsSaved, startingFloor,
                                                             numberOfSegmentsSaved, nonSalableSegments);
-                                                        print('llll  2');
+
                                                       } else {
                                                         showEmptyRow(context);
                                                       }
@@ -4744,7 +4841,7 @@ class _CostPricesState extends State<CostPrices> {
 
                                     if (!priceTableVisible) {
                                       NavigationService().navigateToScreen(
-                                        LandInputs(givenProjectName: projectData.projectName),
+                                        LandInputs(givenProjectName: projectProviderData.projectName),
                                       );
                                     }
                                     else {
@@ -4764,7 +4861,7 @@ class _CostPricesState extends State<CostPrices> {
                                       {
                                         await profitCalculationForEachSegment();
                                         NavigationService().navigateToScreen(
-                                          LandInputs(givenProjectName: projectData.projectName),
+                                          LandInputs(givenProjectName: projectProviderData.projectName),
                                         );
                                       }
 
@@ -4775,33 +4872,33 @@ class _CostPricesState extends State<CostPrices> {
                                           barrierDismissible: false,
                                           builder: (BuildContext context) {
                                             return AlertDialog(
-                                              title: const Text(
-                                                'Confirm Return',
+                                              title:  Text(
+                                                'Confirm Return and Deletion',
                                                 
-                                                style: TextStyle(fontSize: 22, color: Colors.purple, fontWeight: FontWeight.bold),
+                                                style: TextStyle(fontSize: isIpad ? 40.0 : 23.0, color: Colors.purple, fontWeight: FontWeight.bold),
                                               ),
-                                              content: const Text(
+                                              content: Text(
                                                 'If you need the cost and price information for this section, you must fill in all its inputs to save them. '
                                                     '\n\nAre you sure you want to return to the first page without filling all inputs '
                                                     'and deleting this section?',
                                                 
-                                                style: TextStyle(fontSize: 20, color: Colors.black87),
+                                                style: TextStyle(fontSize: isIpad ? 40.0 : 23.0, color: Colors.black87),
                                               ),
                                               actions: [
                                                 TextButton(
                                                   onPressed: () => Navigator.of(context).pop(false), // No
-                                                  child: const Text(
+                                                  child:  Text(
                                                     'No',
                                                     
-                                                    style: TextStyle(fontSize: 22, color: Colors.red, fontWeight: FontWeight.bold),
+                                                    style: TextStyle(fontSize: isIpad ? 40.0 : 23.0, color: Colors.red, fontWeight: FontWeight.bold),
                                                   ),
                                                 ),
                                                 TextButton(
                                                   onPressed: () => Navigator.of(context).pop(true), // Yes
-                                                  child: const Text(
+                                                  child:  Text(
                                                     'Yes',
                                                     
-                                                    style: TextStyle(fontSize: 22, color: Colors.blue, fontWeight: FontWeight.bold),
+                                                    style: TextStyle(fontSize: isIpad ? 37.0 : 20.0, color: Colors.blue, fontWeight: FontWeight.bold),
                                                   ),
                                                 ),
                                               ],
@@ -5551,18 +5648,48 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
     super.dispose();
   }
 
+
+
+  bool isValidNumber(String input) {
+    // Trim any leading or trailing whitespace
+    input = input.trim();
+
+    // Check if the input is empty after trimming
+    if (input.isEmpty) {
+      return false;
+    }
+
+    // Check if the input consists only of digits and at most one decimal point
+    if (!RegExp(r'^[0-9]+(\.[0-9]*)?$').hasMatch(input)) {
+      return false;
+    }
+
+    // Ensure the input doesn't end with a decimal point
+    if (input.endsWith('.')) {
+      return false;
+    }
+
+    // Try parsing the input as a double for final validation
+    try {
+      double.parse(input);
+      return true;
+    } on FormatException {
+      return false;
+    }
+  }
+
   Future<void> checkPercetagesData()
   async {
     // Retrieve the project starting similar data from the database
     ProjectStartingSimilarTableData? data = await DifferentiatedCalculationDatabaseHelper.getStartingSimilarTableSegmentData(
         widget.projectName, widget.CPPNumber, widget.segmentNumber1);
-    print('costPercentcheck ${data?.startingSimilarTableCostPercentage} - sellPercent ${data?.startingSimilarTableSellPricePercentage}');
+ //   print('costPercentcheck ${data?.startingSimilarTableCostPercentage} - sellPercent ${data?.startingSimilarTableSellPricePercentage}');
 
-    print('widget.CPPNumber ${widget.CPPNumber}');
+ //   print('widget.CPPNumber ${widget.CPPNumber}');
     // If the data is not null, set the text of the corresponding text fields and toggle buttons
   if (data != null) {
-    // Never change these conditions
-    print('data.startingSimilarTableCostPerMeter ${data.startingSimilarTableCostPerMeter}');
+    // Never change these conditions, checking just boolean variables are wrong Because they're not saved in database to be retrieved
+ // checking  the value to not to be 0 is just for nurturing percentage or incremental as zero instead  show fixed
   if (data.startingSimilarTableCostPerMeter != -4321 && data.startingSimilarTableCostPerMeter != 0 ) {
         _costPerMeterController.text = data.startingSimilarTableCostPerMeter.toString();
         _costPercentageController.text = '';
@@ -5592,7 +5719,8 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
 
 
 
-        if (data.startingSimilarTableSellPricePerMeter != -4321) {
+        if (data.startingSimilarTableSellPricePerMeter != -4321 &&
+            data.startingSimilarTableSellPricePerMeter != 0) {
         _sellPricePerMeterController.text =
             data.startingSimilarTableSellPricePerMeter.toString();
         _sellPricePercentageController.text = '';
@@ -5601,7 +5729,7 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
           _sellPriceFixedSelected = false;
           _sellPricePercentageSelected = false;
         });
-      } else if (data.startingSimilarTableSellPricePercentage != -4321) {
+      } else if (data.startingSimilarTableSellPricePercentage != -4321 && data.startingSimilarTableSellPricePercentage != 0) {
         _sellPricePerMeterController.text = '';
     _sellPricePercentageController.text =
         data.startingSimilarTableSellPricePercentage.toString();
@@ -5633,34 +5761,6 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
     }
   }
 
-
-  bool isValidNumber(String input) {
-    // Trim any leading or trailing whitespace
-    input = input.trim();
-
-    // Check if the input is empty after trimming
-    if (input.isEmpty) {
-      return false;
-    }
-
-    // Check if the input consists only of digits and at most one decimal point
-    if (!RegExp(r'^[0-9]+(\.[0-9]*)?$').hasMatch(input)) {
-      return false;
-    }
-
-    // Ensure the input doesn't end with a decimal point
-    if (input.endsWith('.')) {
-      return false;
-    }
-
-    // Try parsing the input as a double for final validation
-    try {
-      double.parse(input);
-      return true;
-    } on FormatException {
-      return false;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -5784,7 +5884,7 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                       ),
                       keyboardType: TextInputType.number,
                       style:  TextStyle(color: Colors.black,
-                          fontSize: textFontSize),
+                          fontSize: textFontSize * 1.2),
                     ),
                   ),
                 ),
@@ -5944,7 +6044,8 @@ class _PriceTypeDialogState extends State<PriceTypeDialog> {
                               contentPadding: EdgeInsets.all(10),
                             ),
                             keyboardType: TextInputType.number,
-                            style:  TextStyle(color: Colors.black,  fontSize: textFontSize),
+                            style:   TextStyle(color: Colors.black,
+                                fontSize: isIpad ? 40 : 23),
                           ),
                         ),
                       ),

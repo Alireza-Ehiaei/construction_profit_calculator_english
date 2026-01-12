@@ -17,13 +17,13 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-  final projectData = ProjectData();
-  final subscriptionsProvider = SubscriptionsProvider(projectData);
+  final projectProviderData = ProjectProviderData();
+  final subscriptionsProvider = SubscriptionsProvider(projectProviderData);
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: projectData),
+        ChangeNotifierProvider.value(value: projectProviderData),
         ChangeNotifierProvider.value(value: subscriptionsProvider),
       ],
       child: MyApp(),
@@ -50,13 +50,13 @@ class MyApp extends StatelessWidget {
 
 
 // Define the ProjectData class for updating
-class ProjectData extends ChangeNotifier {
+class ProjectProviderData extends ChangeNotifier {
   String _projectName = '_oozz';
   int _firstStartingFloor = 0;
-  double _uniqueConstructionCostPerMeter = 0;
+  double _uniqueConstructionCostPerMeter = -432;
   List<String> _projectNameList = [];
 
-  double get uniqueConstructionCostPerMeter => _uniqueConstructionCostPerMeter;
+  double get uniformConstructionCostPerMeter => _uniqueConstructionCostPerMeter;
 
   String get projectName => _projectName;
   int get firstStartingFloor => _firstStartingFloor;
@@ -72,7 +72,7 @@ class ProjectData extends ChangeNotifier {
     notifyListeners();
   }
   
-  void setUniqueConstructionCostPerMeter(double value) {
+  void setUniformConstructionCostPerMeter(double value) {
     _uniqueConstructionCostPerMeter = value;
     notifyListeners();
   }

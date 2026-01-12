@@ -12,17 +12,17 @@ import 'costPrices.dart';
 Future<Map<String, dynamic>> getFloorRanges(String projectName, int startingFloor)
 async {
   // Retrieve project data from the database
-  final List<ProjectTableData> projectData =
+  final List<ProjectTableData> projectProviderData =
   await DifferentiatedCalculationDatabaseHelper.getCostPricingData(projectName);
 
-  // SIMPLER APPROACH: Calculate total constructed area directly from projectData
-  double totalConstructedArea = projectData.fold(0.0, (sum, data) =>
+  // SIMPLER APPROACH: Calculate total constructed area directly from projectProviderData
+  double totalConstructedArea = projectProviderData.fold(0.0, (sum, data) =>
   sum + double.parse(data.costPricingTableSegmentArea.toString()));
 
   // Step 1: Create a map to hold total area for each floor
   Map<int, double> floorAreaMap = {};
 
-  for (final currentData in projectData) {
+  for (final currentData in projectProviderData) {
     final int currentFloorNumber =
     int.parse(currentData.costPricingTableFloorNumber.toString());
 
@@ -107,11 +107,11 @@ async {
 
 Future<Map<int, double>> getFloorNumberToAreaMap(String projectName)
 async {
-  final List<ProjectTableData> projectData = await DifferentiatedCalculationDatabaseHelper.getCostPricingData(projectName);
+  final List<ProjectTableData> projectProviderData = await DifferentiatedCalculationDatabaseHelper.getCostPricingData(projectName);
   final Map<int, double> floorNumberToAreaMap = {};
 
-  for (int i = 0; i < projectData.length; i++) {
-    final ProjectTableData currentData = projectData[i];
+  for (int i = 0; i < projectProviderData.length; i++) {
+    final ProjectTableData currentData = projectProviderData[i];
     final int currentFloor = currentData.costPricingTableFloorNumber.toInt();
     final double unitArea = currentData.costPricingTableSegmentArea;
 
@@ -162,7 +162,7 @@ class _FloorRangesPageState extends State<FloorRangesPage> {
     super.initState();
     // Call the method to retrieve floor ranges data
     projectName1 = widget.givenProjectName;
-    startingFloor = Provider.of<ProjectData>(context, listen: false).firstStartingFloor;
+    startingFloor = Provider.of<ProjectProviderData>(context, listen: false).firstStartingFloor;
     getFloorRangesAndMaxFloorData();
   }
 
@@ -244,8 +244,8 @@ class _FloorRangesPageState extends State<FloorRangesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return  Consumer<ProjectData>(
-        builder: (context, projectData, child) {
+    return  Consumer<ProjectProviderData>(
+        builder: (context, projectProviderData, child) {
 
       double screenHeight = MediaQuery.of(context).size.height;
 
@@ -293,9 +293,9 @@ class _FloorRangesPageState extends State<FloorRangesPage> {
                           maxWidth: screenWidth * 0.7,
                         ),
                         child: Text(
-                          projectData.projectName == "***" ? " Permit Fee"
-                              : projectData.projectName == "_oozz" ? "Permit Fee"
-                              : 'Permit Fee - ${projectData.projectName}',
+                          projectProviderData.projectName == "***" ? " Permit Fee"
+                              : projectProviderData.projectName == "_oozz" ? "Permit Fee"
+                              : 'Permit Fee - ${projectProviderData.projectName}',
                           style: TextStyle(color: Colors.white, fontSize: textFontSize),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -588,8 +588,7 @@ class _FloorRangesPageState extends State<FloorRangesPage> {
                                       double.parse(_uniquePermitFeeController.text);
 
                                   UniquePermitFeeData data = UniquePermitFeeData(
-                                    uniquePermitFeeTableId: await DifferentiatedCalculationDatabaseHelper
-                                        .getNextUniquePermitFeeTableId(),
+
                                     uniquePermitFeeTableProjectName: projectName1,
                                     uniquePermitFeeTableIsUniquePermitFeePerMeterBool: 1,
                                     uniquePermitFeeTableIsUniquePermitFeeTotalBool: 0,
@@ -661,7 +660,6 @@ class _FloorRangesPageState extends State<FloorRangesPage> {
                                   totalPermitFee =  double.parse(_uniqueTableTotalPermitFeeController.text);
                                   double uniquePermitFe = (totalPermitFee / totalConstructedArea);
                                   UniquePermitFeeData data = UniquePermitFeeData(
-                                    uniquePermitFeeTableId: await DifferentiatedCalculationDatabaseHelper.getNextUniquePermitFeeTableId(),
                                     uniquePermitFeeTableProjectName: projectName1,
                                     uniquePermitFeeTableIsUniquePermitFeePerMeterBool: 0,
                                     uniquePermitFeeTableIsUniquePermitFeeTotalBool:  1 ,
@@ -807,15 +805,13 @@ class _FloorRangesPageState extends State<FloorRangesPage> {
                               {
                                 if (_uniquePermitFeeController.text.isNotEmpty
                                     && isValidNumber(_uniquePermitFeeController.text))
-
                                 {
 
                                   totalPermitFee = totalConstructedArea *
                                       double.parse(_uniquePermitFeeController.text);
 
                                   UniquePermitFeeData data = UniquePermitFeeData(
-                                    uniquePermitFeeTableId: await DifferentiatedCalculationDatabaseHelper
-                                        .getNextUniquePermitFeeTableId(),
+
                                     uniquePermitFeeTableProjectName: projectName1,
                                     uniquePermitFeeTableIsUniquePermitFeePerMeterBool: 1,
                                     uniquePermitFeeTableIsUniquePermitFeeTotalBool: 0,
@@ -895,7 +891,6 @@ class _FloorRangesPageState extends State<FloorRangesPage> {
                                   totalPermitFee =  double.parse(_uniqueTableTotalPermitFeeController.text);
                                   double uniquePermitFe = (totalPermitFee / totalConstructedArea);
                                   UniquePermitFeeData data = UniquePermitFeeData(
-                                    uniquePermitFeeTableId: await DifferentiatedCalculationDatabaseHelper.getNextUniquePermitFeeTableId(),
                                     uniquePermitFeeTableProjectName: projectName1,
                                     uniquePermitFeeTableIsUniquePermitFeePerMeterBool: 0,
                                     uniquePermitFeeTableIsUniquePermitFeeTotalBool:  1 ,
@@ -1114,7 +1109,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 //    givenMaxConstructionValue = widget.givenMaxConstructionValue;
     floorRangesData = widget.floorRangesData;
     // This is the starting floor of the fee Plan 1, and next starting floors will be updated
-    startingFloor = Provider.of<ProjectData>(context, listen: false).firstStartingFloor;
+    startingFloor = Provider.of<ProjectProviderData>(context, listen: false).firstStartingFloor;
     maxFloorGivenInPermitFee = widget.maxFloorParsedToPermitFee;
     _permitFeePercentageSelected = false;
     _permitFeePerMeterSelected = false;
@@ -1135,12 +1130,12 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 // where the Consumer widget is commonly used. The Consumer widget is typically used
 // within the build method of a widget to listen for changes to a ChangeNotifier and
 // rebuild the UI when the ChangeNotifier changes. the Provider.of method is used
-// to access the projectData within the check PermitFeeData method. The listen: false parameter
-// is used to prevent the check PermitFeeData method from rebuilding when the projectData changes.
+// to access the projectProviderData within the check PermitFeeData method. The listen: false parameter
+// is used to prevent the check PermitFeeData method from rebuilding when the projectProviderData changes.
 
   void checkPermitFeeData() async {
     List<PermitFeeSegmentPricingData> data = await
-        DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan(
+        DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentFeeDataByFeePlan(
         widget.givenProjectName, 1);
     setState(() {
       hasData = data.isNotEmpty;
@@ -1217,7 +1212,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
     // Loop through the data and update the unitCost values for the other floors with the same segmentNumber
     List<PermitFeeSegmentPricingData> permitFeeSegmentPricingDataByFeePlan = await
-    DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan(projectName1, feePlanValue);
+    DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentFeeDataByFeePlan(projectName1, feePlanValue);
     // startingFloor Is a starting floor number but i- in the following lines is the number of
     // row in the price table shown in the screen
     int? stf = permitFeeStartingSimilarTableSegmentData?.permitFeeStartingSimilarTableStartingFloor;
@@ -1278,7 +1273,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
       double permitFeeStartingSimilarTableFeePerMeter) 
   async {
     await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(PermitFeeStartingSimilarTableData(
-      permitFeeStartingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
+   //   permitFeeStartingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
       permitFeeStartingSimilarTableProjectName: projectName1,
       permitFeeStartingSimilarTableSegmentNumber: permitFeeStartingSimilarTableSegmentNumber,
       permitFeeStartingSimilarTableStartingFloor:  permitFeeStartingSimilarTableStartingFloor,
@@ -1319,8 +1314,6 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
     // Insert or update
     await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData(
       PermitFeeStartingSimilarTableData(
-        permitFeeStartingSimilarTableId:
-        await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
         permitFeeStartingSimilarTableProjectName: projectName1,
         permitFeeStartingSimilarTableSegmentNumber:
         int.parse(permitFeeTableData[segmentNumber2 - 1].name.split(' ')[4]),
@@ -1337,7 +1330,6 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
     for (int i = 0; i < permitFeeTableData.length; i++) {
       await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeSegmentPricingData(
         PermitFeeSegmentPricingData(
-          permitFeeSegmentPricingTableId: await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeSegmentPricingTableId(),
           permitFeeSegmentPricingTableProjectName: projectName1,
           permitFeeSegmentPricingTableSegmentNumber:
           int.parse(permitFeeTableData[i].name.split(' ')[4].trim()),
@@ -1365,7 +1357,11 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
   Future<void> permitFeeCalculationForEachSegment()
     async {
-    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeSegmentPricingTableId();
+      // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
+      List<Map<String, dynamic>> fetchPermitFeeStartingSimilarTableData = await
+      DifferentiatedCalculationDatabaseHelper.fetchPermitFeeStartingSimilarTableData(projectName1,
+          permitFeePlanValue);
+
     for (int i = 0; i < permitFeeTableData.length; i++) {
       double segmentArea = permitFeeTableData[i].textField2Controller.text.isNotEmpty
           ? double.parse(permitFeeTableData[i].textField2Controller.text)
@@ -1381,7 +1377,6 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
       int floorNumber = int.parse(permitFeeTableData[i].name.split(' ')[1]);
       int segmentNumber = int.parse(permitFeeTableData[i].name.split(' ')[4]);
       await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeSegmentPricingData(PermitFeeSegmentPricingData(
-        permitFeeSegmentPricingTableId: nextId++,
         permitFeeSegmentPricingTableProjectName: projectName1,
         permitFeeSegmentPricingTableSegmentNumber: segmentNumber,
         permitFeeSegmentPricingTableFloorNumber: floorNumber,
@@ -1391,15 +1386,11 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
         permitFeeSegmentPricingTableTotalSegmentPermitFee: segmentTotalFee,
       ));
 
-      // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
-      List<Map<String, dynamic>> data = await
-      DifferentiatedCalculationDatabaseHelper.fetchPermitFeeStartingSimilarTableData(projectName1,
-          permitFeePlanValue, startingFloor);
-      bool isDataFound = false;
-      for (int j = 0; j < data.length; j++) {
-        if (data[j]['floor'] == startingFloor
-            && data[j]['segmentNumber'] == segmentNumber) {
 
+      bool isDataFound = false;
+      for (int j = 0; j < fetchPermitFeeStartingSimilarTableData.length; j++) {
+        if (fetchPermitFeeStartingSimilarTableData[j]['permitFeeStartingSimilarTableSegmentNumber']
+            == segmentNumber) {
           isDataFound = true;
           break;
         }
@@ -1407,8 +1398,6 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
       if (!isDataFound) {
         await DifferentiatedCalculationDatabaseHelper.insertOrUpdatePermitFeeStartingSimilarPercentageData
           (PermitFeeStartingSimilarTableData(
-          permitFeeStartingSimilarTableId:
-          await DifferentiatedCalculationDatabaseHelper.getNextPermitFeeStartingSimilarID(),
           permitFeeStartingSimilarTableProjectName: projectName1,
           permitFeeStartingSimilarTableSegmentNumber: segmentNumber ,
           permitFeeStartingSimilarTableStartingFloor:  startingFloor,
@@ -1429,7 +1418,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
 
   // icon in popup of MyTableOfInputs
-  void permitFeeIconButtonFunction(BuildContext context, int permitFeeIconButtonFloorNumber,
+  void permitFeeSettingIconButtonFunction(BuildContext context, int permitFeeIconButtonFloorNumber,
       int permitFeeIconButtonSegmentNumber, int permitFeeIconButtonSimilarFloor,
       int  permitFeeIconButtonStartingFloor, int permitFeeIconButtonNumberOfSegments)
   {
@@ -1469,85 +1458,6 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
     );
   }
 
-/*  Future<void> profitCalculationForEachSegment() async {
-    int nextId = await DifferentiatedCalculationDatabaseHelper.getNextProjectId();
-    for (int i = 0; i < priceTableData.length; i++) {
-      double segmentArea = priceTableData[i].textField2Controller.text.isNotEmpty
-          ? double.parse(priceTableData[i].textField2Controller.text)
-          : -4321;
-      double segmentCost = priceTableData[i].textField3Controller.text.isNotEmpty
-          ? double.parse(priceTableData[i].textField3Controller.text)
-          : -4321;
-      double segmentPrice = priceTableData[i].textField4Controller.text.isNotEmpty
-          ? double.parse(priceTableData[i].textField4Controller.text)
-          : -4321;
-      double costOfSegment = (segmentCost != -1 && segmentArea != -1)
-          ? segmentCost * segmentArea
-          : -4321;
-      double incomeOfSegment = (segmentPrice != -1 && segmentArea != -1)
-          ? segmentPrice * segmentArea
-          : -4321;
-      double profitOfSegment = (segmentPrice != -1 && segmentCost != -1 && segmentArea != -1)
-          ? (segmentPrice - segmentCost) * segmentArea
-          : -4321;
-      //  print('Segment $i: segmentArea=$segmentArea, segmentCost=$segmentCost,
-      //  segmentPrice=$segmentPrice, costOfSegment=$costOfSegment, incomeOfSegment=$incomeOfSegment, profitOfSegment=$profitOfSegment');
-
-      int floor = int.parse(priceTableData[i].name.split(' ')[1]);
-      int segment = int.parse(priceTableData[i].name.split(' ')[3]);
-      await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectData(ProjectTableData(
-        costPricingTableProjectId: nextId++,
-        costPricingTableProjectName: projectName1,
-        costPricingTableCpp: cppValue,
-        costPricingTableFloorNumber: floor,
-        costPricingTableSegmentNumber: segment,
-        costPricingTableSegmentArea: segmentArea,
-        costPricingTableSegmentCostPerMeter: segmentCost,
-        costPricingTableSegmentSellPricePerMeter: segmentPrice,
-        costPricingTableCostOfSegment: costOfSegment,
-        costPricingTableIncomeOfSegment: incomeOfSegment,
-        costPricingTableProfitOfSegment: profitOfSegment,
-        costPricingTableIndex3: -1,
-      )
-      );
-
-      // The following fetch method should not be deleted because if you directly call insert method it will replace percentage data being saved with -4321, and also if both fetch and insert methods are deleted then If data is generated without pressing setting icon they won't be saved into the database
-
-      List<Map<String, dynamic>> data = await DifferentiatedCalculationDatabaseHelper.fetchProjectStartingSimilarData(
-          projectName1,cppValue, startingFloor);
-      bool isDataFound = false;
-      for (int j = 0; j < data.length; j++) {
-        if (data[j]['floor'] == startingFloor && data[j]['segmentNnnumber'] == segment) {
-
-          isDataFound = true;
-          break;
-        }
-      }
-      if (!isDataFound) {
-        await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectStartingSimilarPercentageData
-          (ProjectStartingSimilarTableData(
-          startingSimilarTableId: await DifferentiatedCalculationDatabaseHelper.getNextProjectStartingSimilarID(),
-          startingSimilarTableProjectName: projectName1,
-          startingSimilarTableCpp: cppValue,
-          startingSimilarTableStartingFloor: startingFloor,
-      //    startingSimilarTableFloorNumber: floor,
-          startingSimilarTableSegmentNumber: segment,
-          startingSimilarTableSimilarFloor: numberOfSimilarFloorsSaved,
-          startingSimilarTableNumberOfSegments: numberOfSegmentsSaved,
-          startingSimilarTableCostPercentage: _costPercentageSelected && _costPercentageController.text.isNotEmpty ?
-          double.parse(_costPercentageController.text) : -4321,
-          startingSimilarTableCostPerMeter: _costPerMeterSelected && _costPerMeterController.text.isNotEmpty ?
-          double.parse(_costPerMeterController.text) : -4321,
-          startingSimilarTableSellPricePercentage: _sellPricePercentageSelected &&
-              _sellPricePercentageController.text.isNotEmpty ?
-          double.parse(_sellPricePercentageController.text) : -4321,
-          startingSimilarTableSellPricePerMeter: _sellPricePerMeterSelected &&
-              _sellPricePerMeterController.text.isNotEmpty ?
-          double.parse(_sellPricePerMeterController.text) : -4321,
-        ));
-      }
-    }
-  }*/
 
   Future<void> checkPermitFeeVisibility() async {
     String project_ = projectName1;
@@ -1572,7 +1482,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
     // Retrieve the data associated with project name and cpp value
     List<PermitFeeSegmentPricingData> retrievedPermitFeeTableData = await
-      DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentPricingDataByFeePlan
+      DifferentiatedCalculationDatabaseHelper.getPermitFeeSegmentFeeDataByFeePlan
       (projectName, permitFeePlanValue);
 
     int segmentNumber = retrievedPermitFeeTableData[0].permitFeeSegmentPricingTableSegmentNumber;
@@ -1611,16 +1521,16 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
         projectStartingSimilarData[0].permitFeeStartingSimilarTableSimilarFloor;
     int numberOfSegments =
         projectStartingSimilarData[0].permitFeeStartingSimilarTableNumberOfSegments;
-
+    print('startingFloorGotten=$startingFloorGotten, permitFeePlanValue=$permitFeePlanValue');
     numberOfSegmentsController.text = numberOfSegments.toString();
     numberOfFeeSegmentsSaved = numberOfSegments;
 
     // Update the price table data
     permitFeeTableData.clear();
     List<String> segmentNumbers = [];
-    for (int i = 0; i < projectStartingSimilarData[0].permitFeeStartingSimilarTableSimilarFloor+1; i++)
-    { for (int j = 0; j < projectStartingSimilarData[0].permitFeeStartingSimilarTableNumberOfSegments; j++) {
-      segmentNumbers.add('Floor ${(projectStartingSimilarData[0].permitFeeStartingSimilarTableStartingFloor+i).toString()} '
+    for (int i = 0; i < similarFloorCount+1; i++)
+    { for (int j = 0; j < numberOfSegments; j++) {
+      segmentNumbers.add('Floor ${(startingFloorGotten+i).toString()} '
           'Fee Segment ${j + 1}');
     }}
 
@@ -2024,8 +1934,8 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
   @override
   Widget build(BuildContext context) {
-    return  Consumer<ProjectData>(
-        builder: (context, projectData, child) {
+    return  Consumer<ProjectProviderData>(
+        builder: (context, projectProviderData, child) {
           
           double screenHeight = MediaQuery.of(context).size.height;
 
@@ -2082,9 +1992,9 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
                                             maxWidth: screenWidth * 0.7,
                                           ),
                                           child: Text(
-                                            projectData.projectName == "***" ? " Permit Fee"
-                                                : projectData.projectName == "_oozz" ? "Permit Fee"
-                                                : 'Permit Fee - ${projectData.projectName}',
+                                            projectProviderData.projectName == "***" ? " Permit Fee"
+                                                : projectProviderData.projectName == "_oozz" ? "Permit Fee"
+                                                : 'Permit Fee - ${projectProviderData.projectName}',
                                             style: TextStyle(color: Colors.white, fontSize: textFontSize),
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -3404,7 +3314,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
                                                         style: TextStyle(fontSize: textFontSize ) ),
                                                   )),
                                                   (row.name.split(' ')[1]==  startingFloor.toString()
-                                                      && (int.tryParse(feeSimilarFloorController.text) ?? 0) > 0) ?
+                                                      ) ?
                                                   DataCell(IconButton(
                                                       icon:  Icon(Icons.settings_applications_sharp,
                                                       size: iconSizeLarge,), // setting
@@ -3412,8 +3322,6 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
                                                       String rowName = row.name.split(' ')[0];
                                                       String segmentNumber = row.name.split(' ')[4];  // ✅ Index 4 for permit fee
                                                       String numberOfSegmentsValue = numberOfSegmentsController.text;
-
-
 
                                                       // ✅ Permit Fee: ONLY textField3 (fee) + basic fields
                                                       if (rowName.isNotEmpty &&
@@ -3426,7 +3334,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
                                                         if (floor != null && segmentNumberInt != null) {
                                                           saveCurrentSegmentOfFeeTableStartingFloor(segmentNumberInt);
-                                                          permitFeeIconButtonFunction(context, floor, segmentNumberInt,
+                                                          permitFeeSettingIconButtonFunction(context, floor, segmentNumberInt,
                                                               permitFeeNumberOfSimilarFloorsSaved, startingFloor, numberOfFeeSegmentsSaved);
                                                         } else {
                                                           showEmptyRow(context);
@@ -3506,7 +3414,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
 
                                                         if (floor != null && segmentNumberInt != null) {
                                                           saveCurrentSegmentOfFeeTableStartingFloor(segmentNumberInt);
-                                                          permitFeeIconButtonFunction(context, floor, segmentNumberInt,
+                                                          permitFeeSettingIconButtonFunction(context, floor, segmentNumberInt,
                                                               permitFeeNumberOfSimilarFloorsSaved, startingFloor, numberOfFeeSegmentsSaved);
                                                         } else {
                                                           showEmptyRow(context);
@@ -3567,7 +3475,7 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
                                         numberOfSegmentsController.text.isNotEmpty ) {
                                       await permitFeeCalculationForEachSegment();
                                       NavigationService().navigateToScreen(
-                                        LandInputs(givenProjectName: projectData.projectName),
+                                        LandInputs(givenProjectName: projectProviderData.projectName),
                                       );
                                     }
                                     else if (
@@ -3579,32 +3487,32 @@ class _PermitFeeInputsState extends State<PermitFeeInputs> {
                                         // Prevent dismissing by tapping outside
                                         builder: (BuildContext context) {
                                           return AlertDialog(
-                                            title: const Text(
-                                              'Confirm Return',
+                                            title:  Text(
+                                              'Confirm Return and Deletion',
                                              
-                                              style: TextStyle(fontSize: 22, color: Colors.purple, fontWeight: FontWeight.bold),
+                                              style: TextStyle(fontSize: isIpad ? 40.0 : 22.0, color: Colors.purple, fontWeight: FontWeight.bold),
                                             ),
-                                            content: const Text(
+                                            content: Text(
                                               'Are you sure you want to return to the first page without filling in all the entries'
                                                   ' and saving this section\'s information? If you press yes this permit fee plan and its data will be deleted.',
                                               
-                                              style: TextStyle(fontSize: 20, color: Colors.black87),
+                                              style: TextStyle(fontSize: isIpad ? 37.0 : 20.0, color: Colors.black87),
                                             ),
                                             actions: [
                                               TextButton(
                                                 onPressed: () => Navigator.of(context).pop(false), // No
-                                                child: const Text(
+                                                child: Text(
                                                   'No',
                                                   
-                                                  style: TextStyle(fontSize: 20, color: Colors.red, fontWeight: FontWeight.bold),
+                                                  style: TextStyle(fontSize: isIpad ? 37.0 : 20.0, color: Colors.red, fontWeight: FontWeight.bold),
                                                 ),
                                               ),
                                               TextButton(
                                                 onPressed: () => Navigator.of(context).pop(true), // Yes
-                                                child: const Text(
+                                                child: Text(
                                                   'Yes',
                                                   
-                                                  style: TextStyle(fontSize: 20, color: Colors.blue, fontWeight: FontWeight.bold),
+                                                  style: TextStyle(fontSize: isIpad ? 37.0 : 20.0, color: Colors.blue, fontWeight: FontWeight.bold),
                                                 ),
                                               ),
                                             ],
@@ -4287,11 +4195,13 @@ class FeeChangeRateDialogState extends State<FeeChangeRateDialog> {
          DifferentiatedCalculationDatabaseHelper.getPermitFeeStartingSimilarTableSegmentData(
         widget.permitFeeTableProjectName, widget.permitFeeTableFeePlanNumber,
              widget.permitFeeTableSegmentNumber);
+    //   print('daaata.permitFeeStartingSimilarTableFeePercentage ${data?.permitFeeStartingSimilarTableFeePercentage}');
 
     // If the data is not null, set the text of the corresponding text fields and toggle buttons
     if (data != null ) {
-
-      if ( _permitFeePercentageSelected) {
+// Never change these conditions, checking just boolean variables are wrong Because they're not saved in database to be retrieved
+      if ( data.permitFeeStartingSimilarTableFeePercentage != -4321  &&
+         data.permitFeeStartingSimilarTableFeePercentage != 0 ) {
         _permitFeePercentageController.text = data.permitFeeStartingSimilarTableFeePercentage.toString();
         _permitFeePerMeterController.text = '';
         setState(() {
@@ -4300,7 +4210,8 @@ class FeeChangeRateDialogState extends State<FeeChangeRateDialog> {
           _permitFeePerMeterSelected = false;
         });
       }
-      else if (_permitFeePerMeterSelected) {
+      else if ( data.permitFeeStartingSimilarTableFeePerMeter != -4321
+          && data.permitFeeStartingSimilarTableFeePerMeter != 0 ) {
         _permitFeePerMeterController.text = data.permitFeeStartingSimilarTableFeePerMeter.toString();
         _permitFeePercentageController.text = '';
 
@@ -4309,7 +4220,7 @@ class FeeChangeRateDialogState extends State<FeeChangeRateDialog> {
           _permitFeePricingFixedSelected = false;
           _permitFeePercentageSelected = false;
         });
-      }  else if (_permitFeePricingFixedSelected)
+      }  else
       { _permitFeePerMeterController.text = "";
       _permitFeePercentageController.text = "";
       setState(() {
@@ -4461,7 +4372,7 @@ class FeeChangeRateDialogState extends State<FeeChangeRateDialog> {
                         ),
                         keyboardType: TextInputType.number,
                         style:  TextStyle(color: Colors.black,
-                            fontSize: isIpad ? 30 : 15),
+                            fontSize: isIpad ? 30 : 20),
                       ),
                     ),
                   ),
@@ -4518,7 +4429,7 @@ class FeeChangeRateDialogState extends State<FeeChangeRateDialog> {
                         ),
                         keyboardType: TextInputType.number,
                         style:   TextStyle(color: Colors.black,
-                            fontSize: isIpad ? 30 : 23),
+                            fontSize: isIpad ? 30 : 20),
                       ),
                     ),
                   ),
@@ -4556,7 +4467,8 @@ class FeeChangeRateDialogState extends State<FeeChangeRateDialog> {
                   feePerMeter= double.parse(text);
                 }
                 } 
-                else if (_permitFeePricingFixedSelected) {
+                else  {
+                  _permitFeePricingFixedSelected = true;
                 permitFeePercent = 0;
                 feePerMeter= 0;
                 }

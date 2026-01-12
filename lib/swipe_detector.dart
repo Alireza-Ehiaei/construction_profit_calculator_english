@@ -146,7 +146,7 @@ class _SwipeDetectorState extends State<SwipeDetector> {
               ElevatedButton(
                 onPressed: () async {
                   if (isReviewMode) {
-                    final projectData = Provider.of<ProjectData>(context, listen: false);
+                    final projectData = Provider.of<ProjectProviderData>(context, listen: false);
                     await DifferentiatedCalculationDatabaseHelper.deleteProjectBasicData("_oozz");
                     await DifferentiatedCalculationDatabaseHelper.deletePermitFeeDataByProjectName('_oozz');
                     final projectNames = await DifferentiatedCalculationDatabaseHelper.getAllProjectNames();

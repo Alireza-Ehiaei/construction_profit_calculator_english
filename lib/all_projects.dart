@@ -347,7 +347,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
   @override
   void initState() {
     super.initState();
-    _initializeProjectData();
+    _initializeProjectProviderData();
   }
 
 
@@ -359,7 +359,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
     return await inAppPurchase.isAvailable();
   }*/
 
-  Future<void> _initializeProjectData() async {
+  Future<void> _initializeProjectProviderData() async {
     // Retrieve the data from the database
     allProjectsData = await AllProjectsPageDatabase.getAllProjectsPageData();
 
@@ -384,7 +384,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
   }
 
   Future<List<
-      List<dynamic>>> _getAllProjectDataFromAllProjectsPageDatabase() async {
+      List<dynamic>>> _getAllProjectProviderDataFromAllProjectsPageDatabase() async {
     final db = await AllProjectsPageDatabase.database;
     final List<Map<String, dynamic>> maps = await db.query(
       AllProjectsPageDatabase.tableAllProjectsPageData,
@@ -539,8 +539,8 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
           final double spacingHeight = isIpadDevice ? 16.0 : 10.0;
 
 
-          // final navigationProvider = Provider.of<ProjectData>(context, listen: false);
-          return Consumer2<ProjectData, SubscriptionsProvider>(
+          // final navigationProvider = Provider.of<ProjectProviderData>(context, listen: false);
+          return Consumer2<ProjectProviderData, SubscriptionsProvider>(
               builder: (context, projectData, subscriptionsProvider, child) {
                 return Scaffold(
 
@@ -549,7 +549,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: FutureBuilder<List<List<dynamic>>>(
-                        future: _getAllProjectDataFromAllProjectsPageDatabase(),
+                        future: _getAllProjectProviderDataFromAllProjectsPageDatabase(),
                         builder: (context, snapshot) {
                           /*   if (snapshot.hasData) {
                       List<List<dynamic>> data = snapshot.data!;
@@ -1071,7 +1071,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                           ),
                                           onPressed: () async {
                                      //       final subscriptionsProvider = Provider.of<SubscriptionsProvider>(context, listen: false);
-                                     //       final projectData = Provider.of<ProjectData>(context, listen: false);
+                                     //       final projectData = Provider.of<ProjectProviderData>(context, listen: false);
 
                                             showDialog(
                                               context: context,
@@ -1160,7 +1160,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 final bool hasPurchasedAccess = subscriptionsProvider.hasUniformActiveSubscription ||
                                                                     subscriptionsProvider.hasDifferentiatedPlusUniformCalculationProductId;
 
-                                                                if (hasPurchasedAccess) {
+                                                                if  (hasPurchasedAccess) {
                                                                   // ✅ Grant access immediately
                                                                   projectData.setProjectName("wwmm");
                                                                   Navigator.of(context).pop(); // Close any parent dialogs if open
@@ -1595,7 +1595,7 @@ class _AllProjectsPageState extends State<AllProjectsPage> {
                                                                 deletedIndexes);
 
                                                             // Retrieve the updated project data
-                                                            //     List<List<dynamic>> updatedProjectData = await _getAllProjectData();
+                                                            //     List<List<dynamic>> updatedProjectProviderData = await _getAllProjectProviderData();
 
                                                             // Update the data list with the updated project data
                                                             setState(() {});

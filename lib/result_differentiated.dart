@@ -231,7 +231,7 @@ class _ResultPage1State extends State<ResultPage1> {
     String profitPercentageOfProject = '';
     String nameOfProject = '';
     String Pricing = '';
-    var projectData = context.read<ProjectData>();
+    var projectData = context.read<ProjectProviderData>();
     ProjectAddressData? addressData = await
         DifferentiatedCalculationDatabaseHelper.getAddressProjectData(givenProjectName);
 
@@ -404,7 +404,6 @@ class _ResultPage1State extends State<ResultPage1> {
 
                     final ProjectAddressData projectAddressData =
                     ProjectAddressData(
-                      addressTableId: await DifferentiatedCalculationDatabaseHelper.getNextAddressProjectID(),
                       addressTableProjectName: projectNameController.text,
                       addressTableEnvironmentallyFriendly: environmentallyFriendlyController.text,
                       addressTableSociallyFriendly: sociallyFriendlyController.text,
@@ -418,15 +417,15 @@ class _ResultPage1State extends State<ResultPage1> {
 
                     await DifferentiatedCalculationDatabaseHelper.insertOrUpdateAddressProjectData(projectAddressData);
 
-                    List<ResultProjectColumnsClassData> resultProjectData =
+                    List<ResultProjectColumnsClassData> resultProjectProviderData =
                     await DifferentiatedCalculationDatabaseHelper.getResultProjectColumnsClassData(givenProjectName);
 
-                    if (resultProjectData.isNotEmpty) {
-                      nameOfProject = resultProjectData[0].resultProjectTableProjectName;
-                      incomeOfProject = (resultProjectData[0].resultProjectTableTotalIncome);
-                      costOfProject = (resultProjectData[0].resultProjectTableTotalCosts);
-                      profitOfProject = (resultProjectData[0].resultProjectTableTotalProfit);
-                      profitPercentageOfProject = (resultProjectData[0].resultProjectTableProfitPercentageOfProject);
+                    if (resultProjectProviderData.isNotEmpty) {
+                      nameOfProject = resultProjectProviderData[0].resultProjectTableProjectName;
+                      incomeOfProject = (resultProjectProviderData[0].resultProjectTableTotalIncome);
+                      costOfProject = (resultProjectProviderData[0].resultProjectTableTotalCosts);
+                      profitOfProject = (resultProjectProviderData[0].resultProjectTableTotalProfit);
+                      profitPercentageOfProject = (resultProjectProviderData[0].resultProjectTableProfitPercentageOfProject);
 
                       environmentallyFriendly = (environmentallyFriendlyController.text.isNotEmpty)
                           ? double.parse(environmentallyFriendlyController.text.replaceAll(',', ''))
@@ -514,7 +513,7 @@ class _ResultPage1State extends State<ResultPage1> {
     final double spacingHeight = isIpad ? 16.0 : 7.0;
 
 
-    return  Consumer<ProjectData>(
+    return  Consumer<ProjectProviderData>(
         builder: (context, projectData, child) {
           return Scaffold(
               key: _scaffoldKey,

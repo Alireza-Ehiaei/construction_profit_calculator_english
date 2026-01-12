@@ -62,7 +62,7 @@ class AreaData {
 }
 
 class ProjectBasicData {
-  int projectBasicTableId;
+ // int projectBasicTableId;
   String projectBasicTableProjectName;
   double projectBasicTableLandArea;
   double projectBasicTableLandPricePerMeter;
@@ -76,7 +76,7 @@ class ProjectBasicData {
   int projectBasicTableShortNumbersNumberOfZeroRemoved;
 
   ProjectBasicData({
-    required this.projectBasicTableId,
+ //   required this.projectBasicTableId,
     required this.projectBasicTableProjectName,
     required this.projectBasicTableLandArea,
     required this.projectBasicTableLandPricePerMeter,
@@ -92,7 +92,7 @@ class ProjectBasicData {
 
   Map<String, dynamic> toMap() {
     return {
-      'projectBasicTableId': projectBasicTableId,
+   //   'projectBasicTableId': projectBasicTableId,
       'projectBasicTableProjectName': projectBasicTableProjectName,
       'projectBasicTableLandArea': projectBasicTableLandArea,
       'projectBasicTableLandPricePerMeter': projectBasicTableLandPricePerMeter,
@@ -109,7 +109,7 @@ class ProjectBasicData {
 }
 
 class ProjectTableData {
-  int costPricingTableProjectId;
+
   String costPricingTableProjectName;
   int costPricingTableCpp;
   int costPricingTableFloorNumber;
@@ -123,7 +123,7 @@ class ProjectTableData {
   int costPricingTableIndex3;
 
   ProjectTableData({
-    required this.costPricingTableProjectId,
+
     required this.costPricingTableProjectName,
     required this.costPricingTableCpp,
     required this.costPricingTableFloorNumber,
@@ -139,7 +139,7 @@ class ProjectTableData {
 
   Map<String, dynamic> toMap() {
     return {
-      'costPricingTableProjectId': costPricingTableProjectId,
+    //  'costPricingTableProjectId': costPricingTableProjectId,
       'costPricingTableProjectName': costPricingTableProjectName,
       'costPricingTableCpp': costPricingTableCpp,
       'costPricingTableFloorNumber': costPricingTableFloorNumber,
@@ -162,7 +162,6 @@ class ProjectTableData {
 // data of one floor is saved in StartingSimilarTableData
 
 class ProjectStartingSimilarTableData {
-  final int startingSimilarTableId;
   final String startingSimilarTableProjectName;
   final int startingSimilarTableCpp;
   late final int startingSimilarTableStartingFloor;
@@ -176,7 +175,6 @@ class ProjectStartingSimilarTableData {
   final double startingSimilarTableSellPricePerMeter;
 
   ProjectStartingSimilarTableData({
-    required this.startingSimilarTableId,
     required this.startingSimilarTableProjectName,
     required this.startingSimilarTableCpp,
     required this.startingSimilarTableStartingFloor,
@@ -192,7 +190,6 @@ class ProjectStartingSimilarTableData {
 
   Map<String, dynamic> toMap() {
     return {
-      'startingSimilarTableId': startingSimilarTableId,
       'startingSimilarTableProjectName': startingSimilarTableProjectName,
       'startingSimilarTableCpp': startingSimilarTableCpp,
       'startingSimilarTableStartingFloor': startingSimilarTableStartingFloor,
@@ -210,7 +207,7 @@ class ProjectStartingSimilarTableData {
 
 
 class UniquePermitFeeData {
-  int uniquePermitFeeTableId;
+
   String uniquePermitFeeTableProjectName;
   int uniquePermitFeeTableIsUniquePermitFeePerMeterBool;
   int uniquePermitFeeTableIsUniquePermitFeeTotalBool;
@@ -218,7 +215,7 @@ class UniquePermitFeeData {
   double uniquePermitFeeTableUniquePermitFeeTotal;
 
   UniquePermitFeeData({
-    required this.uniquePermitFeeTableId,
+
     required this.uniquePermitFeeTableProjectName,
     required this.uniquePermitFeeTableIsUniquePermitFeePerMeterBool,
     required this.uniquePermitFeeTableIsUniquePermitFeeTotalBool,
@@ -228,7 +225,6 @@ class UniquePermitFeeData {
 
   Map<String, dynamic> toMap() {
     return {
-      'uniquePermitFeeTableId': uniquePermitFeeTableId,
       'uniquePermitFeeTableProjectName': uniquePermitFeeTableProjectName,
       'uniquePermitFeeTableIsUniquePermitFeePerMeterBool': uniquePermitFeeTableIsUniquePermitFeePerMeterBool,
       'uniquePermitFeeTableIsUniquePermitFeeTotalBool': uniquePermitFeeTableIsUniquePermitFeeTotalBool,
@@ -239,7 +235,7 @@ class UniquePermitFeeData {
 }
 
 class PermitFeeSegmentPricingData {
-  int permitFeeSegmentPricingTableId;
+
   String permitFeeSegmentPricingTableProjectName;
   int permitFeeSegmentPricingTableSegmentNumber;
   int permitFeeSegmentPricingTableFloorNumber;
@@ -249,7 +245,7 @@ class PermitFeeSegmentPricingData {
   double permitFeeSegmentPricingTableTotalSegmentPermitFee;
 
   PermitFeeSegmentPricingData({
-    required this.permitFeeSegmentPricingTableId,
+
     required this.permitFeeSegmentPricingTableProjectName,
     required this.permitFeeSegmentPricingTableSegmentNumber,
     required this.permitFeeSegmentPricingTableFloorNumber,
@@ -261,7 +257,6 @@ class PermitFeeSegmentPricingData {
 
   Map<String, dynamic> toMap() {
     return {
-      'permitFeeSegmentPricingTableId': permitFeeSegmentPricingTableId,
       'permitFeeSegmentPricingTableProjectName': permitFeeSegmentPricingTableProjectName,
       'permitFeeSegmentPricingTableSegmentNumber': permitFeeSegmentPricingTableSegmentNumber,
       'permitFeeSegmentPricingTableFloorNumber': permitFeeSegmentPricingTableFloorNumber,
@@ -274,7 +269,7 @@ class PermitFeeSegmentPricingData {
 }
 
 class PermitFeeStartingSimilarTableData {
-  int permitFeeStartingSimilarTableId;
+ // int permitFeeStartingSimilarTableId;
   String permitFeeStartingSimilarTableProjectName;
   int permitFeeStartingSimilarTableFeePlanNumber;
   int permitFeeStartingSimilarTableStartingFloor;
@@ -286,7 +281,7 @@ class PermitFeeStartingSimilarTableData {
   double permitFeeStartingSimilarTableFeePerMeter;
 
   PermitFeeStartingSimilarTableData({
-    required this.permitFeeStartingSimilarTableId,
+  //  required this.permitFeeStartingSimilarTableId,
     required this.permitFeeStartingSimilarTableProjectName,
     required this.permitFeeStartingSimilarTableSegmentNumber,
     required this.permitFeeStartingSimilarTableStartingFloor,
@@ -300,7 +295,7 @@ class PermitFeeStartingSimilarTableData {
 
   Map<String, dynamic> toMap() {
     return {
-      'permitFeeStartingSimilarTableId': permitFeeStartingSimilarTableId,
+   //   'permitFeeStartingSimilarTableId': permitFeeStartingSimilarTableId,
       'permitFeeStartingSimilarTableProjectName': permitFeeStartingSimilarTableProjectName,
       'permitFeeStartingSimilarTableSegmentNumber': permitFeeStartingSimilarTableSegmentNumber,
       'permitFeeStartingSimilarTableStartingFloor': permitFeeStartingSimilarTableStartingFloor,
@@ -315,7 +310,6 @@ class PermitFeeStartingSimilarTableData {
 }
 
 class ProjectResultFloorData {
-  int resultFloorTableId;
   String resultFloorTableProjectName;
   int resultFloorTableCostPricePlan;
   int resultFloorTableFloorNumber;
@@ -324,7 +318,6 @@ class ProjectResultFloorData {
   String resultFloorTableProfitOfFloor;
 
   ProjectResultFloorData({
-    required this.resultFloorTableId,
     required this.resultFloorTableProjectName,
     required this.resultFloorTableCostPricePlan,
     required this.resultFloorTableFloorNumber,
@@ -335,7 +328,6 @@ class ProjectResultFloorData {
 
   Map<String, dynamic> toMap() {
     return {
-      'resultFloorTableId': resultFloorTableId,
       'resultFloorTableProjectName': resultFloorTableProjectName,
       'resultFloorTableCostPricePlan': resultFloorTableCostPricePlan,
       'resultFloorTableFloorNumber': resultFloorTableFloorNumber,
@@ -347,7 +339,6 @@ class ProjectResultFloorData {
 }
 
 class ProjectResultCppData {
-  int resultCppTableId;
   String resultCppTableProjectName;
   int resultCppTableCostPricePlan;
   String resultCppTableIncomeOfCostPricePlan;
@@ -355,7 +346,6 @@ class ProjectResultCppData {
   String resultCppTableProfitOfCostPricePlan;
 
   ProjectResultCppData({
-    required this.resultCppTableId,
     required this.resultCppTableProjectName,
     required this.resultCppTableCostPricePlan,
     required this.resultCppTableIncomeOfCostPricePlan,
@@ -365,7 +355,6 @@ class ProjectResultCppData {
 
   Map<String, dynamic> toMap() {
     return {
-      'resultCppTableId': resultCppTableId,
       'resultCppTableProjectName': resultCppTableProjectName,
       'resultCppTableCostPricePlan': resultCppTableCostPricePlan,
       'resultCppTableIncomeOfCostPricePlan': resultCppTableIncomeOfCostPricePlan,
@@ -376,7 +365,6 @@ class ProjectResultCppData {
 }
 
 class ResultProjectColumnsClassData {
-  int resultProjectTableId;
   String resultProjectTableProjectName;
   String resultProjectTableCostOfLand;
   String resultProjectTableLandArea;
@@ -415,7 +403,6 @@ class ResultProjectColumnsClassData {
 
 
   ResultProjectColumnsClassData({
-    required this.resultProjectTableId,
     required this.resultProjectTableProjectName,
     required this.resultProjectTableLandArea,
     required this.resultProjectTableCostOfLand,
@@ -455,7 +442,6 @@ class ResultProjectColumnsClassData {
 
   Map<String, dynamic> toMap() {
     return {
-      'resultProjectTableId': resultProjectTableId,
       'resultProjectTableProjectName': resultProjectTableProjectName,
       'resultProjectTableLandArea': resultProjectTableLandArea,
       'resultProjectTableTotalNumberOfFloorsText': resultProjectTableTotalNumberOfFloorsText,
@@ -496,7 +482,6 @@ class ResultProjectColumnsClassData {
 }
 
 class ProjectAddressData {
-  int addressTableId;
   String addressTableProjectName;
   String addressTableEnvironmentallyFriendly;
   String addressTableSociallyFriendly;
@@ -508,7 +493,6 @@ class ProjectAddressData {
   String addressTableOther;
 
   ProjectAddressData({
-    required this.addressTableId,
     required this.addressTableProjectName,
     required this.addressTableEnvironmentallyFriendly,
     required this.addressTableSociallyFriendly,
@@ -522,7 +506,6 @@ class ProjectAddressData {
 
   Map<String, dynamic> toMap() {
     return {
-      'addressTableId': addressTableId,
       'addressTableProjectName': addressTableProjectName,
       'addressTableEnvironmentallyFriendly': addressTableEnvironmentallyFriendly,
       'addressTableSociallyFriendly': addressTableSociallyFriendly,
@@ -539,7 +522,6 @@ class ProjectAddressData {
 class DifferentiatedCalculationDatabaseHelper {
 
   static const String tableBasicData = 'projectBasicDataTable';
-  static const String columnProjectBasicTableId = 'projectBasicTableId';
   static const String columnProjectBasicTableProjectName = 'projectBasicTableProjectName';
   static const String columnProjectBasicTableLandArea = 'projectBasicTableLandArea';
   static const String columnProjectBasicTableLandPricePerMeter = 'projectBasicTableLandPricePerMeter';
@@ -554,7 +536,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
 
   static const tableCostPricing = 'projectCostPricingTable';
-  static const columnCostPricingTableProjectId = 'costPricingTableProjectId';
   static const columnCostPricingTableProjectName = 'costPricingTableProjectName';
   static const columnCostPricingTableCpp = 'costPricingTableCpp';
   static const columnCostPricingTableFloorNumber = 'costPricingTableFloorNumber';
@@ -568,7 +549,7 @@ class DifferentiatedCalculationDatabaseHelper {
   static const columnCostPricingTableIndex3 = 'costPricingTableIndex3';
 
   static const tableStartingSimilar = 'projectStartingSimilarTable';
-  static const columnStartingSimilarTableId = 'startingSimilarTableId';
+//  static const columnStartingSimilarTableId = 'startingSimilarTableId';
   static const columnStartingSimilarTableProjectName = 'startingSimilarTableProjectName';
   static const columnStartingSimilarTableCpp = 'startingSimilarTableCpp';
   static const columnStartingSimilarTableStartingFloor = 'startingSimilarTableStartingFloor';
@@ -582,7 +563,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static const columnStartingSimilarTableSellPricePerMeter = 'startingSimilarTableSellPricePerMeter';
 
   static const tablePermitFeeSegmentPricing = 'permitFeeSegmentPricingTable';
-  static const columnPermitFeeSegmentPricingTableId = 'permitFeeSegmentPricingTableId';
   static const columnPermitFeeSegmentPricingTableProjectName = 'permitFeeSegmentPricingTableProjectName';
   static const columnPermitFeeSegmentPricingTableSegmentNumber = 'permitFeeSegmentPricingTableSegmentNumber';
   static const columnPermitFeeSegmentPricingTableFloorNumber = 'permitFeeSegmentPricingTableFloorNumber';
@@ -593,7 +573,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
 
   static const tableUniquePermitFee = 'uniquePermitFeeTable';
-  static const columnUniquePermitFeeTableId = 'uniquePermitFeeTableId';
   static const columnUniquePermitFeeTableProjectName = 'uniquePermitFeeTableProjectName';
   static const columnUniquePermitFeeTableIsUniquePermitFeePerMeterBool = 'uniquePermitFeeTableIsUniquePermitFeePerMeterBool';
   static const columnUniquePermitFeeTableIsUniquePermitFeeTotalBool = 'uniquePermitFeeTableIsUniquePermitFeeTotalBool';
@@ -601,7 +580,7 @@ class DifferentiatedCalculationDatabaseHelper {
   static const columnUniquePermitFeeTableUniquePermitFeeTotal = 'uniquePermitFeeTableUniquePermitFeeTotal';
 
   static const tablePermitFeeStartingSimilar = 'permitFeeStartingSimilarTable';
-  static const columnPermitFeeStartingSimilarTableId = 'permitFeeStartingSimilarTableId';
+ // static const columnPermitFeeStartingSimilarTableId = 'permitFeeStartingSimilarTableId';
   static const columnPermitFeeStartingSimilarTableProjectName = 'permitFeeStartingSimilarTableProjectName';
   static const columnPermitFeeStartingSimilarTableSegmentNumber = 'permitFeeStartingSimilarTableSegmentNumber';
   static const columnPermitFeeStartingSimilarTableStartingFloor = 'permitFeeStartingSimilarTableStartingFloor';
@@ -614,7 +593,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
 
   static const tableResultProjectData = 'resultProjectDataTable';
-  static const String columnResultProjectTableId = 'resultProjectTableId';
   static const String columnResultProjectTableProjectName = 'resultProjectTableProjectName';
   static const String columnResultProjectTableLandArea = 'resultProjectTableLandArea';
   static const String columnResultProjectTableCostOfLand = 'resultProjectTableCostOfLand';
@@ -656,7 +634,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
   // Result cpp Data Table
   static const String tableResultCppData = 'resultConstructionDataTable';
-  static const String columnResultCppTableId = 'resultCppTableId';
   static const String columnResultCppTableProjectName = 'resultCppTableProjectName';
   static const String columnResultCppTableCostPricePlan = 'resultCppTableCostPricePlan';
   static const String columnResultCppTableIncomeOfCostPricePlan = 'resultCppTableIncomeOfCostPricePlan';
@@ -665,7 +642,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
 // Result Floor Data Table
   static const String tableResultFloorData = 'resultFloorDataTable';
-  static const String columnResultFloorTableId = 'resultFloorTableId';
   static const String columnResultFloorTableProjectName = 'resultFloorTableProjectName';
   static const String columnResultFloorTableCostPricePlan = 'resultFloorTableCostPricePlan';
   static const String columnResultFloorTableFloorNumber = 'resultFloorTableFloorNumber';
@@ -675,7 +651,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
 
   static const String tableAddress = 'projectAddressTable';
-  static const String columnAddressTableId = 'addressTableId';
   static const String columnAddressTableProjectName = 'addressTableProjectName';
   static const String columnAddressTableEnvironmentallyFriendly = 'addressTableEnvironmentallyFriendly';
   static const String columnAddressTableSociallyFriendly = 'addressTableSociallyFriendly';
@@ -727,7 +702,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreateProjectBasicTable(Database db, int version) async {
     await db.execute('''
     CREATE TABLE $tableBasicData (
-      $columnProjectBasicTableId INTEGER PRIMARY KEY,
       $columnProjectBasicTableProjectName TEXT NOT NULL,
       $columnProjectBasicTableLandArea REAL NOT NULL,
       $columnProjectBasicTableLandPricePerMeter REAL NOT NULL,
@@ -747,7 +721,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreateCostPricingTable(Database db, int version) async {
     await db.execute('''
       CREATE TABLE $tableCostPricing (
-        $columnCostPricingTableProjectId INTEGER PRIMARY KEY,
         $columnCostPricingTableProjectName TEXT NOT NULL,
         $columnCostPricingTableCpp INTEGER NOT NULL,
         $columnCostPricingTableFloorNumber INTEGER NOT NULL,
@@ -766,7 +739,7 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreateStartingSimilarTable(Database db, int version) async {
     await db.execute('''
       CREATE TABLE $tableStartingSimilar (
-        $columnStartingSimilarTableId INTEGER PRIMARY KEY,
+       
         $columnStartingSimilarTableProjectName TEXT NOT NULL,
         $columnStartingSimilarTableCpp INTEGER NOT NULL,
         $columnStartingSimilarTableStartingFloor INTEGER NOT NULL,
@@ -786,7 +759,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreateUniquePermitFeeTable(Database db, int version) async {
     await db.execute('''
     CREATE TABLE $tableUniquePermitFee (
-      $columnUniquePermitFeeTableId INTEGER PRIMARY KEY,
       $columnUniquePermitFeeTableProjectName TEXT NOT NULL,
       $columnUniquePermitFeeTableIsUniquePermitFeePerMeterBool INTEGER NOT NULL,
       $columnUniquePermitFeeTableIsUniquePermitFeeTotalBool INTEGER NOT NULL,
@@ -799,7 +771,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreatePermitFeeSegmentPricingTable(Database db, int version) async {
     await db.execute('''
     CREATE TABLE $tablePermitFeeSegmentPricing (
-      $columnPermitFeeSegmentPricingTableId INTEGER PRIMARY KEY,
       $columnPermitFeeSegmentPricingTableProjectName TEXT NOT NULL,
       $columnPermitFeeSegmentPricingTableSegmentNumber INTEGER NOT NULL,
       $columnPermitFeeSegmentPricingTableFloorNumber INTEGER NOT NULL,
@@ -814,7 +785,7 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreatePermitFeeStartingSimilarTable(Database db, int version) async {
     await db.execute('''
       CREATE TABLE $tablePermitFeeStartingSimilar (
-        $columnPermitFeeStartingSimilarTableId INTEGER PRIMARY KEY,
+  
         $columnPermitFeeStartingSimilarTableProjectName TEXT NOT NULL,
         $columnPermitFeeStartingSimilarTableSegmentNumber INTEGER NOT NULL,
         $columnPermitFeeStartingSimilarTableStartingFloor INTEGER NOT NULL,
@@ -830,7 +801,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreateResultFloorTable (Database db, int version) async {
     await db.execute('''
       CREATE TABLE $tableResultFloorData (
-        $columnResultFloorTableId INTEGER PRIMARY KEY,
         $columnResultFloorTableProjectName TEXT NOT NULL,
         $columnResultFloorTableCostPricePlan INTEGER NOT NULL,
         $columnResultFloorTableFloorNumber INTEGER NOT NULL,
@@ -845,7 +815,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreateProjectResultCppData  (Database db, int version) async {
     await db.execute('''
       CREATE TABLE $tableResultCppData (
-        $columnResultCppTableId INTEGER PRIMARY KEY,
         $columnResultCppTableProjectName TEXT NOT NULL,
         $columnResultCppTableCostPricePlan INTEGER NOT NULL,
         $columnResultCppTableIncomeOfCostPricePlan TEXT NOT NULL,
@@ -859,7 +828,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreateResultProjectTable(Database db, int version) async {
     await db.execute('''
   CREATE TABLE $tableResultProjectData (
-    $columnResultProjectTableId INTEGER PRIMARY KEY,
     $columnResultProjectTableProjectName TEXT NOT NULL,
     $columnResultProjectTableLandArea TEXT NOT NULL,
     $columnResultProjectTableTotalSalableAreaToLandArea TEXT NOT NULL,
@@ -905,7 +873,6 @@ class DifferentiatedCalculationDatabaseHelper {
   static Future<void> _onCreateAddressTable (Database db, int version) async {
     await db.execute('''
       CREATE TABLE $tableAddress (
-        $columnAddressTableId INTEGER PRIMARY KEY,
         $columnAddressTableProjectName TEXT NOT NULL,
         $columnAddressTableEnvironmentallyFriendly REAL NOT NULL,
         $columnAddressTableSociallyFriendly REAL NOT NULL,
@@ -919,49 +886,15 @@ class DifferentiatedCalculationDatabaseHelper {
     ''');
   }
 
-/*  static Future<int> insertOrUpdateProjectBasicData(ProjectBasicData projectBasicData)
-  async {
-    final db = await database;
 
-    // Query to check if the project already exists based on multiple criteria
-    final maps = await db.query(
-      tableBasicData,
-      where: '$columnProjectBasicTableProjectName = ?',
-      whereArgs: [projectBasicData.projectBasicTableProjectName],
-    );
-
-    if (maps.isNotEmpty) {
-      // If the project exists, update the existing record
-      final id = maps.first[columnProjectBasicTableId] as int;
-
-      await db.update(
-        tableBasicData,
-        projectBasicData.toMap(),
-        where: '$columnProjectBasicTableProjectName = ?',
-        whereArgs: [projectBasicData.projectBasicTableProjectName],
-      );
-      return id; // Return the ID of the updated record
-    } else {
-      // If the project does not exist, insert a new record
-      final id = await db.insert(
-        tableBasicData,
-        projectBasicData.toMap(),
-      );
-      return id; // Return the ID of the newly inserted record
-    }
-  }*/
-
-
-  static Future<int> insertOrUpdateProjectBasicData(
+  static Future<void> insertOrUpdateProjectBasicData(
       String projectName,
       double landArea,
       double landPricePerMeter,
       double uniformConstructionCost,
       int firstFloorNumber,
       int numberOfZeroRemoved,
-
-      )
-  async {
+      ) async {
     final db = await database;
 
     // Check if project exists
@@ -972,7 +905,7 @@ class DifferentiatedCalculationDatabaseHelper {
     );
 
     if (existingRecords.isNotEmpty) {
-      // Update existing record with new values
+      // UPDATE existing record
       await db.update(
         tableBasicData,
         {
@@ -985,10 +918,9 @@ class DifferentiatedCalculationDatabaseHelper {
         where: '$columnProjectBasicTableProjectName = ?',
         whereArgs: [projectName],
       );
-      return existingRecords.first[columnProjectBasicTableId] as int;
     } else {
-      // Insert new record with provided values and zeros for other columns
-      final id = await db.insert(
+      // INSERT new record
+      await db.insert(
         tableBasicData,
         {
           columnProjectBasicTableProjectName: projectName,
@@ -1004,9 +936,9 @@ class DifferentiatedCalculationDatabaseHelper {
           columnProjectBasicTableShortNumbersNumberOfZeroRemoved: numberOfZeroRemoved,
         },
       );
-      return id;
     }
   }
+
 
 
   static Future<void> updateProjectBasicDataRemaining(
@@ -1033,7 +965,7 @@ class DifferentiatedCalculationDatabaseHelper {
     );
   }
 
-  static Future<int> insertOrUpdateProjectData(ProjectTableData projectData) async {
+  static Future<void> insertOrUpdateProjectData(ProjectTableData projectData) async {
     final db = await database;
     final maps = await db.query(
       tableCostPricing,
@@ -1042,8 +974,9 @@ class DifferentiatedCalculationDatabaseHelper {
       whereArgs: [projectData.costPricingTableProjectName, projectData.costPricingTableCpp,
         projectData.costPricingTableFloorNumber, projectData.costPricingTableSegmentNumber],
     );
+
     if (maps.isNotEmpty) {
-      final id = maps.first[columnCostPricingTableProjectId] as int;
+      // UPDATE
       await db.update(
         tableCostPricing,
         projectData.toMap(),
@@ -1052,18 +985,16 @@ class DifferentiatedCalculationDatabaseHelper {
         whereArgs: [projectData.costPricingTableProjectName, projectData.costPricingTableCpp,
           projectData.costPricingTableFloorNumber, projectData.costPricingTableSegmentNumber],
       );
-      return id;
     } else {
-      final id = await db.insert(
+      // INSERT
+      await db.insert(
         tableCostPricing,
         projectData.toMap(),
       );
-      return id;
     }
   }
 
-  static Future<int> insertOrUpdateUniquePermitFeeData(UniquePermitFeeData data) async
-  {
+  static Future<void> insertOrUpdateUniquePermitFeeData(UniquePermitFeeData data) async {
     final db = await database;
 
     List<Map<String, dynamic>> maps = await db.query(
@@ -1073,23 +1004,22 @@ class DifferentiatedCalculationDatabaseHelper {
     );
 
     if (maps.isNotEmpty) {
-      int id = maps[0][columnUniquePermitFeeTableId];
+      // UPDATE
       await db.update(
         tableUniquePermitFee,
         data.toMap(),
         where: '$columnUniquePermitFeeTableProjectName = ?',
         whereArgs: [data.uniquePermitFeeTableProjectName],
       );
-      return id;
     } else {
-      int id = await db.insert(
+      // INSERT
+      await db.insert(
         tableUniquePermitFee,
         data.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      return id;
     }
   }
+
 
   static Future<List<ProjectBasicData>> getProjectBasicData(String projectName) async {
     final db = await database;
@@ -1101,7 +1031,7 @@ class DifferentiatedCalculationDatabaseHelper {
 
     return List.generate(maps.length, (i) {
       return ProjectBasicData(
-        projectBasicTableId: maps[i][columnProjectBasicTableId],
+   //     projectBasicTableId: maps[i][columnProjectBasicTableId],
         projectBasicTableProjectName: maps[i][columnProjectBasicTableProjectName],
         projectBasicTableLandArea: maps[i][columnProjectBasicTableLandArea],
         projectBasicTableLandPricePerMeter: maps[i][columnProjectBasicTableLandPricePerMeter],
@@ -1128,7 +1058,7 @@ class DifferentiatedCalculationDatabaseHelper {
 
     return List.generate(maps.length, (i) {
       return ProjectTableData(
-        costPricingTableProjectId: maps[i][columnCostPricingTableProjectId],
+
         costPricingTableProjectName: maps[i][columnCostPricingTableProjectName],
         costPricingTableCpp: maps[i][columnCostPricingTableCpp],
         costPricingTableFloorNumber: maps[i][columnCostPricingTableFloorNumber],
@@ -1143,47 +1073,7 @@ class DifferentiatedCalculationDatabaseHelper {
       );
     });
   }
-  /* static Future<List<ProjectTableData>> getCostPricingData(String projectName) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      tableCostPricing,
-      where: '$columnCostPricingTableProjectName = ?',
-      whereArgs: [projectName],
-    );
 
-    return List.generate(maps.length, (i) {
-      return ProjectTableData(
-        id: maps[i][columnCostPricingTableProjectId],
-        projectName: maps[i][columnCostPricingTableProjectName],
-        cpp: maps[i][columnCostPricingTableCpp],
-        floor: maps[i][columnCostPricingTableProjectName],
-        segment: maps[i][columnCostPricingTableSegmentNumber],
-        segmentArea: maps[i][columnCostPricingTableSegmentArea],
-        segmentCost: maps[i][columnCostPricingTableSegmentCostPerMeter],
-        segmentPrice: maps[i][columnCostPricingTableSegmentSellPricePerMeter],
-        incomeOfSegment: maps[i][columnCostPricingTableIncomeOfSegment],
-        costOfSegment: maps[i][columnCostPricingTableCostOfSegment],
-        profitOfSegment: maps[i][columnCostPricingTableProfitOfSegment],
-        index3: maps[i][columnCostPricingTableIndex3],
-      );
-    });
-  }
-*/
-
-  static Future<int> getNextProjectBasicId() async {
-    final dbProject = await database;
-    final List<Map<String, dynamic>> maps = await dbProject.rawQuery(
-        'SELECT MAX($columnProjectBasicTableId) + 1 as nextId FROM $tableBasicData'
-    );
-    return maps.first['nextId'] ?? 1; // Return 1 if no ID exists
-  }
-
-  static Future<int> getNextProjectId() async {
-    final dbProject = await database;
-    final List<Map<String, dynamic>> maps =
-    await dbProject.rawQuery('SELECT MAX($columnCostPricingTableProjectId) + 1 as nextId FROM $tableCostPricing');
-    return maps.first['nextId'] ?? 1;
-  }
 
   static Future<Map<String, int?>> getMaxFloorCppByProject(project_) async {
     final db = await database;
@@ -1218,7 +1108,7 @@ class DifferentiatedCalculationDatabaseHelper {
 
     return List.generate(maps.length, (i) {
       return ProjectTableData(
-        costPricingTableProjectId: maps[i][columnCostPricingTableProjectId],
+
         costPricingTableProjectName: maps[i][columnCostPricingTableProjectName],
         costPricingTableCpp: maps[i][columnCostPricingTableCpp],
         costPricingTableFloorNumber: maps[i][columnCostPricingTableFloorNumber],
@@ -1253,13 +1143,13 @@ class DifferentiatedCalculationDatabaseHelper {
     return floors;
   }
 
-  static Future<int> getNextProjectStartingSimilarID() async {
+/*  static Future<int> getNextProjectStartingSimilarID() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT MAX($columnStartingSimilarTableId) + '
         '1 as $columnStartingSimilarTableId FROM $tableStartingSimilar');
     int nextID = maps.first[columnStartingSimilarTableId] ?? 1;
     return nextID;
-  }
+  }*/
 
   static Future<int> insertProjectStartingSimilarData(ProjectStartingSimilarTableData projectData) async {
     final db = await database;
@@ -1268,35 +1158,36 @@ class DifferentiatedCalculationDatabaseHelper {
     return id;
   }
 
-  static Future<int> insertOrUpdateProjectStartingSimilarPercentageData(
+  static Future<void> insertOrUpdateProjectStartingSimilarPercentageData(
       ProjectStartingSimilarTableData data) async {
     final db = await database;
     List<Map<String, dynamic>> maps = await db.query(
       tableStartingSimilar,
       where: '$columnStartingSimilarTableProjectName = ? AND $columnStartingSimilarTableCpp = ? '
-          ' AND $columnStartingSimilarTableSegmentNumber = ?',// SegmentNumber is necessary
+          'AND $columnStartingSimilarTableSegmentNumber = ?',
       whereArgs: [data.startingSimilarTableProjectName, data.startingSimilarTableCpp,
-         data.startingSimilarTableSegmentNumber],
+        data.startingSimilarTableSegmentNumber],
     );
+
     if (maps.isNotEmpty) {
-      int id = maps[0][columnStartingSimilarTableId];
+      // UPDATE
       await db.update(
         tableStartingSimilar,
         data.toMap(),
-        where: '$columnStartingSimilarTableProjectName = ? AND $columnStartingSimilarTableCpp = ?'
-            ' AND $columnStartingSimilarTableSegmentNumber = ?',
+        where: '$columnStartingSimilarTableProjectName = ? AND $columnStartingSimilarTableCpp = ? '
+            'AND $columnStartingSimilarTableSegmentNumber = ?',
         whereArgs: [data.startingSimilarTableProjectName, data.startingSimilarTableCpp,
-           data.startingSimilarTableSegmentNumber],
+          data.startingSimilarTableSegmentNumber],
       );
-      return id;
     } else {
-      int id = await db.insert(
+      // INSERT
+      await db.insert(
         tableStartingSimilar,
         data.toMap(),
       );
-      return id;
     }
   }
+
 
 
   // for saving_updating cost & price
@@ -1365,7 +1256,7 @@ class DifferentiatedCalculationDatabaseHelper {
 
     if (maps.isNotEmpty) {
       return ProjectStartingSimilarTableData(
-        startingSimilarTableId: maps[0][columnStartingSimilarTableId],
+
         startingSimilarTableProjectName: maps[0][columnStartingSimilarTableProjectName],
         startingSimilarTableCpp: maps[0][columnStartingSimilarTableCpp],
         startingSimilarTableStartingFloor: maps[0][columnStartingSimilarTableStartingFloor],
@@ -1396,7 +1287,7 @@ class DifferentiatedCalculationDatabaseHelper {
 
     return List.generate(maps.length, (i) {
       return ProjectStartingSimilarTableData(
-        startingSimilarTableId: maps[i][columnStartingSimilarTableId],
+
         startingSimilarTableProjectName: maps[i][columnStartingSimilarTableProjectName],
         startingSimilarTableCpp: maps[i][columnStartingSimilarTableCpp],
         startingSimilarTableStartingFloor: maps[i][columnStartingSimilarTableStartingFloor],
@@ -1414,7 +1305,7 @@ class DifferentiatedCalculationDatabaseHelper {
 
 
   // Modified insertOrUpdatePermi tFeeSegmentPricingData method
-  static Future<int> insertOrUpdatePermitFeeSegmentPricingData(
+  static Future<void> insertOrUpdatePermitFeeSegmentPricingData(
       PermitFeeSegmentPricingData permitFeeSegmentPricingData) async {
     final db = await database;
     final maps = await db.query(
@@ -1426,10 +1317,10 @@ class DifferentiatedCalculationDatabaseHelper {
         permitFeeSegmentPricingData.permitFeeSegmentPricingTableSegmentNumber,
         permitFeeSegmentPricingData.permitFeeSegmentPricingTableFloorNumber,
         permitFeeSegmentPricingData.permitFeeSegmentPricingTableFeePlanNumber],
-      // these columns are defined in class
     );
+
     if (maps.isNotEmpty) {
-      final id = maps.first[columnPermitFeeSegmentPricingTableId] as int;
+      // UPDATE
       await db.update(
         tablePermitFeeSegmentPricing,
         permitFeeSegmentPricingData.toMap(),
@@ -1441,15 +1332,15 @@ class DifferentiatedCalculationDatabaseHelper {
           permitFeeSegmentPricingData.permitFeeSegmentPricingTableFloorNumber,
           permitFeeSegmentPricingData.permitFeeSegmentPricingTableFeePlanNumber],
       );
-      return id;
     } else {
-      final id = await db.insert(
+      // INSERT
+      await db.insert(
         tablePermitFeeSegmentPricing,
         permitFeeSegmentPricingData.toMap(),
       );
-      return id;
     }
   }
+
 
   Future<List<Map<String, dynamic>>> calculatePermitFeeForEachFloor(String projectName) async {
     List<Map<String, dynamic>> floorPermitFees = [];
@@ -1482,37 +1373,36 @@ class DifferentiatedCalculationDatabaseHelper {
     return projectNames;
   }
 
-  static Future<int> getNextAddressProjectID() async {
+/*  static Future<int> getNextAddressProjectID() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT MAX($columnAddressTableId) '
         '+ 1 as $columnAddressTableId FROM $tableAddress');
     int nextID = maps.first[columnAddressTableId] ?? 1;
     return nextID;
-  }
+  }*/
 
-  static Future<int> insertOrUpdateAddressProjectData(ProjectAddressData data) async {
+  static Future<void> insertOrUpdateAddressProjectData(ProjectAddressData data) async {
     final db = await database;
     List<Map<String, dynamic>> maps = await db.query(
       tableAddress,
       where: '$columnAddressTableProjectName = ?',
       whereArgs: [data.addressTableProjectName],
     );
+
     if (maps.isNotEmpty) {
-      int id = maps[0][columnAddressTableId];
+      // UPDATE
       await db.update(
         tableAddress,
         data.toMap(),
         where: '$columnAddressTableProjectName = ?',
         whereArgs: [data.addressTableProjectName],
       );
-      return id;
     } else {
-      int id = await db.insert(
+      // INSERT
+      await db.insert(
         tableAddress,
         data.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      return id;
     }
   }
 
@@ -1523,7 +1413,7 @@ class DifferentiatedCalculationDatabaseHelper {
         whereArgs: [projectName]);
     return List.generate(maps.length, (i) {
       return ProjectStartingSimilarTableData(
-        startingSimilarTableId: maps[0][columnStartingSimilarTableId],
+
         startingSimilarTableProjectName: maps[0][columnStartingSimilarTableProjectName],
         startingSimilarTableCpp: maps[0][columnStartingSimilarTableCpp],
         startingSimilarTableStartingFloor: maps[0][columnStartingSimilarTableStartingFloor],
@@ -1586,7 +1476,6 @@ class DifferentiatedCalculationDatabaseHelper {
     );
     return List.generate(maps.length, (i) {
       return ProjectResultFloorData(
-        resultFloorTableId: maps[i][columnResultFloorTableId],
         resultFloorTableProjectName: maps[i][columnResultFloorTableProjectName],
         resultFloorTableCostPricePlan: maps[i][columnResultFloorTableCostPricePlan],
         resultFloorTableFloorNumber: maps[i][columnResultFloorTableFloorNumber],
@@ -1607,7 +1496,6 @@ class DifferentiatedCalculationDatabaseHelper {
     );
     return List.generate(maps.length, (i) {
       return ProjectResultCppData(
-        resultCppTableId: maps[i][columnResultCppTableId],
         resultCppTableProjectName: maps[i][columnResultCppTableProjectName],
         resultCppTableCostPricePlan: maps[i][columnResultCppTableCostPricePlan],
         resultCppTableIncomeOfCostPricePlan: maps[i][columnResultCppTableIncomeOfCostPricePlan],
@@ -1626,7 +1514,6 @@ class DifferentiatedCalculationDatabaseHelper {
     );
     return List.generate(maps.length, (i) {
       return ResultProjectColumnsClassData(
-        resultProjectTableId: maps[i][columnResultProjectTableId] ?? 0,
         resultProjectTableProjectName: maps[i][columnResultProjectTableProjectName] ?? '',
         resultProjectTableLandArea: maps[i][columnResultProjectTableLandArea] ?? 0.0,
         resultProjectTableCostOfLand: maps[i][columnResultProjectTableCostOfLand] ?? 0.0,
@@ -2328,7 +2215,6 @@ class DifferentiatedCalculationDatabaseHelper {
     }
 
     return ProjectAddressData(
-      addressTableId: maps[0][columnAddressTableId],
       addressTableProjectName: maps[0][columnAddressTableProjectName],
       addressTableEnvironmentallyFriendly: maps[0][columnAddressTableEnvironmentallyFriendly],
       addressTableSociallyFriendly: maps[0][columnAddressTableSociallyFriendly],
@@ -2351,7 +2237,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
     return List.generate(maps.length, (i) {
       return UniquePermitFeeData(
-        uniquePermitFeeTableId: maps[i][columnUniquePermitFeeTableId],
         uniquePermitFeeTableProjectName: maps[i][columnUniquePermitFeeTableProjectName],
         uniquePermitFeeTableIsUniquePermitFeePerMeterBool: maps[i][columnUniquePermitFeeTableIsUniquePermitFeePerMeterBool],
         uniquePermitFeeTableIsUniquePermitFeeTotalBool: maps[i][columnUniquePermitFeeTableIsUniquePermitFeeTotalBool],
@@ -2374,7 +2259,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
     return List.generate(maps.length, (i) {
       return PermitFeeSegmentPricingData(
-        permitFeeSegmentPricingTableId: maps[i][columnPermitFeeSegmentPricingTableId],
         permitFeeSegmentPricingTableProjectName: maps[i][columnPermitFeeSegmentPricingTableProjectName],
         permitFeeSegmentPricingTableSegmentNumber: maps[i][columnPermitFeeSegmentPricingTableSegmentNumber],
         permitFeeSegmentPricingTableFloorNumber: maps[i][columnPermitFeeSegmentPricingTableFloorNumber],
@@ -2387,7 +2271,7 @@ class DifferentiatedCalculationDatabaseHelper {
   }
 
 
-  static Future<List<PermitFeeSegmentPricingData>> getPermitFeeSegmentPricingDataByFeePlan(String projectName,
+  static Future<List<PermitFeeSegmentPricingData>> getPermitFeeSegmentFeeDataByFeePlan(String projectName,
       int permitFeeSegmentPricingTableFeePlanNumber)
   async {
     final Database db = await database;
@@ -2400,7 +2284,6 @@ class DifferentiatedCalculationDatabaseHelper {
 
     return List.generate(maps.length, (i) {
       return PermitFeeSegmentPricingData(
-        permitFeeSegmentPricingTableId: maps[i][columnPermitFeeSegmentPricingTableId],
         permitFeeSegmentPricingTableProjectName: maps[i][columnPermitFeeSegmentPricingTableProjectName],
         permitFeeSegmentPricingTableSegmentNumber: maps[i][columnPermitFeeSegmentPricingTableSegmentNumber],
         permitFeeSegmentPricingTableFloorNumber: maps[i][columnPermitFeeSegmentPricingTableFloorNumber],
@@ -2412,26 +2295,6 @@ class DifferentiatedCalculationDatabaseHelper {
     });
   }
 
-  static Future<int> getNextUniquePermitFeeTableId() async {
-    final Database db = await database;
-
-    final List<Map<String, dynamic>> maps = await db.rawQuery(
-      'SELECT MAX($columnUniquePermitFeeTableId) + 1 as $columnUniquePermitFeeTableId FROM $tableUniquePermitFee',
-    );
-    int nextID = maps.first[columnUniquePermitFeeTableId] ?? 1;
-    return nextID;
-  }
-
-  static Future<int> getNextPermitFeeSegmentPricingTableId() async {
-    final Database db = await database;
-
-    final List<Map<String, dynamic>> maps = await db.rawQuery(
-      'SELECT MAX($columnPermitFeeSegmentPricingTableId) + 1 as $columnPermitFeeSegmentPricingTableId FROM '
-          '$tablePermitFeeSegmentPricing',
-    );
-    int nextID = maps.first[columnPermitFeeSegmentPricingTableId] ?? 1;
-    return nextID;
-  }
 
   static Future<PermitFeeStartingSimilarTableData?> getPermitFeeStartingSimilarTableSegmentData
       (String projectName,int feePlanNumber, int segmentNumber)
@@ -2447,7 +2310,7 @@ class DifferentiatedCalculationDatabaseHelper {
 
     if (maps.isNotEmpty) {
       return PermitFeeStartingSimilarTableData(
-        permitFeeStartingSimilarTableId: maps[0][columnPermitFeeStartingSimilarTableId],
+   //     permitFeeStartingSimilarTableId: maps[0][columnPermitFeeStartingSimilarTableId],
         permitFeeStartingSimilarTableProjectName: maps[0][columnPermitFeeStartingSimilarTableProjectName],
         permitFeeStartingSimilarTableSegmentNumber: maps[0][columnPermitFeeStartingSimilarTableSegmentNumber],
         permitFeeStartingSimilarTableStartingFloor: maps[0][columnPermitFeeStartingSimilarTableStartingFloor],
@@ -2468,13 +2331,14 @@ class DifferentiatedCalculationDatabaseHelper {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tablePermitFeeStartingSimilar,
-      where: '$columnPermitFeeStartingSimilarTableProjectName = ?',
-      whereArgs: [projectName],
+      where: '$columnPermitFeeStartingSimilarTableProjectName = ? AND '
+          '$columnPermitFeeStartingSimilarTableFeePlanNumber = ?',
+      whereArgs: [projectName, permitFeePlanNumber],
     );
 
     return List.generate(maps.length, (i) {
       return PermitFeeStartingSimilarTableData(
-        permitFeeStartingSimilarTableId: maps[i][columnPermitFeeStartingSimilarTableId],
+ //       permitFeeStartingSimilarTableId: maps[i][columnPermitFeeStartingSimilarTableId],
         permitFeeStartingSimilarTableProjectName: maps[i][columnPermitFeeStartingSimilarTableProjectName],
         permitFeeStartingSimilarTableSegmentNumber: maps[i][columnPermitFeeStartingSimilarTableSegmentNumber],
         permitFeeStartingSimilarTableStartingFloor: maps[i][columnPermitFeeStartingSimilarTableStartingFloor],
@@ -2489,36 +2353,40 @@ class DifferentiatedCalculationDatabaseHelper {
   }
 
 
-
-  static Future<int> insertOrUpdatePermitFeeStartingSimilarPercentageData
-      (PermitFeeStartingSimilarTableData data) async {
+  static Future<void> insertOrUpdatePermitFeeStartingSimilarPercentageData(
+      PermitFeeStartingSimilarTableData data) async {
     final db = await database;
     List<Map<String, dynamic>> maps = await db.query(
       tablePermitFeeStartingSimilar,
-      where: '$columnPermitFeeStartingSimilarTableProjectName = ? AND $columnPermitFeeStartingSimilarTableSegmentNumber = ? '
-          ' AND $columnPermitFeeStartingSimilarTableFeePlanNumber = ?',
-      whereArgs: [data.permitFeeStartingSimilarTableProjectName, data.permitFeeStartingSimilarTableSegmentNumber,
-         data.permitFeeStartingSimilarTableFeePlanNumber],
+      where: '$columnPermitFeeStartingSimilarTableProjectName = ? AND '
+          '$columnPermitFeeStartingSimilarTableSegmentNumber = ? AND '
+          '$columnPermitFeeStartingSimilarTableFeePlanNumber = ?',
+      whereArgs: [data.permitFeeStartingSimilarTableProjectName,
+        data.permitFeeStartingSimilarTableSegmentNumber,
+        data.permitFeeStartingSimilarTableFeePlanNumber],
     );
+
     if (maps.isNotEmpty) {
-      int id = maps[0][columnPermitFeeStartingSimilarTableId];
+      // UPDATE existing row
       await db.update(
         tablePermitFeeStartingSimilar,
         data.toMap(),
-        where: '$columnPermitFeeStartingSimilarTableProjectName = ? AND $columnPermitFeeStartingSimilarTableSegmentNumber = ?'
-            ' AND $columnPermitFeeStartingSimilarTableFeePlanNumber = ?',
-        whereArgs: [data.permitFeeStartingSimilarTableProjectName, data.permitFeeStartingSimilarTableSegmentNumber,
+        where: '$columnPermitFeeStartingSimilarTableProjectName = ? AND '
+            '$columnPermitFeeStartingSimilarTableSegmentNumber = ? AND '
+            '$columnPermitFeeStartingSimilarTableFeePlanNumber = ?',
+        whereArgs: [data.permitFeeStartingSimilarTableProjectName,
+          data.permitFeeStartingSimilarTableSegmentNumber,
           data.permitFeeStartingSimilarTableFeePlanNumber],
       );
-      return id;
     } else {
-      int id = await db.insert(
+      // INSERT new row
+      await db.insert(
         tablePermitFeeStartingSimilar,
         data.toMap(),
       );
-      return id;
     }
   }
+
 
   static Future<List<PermitFeeStartingSimilarTableData>> getAllFeeProjectStartingSimilarData(String projectName) async {
     final db = await database;
@@ -2527,7 +2395,7 @@ class DifferentiatedCalculationDatabaseHelper {
         whereArgs: [projectName]);
     return List.generate(maps.length, (i) {
       return PermitFeeStartingSimilarTableData(
-        permitFeeStartingSimilarTableId: maps[i][columnPermitFeeStartingSimilarTableId],
+     //   permitFeeStartingSimilarTableId: maps[i][columnPermitFeeStartingSimilarTableId],
         permitFeeStartingSimilarTableProjectName: maps[i][columnPermitFeeStartingSimilarTableProjectName],
         permitFeeStartingSimilarTableSegmentNumber: maps[i][columnPermitFeeStartingSimilarTableSegmentNumber],
         permitFeeStartingSimilarTableStartingFloor: maps[i][columnPermitFeeStartingSimilarTableStartingFloor],
@@ -2541,26 +2409,26 @@ class DifferentiatedCalculationDatabaseHelper {
     });
   }
 
-  static Future<int> getNextPermitFeeStartingSimilarID() async {
+/*  static Future<int> getNextPermitFeeStartingSimilarID() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT MAX($columnPermitFeeStartingSimilarTableId) + '
         '1 as $columnPermitFeeStartingSimilarTableId FROM $tablePermitFeeStartingSimilar');
     int nextID = maps.first[columnPermitFeeStartingSimilarTableId] ?? 1;
     return nextID;
-  }
+  }*/
 
 
-  static Future<List<Map<String, dynamic>>> fetchPermitFeeStartingSimilarTableData(String permitFeeProjectName,
-      int permitFeePlanNumber, int permitFeeStartingFloor)
+  static Future<List<Map<String, dynamic>>> fetchPermitFeeStartingSimilarTableData
+      (String permitFeeProjectName,
+      int permitFeePlanNumber)
   async {
     List<Map<String, dynamic>> data = [];
     final db = await database;
     final List<dynamic> result = await db.query(
       tablePermitFeeStartingSimilar,
       where: '$columnPermitFeeStartingSimilarTableProjectName = ? AND '
-          '$columnPermitFeeStartingSimilarTableFeePlanNumber = ? AND'
-          ' $columnPermitFeeStartingSimilarTableStartingFloor = ?',
-      whereArgs: [permitFeeProjectName, permitFeePlanNumber, permitFeeStartingFloor],
+          '$columnPermitFeeStartingSimilarTableFeePlanNumber = ? ',
+      whereArgs: [permitFeeProjectName, permitFeePlanNumber],
     );
 
     for (Map<String, dynamic> row in result) {
@@ -2599,13 +2467,13 @@ class DifferentiatedCalculationDatabaseHelper {
   }
 
 
-  static Future<int> getNextResultProjectTableId() async {
+/*  static Future<int> getNextResultProjectTableId() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT MAX($columnResultProjectTableId) + 1 as '
         '$columnResultProjectTableId FROM $tableResultProjectData');
     int nextID = maps.first[columnResultProjectTableId] ?? 1;
     return nextID;
-  }
+  }*/
 
 
   static Future deleteTablesOfDifferentiatedCalculationDatabaseHelper() async {
@@ -2630,7 +2498,7 @@ class DifferentiatedCalculationDatabaseHelper {
 
     return List.generate(maps.length, (i) {
       return ProjectStartingSimilarTableData(
-        startingSimilarTableId: maps[i][columnStartingSimilarTableId],
+
         startingSimilarTableProjectName: maps[i][columnStartingSimilarTableProjectName],
         startingSimilarTableCpp: maps[i][columnStartingSimilarTableCpp],
         startingSimilarTableStartingFloor: maps[i][columnStartingSimilarTableStartingFloor],
@@ -2648,38 +2516,35 @@ class DifferentiatedCalculationDatabaseHelper {
   }
 
   // Method to update the rows in the 'projectStartingSimilarTable' table
-  static Future<void> updateStartingFloorForInTableStartingSimilar(String projectName, int differenceStartingFloor) async {
+  static Future<void> updateStartingFloorForInTableStartingSimilar(
+      String projectName, int differenceStartingFloor) async {
     final db = await database;
-    List<ProjectStartingSimilarTableData> rows = await
-    getRowsOfStartingSimilarTable(projectName);
 
-    for (var row in rows) {
-      row.startingSimilarTableStartingFloor += differenceStartingFloor;
-      await db.update(
-        tableStartingSimilar,
-        row.toMap(),
-        where: '$columnStartingSimilarTableId = ?',
-        whereArgs: [row.startingSimilarTableId],
-      );
-    }
+    await db.update(
+      tableStartingSimilar,
+      {'startingSimilarTableStartingFloor': differenceStartingFloor},  // Only update this column
+      where: '$columnStartingSimilarTableProjectName = ?',
+      whereArgs: [projectName],
+      // Add other columns if you want to limit to specific CPP/segment too
+    );
   }
 
-  static Future<void> updateStartingFloorInTableCostPricing(String projectName, int differenceStartingFloor) async {
-    final db = await database;
-    List<ProjectTableData> rows = await getCostPricingData(projectName);
 
-    for (var row in rows) {
-      row.costPricingTableFloorNumber += differenceStartingFloor;
-      await db.update(
-        tableCostPricing,
-        row.toMap(),
-        where: '$columnCostPricingTableProjectId = ?',
-        whereArgs: [row.costPricingTableProjectId],
-      );
-    }
+  static Future<void> updateStartingFloorInTableCostPricing(
+      String projectName, int differenceStartingFloor) async {
+    final db = await database;
+
+    await db.rawUpdate(
+      'UPDATE $tableCostPricing '
+          'SET $columnCostPricingTableFloorNumber = '
+          '$columnCostPricingTableFloorNumber + ? '
+          'WHERE $columnCostPricingTableProjectName = ?',
+      [differenceStartingFloor, projectName],
+    );
   }
 
-  static Future<void> updateFloorNumberInTableResultFloorData(String projectName, int differenceFloorNumber) async {
+  static Future<void> updateFloorNumberInTableResultFloorData(String projectName,
+      int differenceFloorNumber) async {
     final db = await database;
     List<ProjectResultFloorData> rows = await getProjectResultFloorData(projectName);
 
@@ -2693,25 +2558,6 @@ class DifferentiatedCalculationDatabaseHelper {
       );
     }
   }
-
-/*  static Future<void> updateFloorNumberAndStartingFloorInTablePermitFeeStartingSimilar
-      (String projectName, int differenceStartingFloor) async {
-    final db = await database;
-    List<PermitFeeStartingSimilarTableData> rows = await getPermitFeeStartingSimilarData(projectName);
-
-    for (var row in rows) {
-
-      row.permitFeeStartingSimilarTableStartingFloor += differenceStartingFloor;
-      await db.update(
-        tablePermitFeeStartingSimilar,
-        row.toMap(),
-        where: '$columnPermitFeeStartingSimilarTableProjectName = ?',
-        whereArgs: [projectName],
-      );
-    }
-  }*/
-
-
 
 
   static Future<void> updateFloorNumberInTablePermitFeeSegmentPricing(String projectName, int differenceFloorNumber) async {

@@ -29,9 +29,9 @@ class _LandInputsState extends State<LandInputs> {
   TextEditingController landAreaController = TextEditingController();
   TextEditingController firstFloorNumberController = TextEditingController();
   TextEditingController landPricePerMeterController = TextEditingController();
-  TextEditingController uniqueConstructionCostController = TextEditingController();
+  TextEditingController uniformConstructionCostController = TextEditingController();
    bool _isDifferentiatedConstructionCostBool = true;
-   bool _isUniqueConstructionCostPerMeterBool = false;
+   bool _isUniformConstructionCostPerMeterBool = false;
 
   int givenStartingFloor1 = -4321;
   bool obscureText = true;
@@ -57,7 +57,7 @@ class _LandInputsState extends State<LandInputs> {
   bool hasData = false;
   int selectedValue = 0;
   bool showLandPrice = true;
-//  var projectData = Provider.of<ProjectData>(context, listen: false).firstStartingFloor;
+//  var projectData = Provider.of<ProjectProviderData>(context, listen: false).firstStartingFloor;
  // late int firstStartingFloor;
 
 
@@ -85,23 +85,34 @@ class _LandInputsState extends State<LandInputs> {
     super.dispose();
   }
 
-  void checkBasicData()
-  async {
-    final projectBasicData = await
-       DifferentiatedCalculationDatabaseHelper.getProjectBasicData(projectName1);
-    if (projectBasicData.isNotEmpty)
-    {
-      // Assign the retrieved data to associated variables
-      landAreaController.text = projectBasicData[0].projectBasicTableLandArea.toString();
-      landPricePerMeterController.text = projectBasicData[0].projectBasicTableLandPricePerMeter.toString();
-      firstFloorNumberController.text = projectBasicData[0].projectBasicTableFirstFloorNumber.toString();
-      uniqueConstructionCostController.text = projectBasicData[0].projectBasicTableUniformConstructionCost.toString();
-        selectedValue = int.tryParse(projectBasicData[0].projectBasicTableShortNumbersNumberOfZeroRemoved.toString())!;
+  void checkBasicData() async {
+    final projectBasicData =
+    await DifferentiatedCalculationDatabaseHelper.getProjectBasicData(projectName1);
 
-      _isUniqueConstructionCostPerMeterBool = (uniqueConstructionCostController.text != '-432');
-      _isDifferentiatedConstructionCostBool = !(uniqueConstructionCostController.text != '-432');
+    if (projectBasicData.isNotEmpty) {
+      final retrievedUniformConstructionCost =
+          projectBasicData[0].projectBasicTableUniformConstructionCost;
+
+      setState(() {
+        landAreaController.text =
+            projectBasicData[0].projectBasicTableLandArea.toString();
+        landPricePerMeterController.text =
+            projectBasicData[0].projectBasicTableLandPricePerMeter.toString();
+        firstFloorNumberController.text =
+            projectBasicData[0].projectBasicTableFirstFloorNumber.toString();
+
+        // Use numeric comparison, not string:
+        uniformConstructionCostController.text =
+        retrievedUniformConstructionCost != -432 ? retrievedUniformConstructionCost.toString() : '';
+
+        _isUniformConstructionCostPerMeterBool =
+            retrievedUniformConstructionCost != -432;
+        _isDifferentiatedConstructionCostBool =
+            retrievedUniformConstructionCost == -432;
+      });
     }
   }
+
 
   Future<void> _onBackButtonPressedCallback(BuildContext context)
    async {
@@ -112,14 +123,14 @@ class _LandInputsState extends State<LandInputs> {
         firstFloorNumberController.text.isNotEmpty &&
         isValidNumber(firstFloorNumberController.text) &&
         int.tryParse(firstFloorNumberController.text) != null  &&
-        (_isDifferentiatedConstructionCostBool || (_isUniqueConstructionCostPerMeterBool &&
-            isValidNumber(uniqueConstructionCostController.text))))) ) {
+        (_isDifferentiatedConstructionCostBool || (_isUniformConstructionCostPerMeterBool &&
+            isValidNumber(uniformConstructionCostController.text))))) ) {
 
       await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
           projectName1,
           double.parse(landAreaController.text),
           double.parse(landPricePerMeterController.text),
-          double.tryParse(uniqueConstructionCostController.text) ?? -432,
+          double.tryParse(uniformConstructionCostController.text) ?? -432,
           int.tryParse(firstFloorNumberController.text) ?? 0,
           selectedValue
       );
@@ -305,7 +316,7 @@ class _LandInputsState extends State<LandInputs> {
     final double spacingHeight = isIpad ? 20 : 10;
 
 
-    return  Consumer<ProjectData>(
+    return  Consumer<ProjectProviderData>(
         builder: (context, projectData, child) {
 
           return Scaffold(
@@ -784,8 +795,8 @@ class _LandInputsState extends State<LandInputs> {
                                                     setState(() {
                                                       _isDifferentiatedConstructionCostBool = value;
                                                       if (value) {
-                                                        _isUniqueConstructionCostPerMeterBool = false;
-                                                        uniqueConstructionCostController.clear();
+                                                        _isUniformConstructionCostPerMeterBool = false;
+                                                        uniformConstructionCostController.clear();
                                                       }
                                                     });
                                                   },
@@ -853,13 +864,13 @@ class _LandInputsState extends State<LandInputs> {
                                               children: [
                                                 // Text field - Move Expanded to be direct child of Row
                                                 Switch(
-                                                  value: _isUniqueConstructionCostPerMeterBool,
+                                                  value: _isUniformConstructionCostPerMeterBool,
                                                   onChanged: (bool value) {
                                                     setState(() {
-                                                      _isUniqueConstructionCostPerMeterBool = value;
+                                                      _isUniformConstructionCostPerMeterBool = value;
                                                       if (value) {
                                                         _isDifferentiatedConstructionCostBool = false;
-                                                        uniqueConstructionCostController.clear();
+                                                        uniformConstructionCostController.clear();
                                                       }
                                                     });
                                                   },
@@ -881,8 +892,8 @@ class _LandInputsState extends State<LandInputs> {
                                                 Expanded(
                                                //   flex: 2,
                                                   child: TextField(
-                                                    controller: uniqueConstructionCostController,
-                                                    readOnly: !_isUniqueConstructionCostPerMeterBool,
+                                                    controller: uniformConstructionCostController,
+                                                    readOnly: !_isUniformConstructionCostPerMeterBool,
                                                     decoration: InputDecoration(
                                                       hintText: 'per ft²/m²', hintStyle: TextStyle(color:
                                                           Colors.black38, fontSize: isIpad ? 30 : 15,),
@@ -1171,15 +1182,15 @@ class _LandInputsState extends State<LandInputs> {
                                         firstFloorNumberController.text.isNotEmpty &&
                                         isValidNumber(firstFloorNumberController.text) &&
                                         int.tryParse(firstFloorNumberController.text) != null &&
-                                        (_isDifferentiatedConstructionCostBool || (_isUniqueConstructionCostPerMeterBool &&
-                                    isValidNumber(uniqueConstructionCostController.text)))
+                                        (_isDifferentiatedConstructionCostBool || (_isUniformConstructionCostPerMeterBool &&
+                                    isValidNumber(uniformConstructionCostController.text)))
                                     ) {
-                
+
                                       await DifferentiatedCalculationDatabaseHelper.insertOrUpdateProjectBasicData(
                                         projectName1,
                                         double.parse(landAreaController.text),
                                         double.parse(landPricePerMeterController.text),
-                                          double.parse(uniqueConstructionCostController.text),
+                                          double.tryParse(uniformConstructionCostController.text) ?? -432,
                                         int.tryParse(firstFloorNumberController.text) ?? 0,
                                           selectedValue
                                       );
@@ -1189,14 +1200,23 @@ class _LandInputsState extends State<LandInputs> {
                 
                                       projectData.setFirstStartingFloor(givenStartingFloor1);
                                       // First, parse the text to double
-                                      double parsedValue = double.tryParse(uniqueConstructionCostController.text) ?? -432;
-
+                                      double parsedValue = double.tryParse(uniformConstructionCostController.text) ?? -432;
+                                      print('parsedValue $parsedValue');
                                       // Then check and set if not -432
-                                      if (_isUniqueConstructionCostPerMeterBool && parsedValue != -432) {
-                                        Provider.of<ProjectData>(context, listen: false)
-                                            .setUniqueConstructionCostPerMeter(parsedValue);
+                                      if (_isUniformConstructionCostPerMeterBool && parsedValue != -432) {
+                                        Provider.of<ProjectProviderData>(context, listen: false)
+                                            .setUniformConstructionCostPerMeter(parsedValue);
+                                      }
+                                      final hhh =  await DifferentiatedCalculationDatabaseHelper.getProjectBasicData(projectName1);
+
+                                      double retrievedUniformConstructionCost = -432;  // Default sentinel
+
+                                      if (hhh.isNotEmpty) {
+                                        retrievedUniformConstructionCost =
+                                            hhh[0].projectBasicTableUniformConstructionCost;
                                       }
 
+                                      print('retrievedUniformConstructionCost $retrievedUniformConstructionCost');
                                       NavigationService().navigateToScreen(
                                         CostPrices(
                                           givenProjectName: projectName1,

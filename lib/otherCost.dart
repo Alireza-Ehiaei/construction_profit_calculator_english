@@ -59,7 +59,7 @@ class _OtherCostsState extends State<OtherCosts> {
     projectName1 = widget.givenProjectName;
   //  givenFloorRangesData = widget.givenFloorRangesData;
   //  givenMaxFloorNumber = widget.givenMaxFloorNumber;
-    startingFloor = Provider.of<ProjectData>(context, listen: false).firstStartingFloor;
+    startingFloor = Provider.of<ProjectProviderData>(context, listen: false).firstStartingFloor;
     checkBasicData();
 
     //   interstitialAdManager = InterstitialAdManager();
@@ -237,7 +237,7 @@ class _OtherCostsState extends State<OtherCosts> {
     final double spacingHeight = isIpad ? 20 : 10;
 
 
-    return  Consumer<ProjectData>(
+    return  Consumer<ProjectProviderData>(
         builder: (context, projectData, child) {
           return Scaffold(
             body: Container(
@@ -1026,7 +1026,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                           pow(10, shortNumbersNumberOfZeroRemoved).toInt();
                                       String totalPermitFeeText = formatNumberWithThousandSeparator(totalPermitFee);
 
-                                      //   bool yardConstructionCostsBoolValue= bool.parse(resultProjectData[0].resultProjectTableYardConstructionCostsBoolValue);
+                                      //   bool yardConstructionCostsBoolValue= bool.parse(resultProjectProviderData[0].resultProjectTableYardConstructionCostsBoolValue);
 
 
                                       double yardConstructionCostsTotalValue =
@@ -1034,9 +1034,9 @@ class _OtherCostsState extends State<OtherCosts> {
                                           * pow(10, shortNumbersNumberOfZeroRemoved).toInt());
 
                                       /*double yardConstructionCostsTotalValue = yardConstructionCostsBoolValue ?
-                                        (landArea * double.parse(resultProjectData[0].resultProjectTableRoofAndYardConstructionCosts.replaceAll(',', ''))
+                                        (landArea * double.parse(resultProjectProviderData[0].resultProjectTableRoofAndYardConstructionCosts.replaceAll(',', ''))
                                         * pow(10, shortNumbersNumberOfZeroRemoved).toInt())
-                                        : (double.parse(resultProjectData[0].resultProjectTableRoofAndYardConstructionCosts.replaceAll(',', ''))
+                                        : (double.parse(resultProjectProviderData[0].resultProjectTableRoofAndYardConstructionCosts.replaceAll(',', ''))
                                         * pow(10, shortNumbersNumberOfZeroRemoved).toInt());*/
                                       String yardConstructionCostsText = formatNumberWithThousandSeparator(
                                           yardConstructionCostsTotalValue);
@@ -1068,14 +1068,14 @@ class _OtherCostsState extends State<OtherCosts> {
                                       String unitAverageSellPricePerMeterText = formatNumberWithThousandSeparator(
                                           unitAverageSellPricePerMeter);
 
-                                      //  bool TransactionCostBoolValue= bool.parse(resultProjectData[0].resultProjectTableTransactionCostBoolValue);
+                                      //  bool TransactionCostBoolValue= bool.parse(resultProjectProviderData[0].resultProjectTableTransactionCostBoolValue);
                 
                                       double transactionCostsValue =
                                       ((totalIncome * ((projectBasicDataList[0].projectBasicTableTransactionCosts)) /100));
                 
                                       /*  double transactionCostsValue = TransactionCostBoolValue ?
-                                    ((totalIncome * (double.parse(resultProjectData[0].resultProjectTableTransactionCosts.replaceAll(',', '')))/100))
-                                        : (double.parse(resultProjectData[0].resultProjectTableTransactionCosts.replaceAll(',', ''))
+                                    ((totalIncome * (double.parse(resultProjectProviderData[0].resultProjectTableTransactionCosts.replaceAll(',', '')))/100))
+                                        : (double.parse(resultProjectProviderData[0].resultProjectTableTransactionCosts.replaceAll(',', ''))
                                         *pow(10, shortNumbersNumberOfZeroRemoved).toInt());
                                             */
                                       String transactionCostsText = formatNumberWithThousandSeparator(
@@ -1331,9 +1331,8 @@ class _OtherCostsState extends State<OtherCosts> {
                                           profitOfProject / costOfProject;
 
                 
-                                      ResultProjectColumnsClassData resultProjectData_ = ResultProjectColumnsClassData(
-                                        resultProjectTableId: await DifferentiatedCalculationDatabaseHelper
-                                            .getNextResultProjectTableId(),
+                                      ResultProjectColumnsClassData resultProjectProviderData_ = ResultProjectColumnsClassData(
+
                                         resultProjectTableProjectName: widget.givenProjectName,
                                         resultProjectTablePricing: 'differentiated',
 
@@ -1381,7 +1380,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                       );
 
                                       await DifferentiatedCalculationDatabaseHelper.insertOrUpdateResultProjectData(
-                                          resultProjectData_);
+                                          resultProjectProviderData_);
 
                                       if (projectName1!= '_oozz') {
                                         await AllProjectsPageDatabase.updateAllProjectsPageData(
@@ -1394,7 +1393,7 @@ class _OtherCostsState extends State<OtherCosts> {
                                       }
 
                                    //   InterstitialAdManager.showInterstitial();
-                                      await Future.delayed(const Duration(seconds: 2));
+                                  //    await Future.delayed(const Duration(seconds: 2));
 
                                       NavigationService().navigateToScreen(const ResultPage1());
 
